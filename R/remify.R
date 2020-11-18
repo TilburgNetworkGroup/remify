@@ -52,7 +52,7 @@ reh <- function(edgelist,
     # (1) If the R class of `time` is either `integer` or `numeric` 
     if((is.integer(edgelist[,1]) | is.numeric(edgelist[,1]))){
       time_class <- "numeric"
-      if(!is.null(time_unit)) time_unit <- "NULL"
+      time_unit <- "NULL"
     }
     else{
     # (2) If the R class of `time` is `Date` (`Date` is the data type in Rcpp)
@@ -88,7 +88,6 @@ reh <- function(edgelist,
         }
         
     }
-
 
     # Pre-processing relational event history (rehCpp.cpp)
     out <- rehCpp(edgelist = edgelist,

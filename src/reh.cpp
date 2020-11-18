@@ -391,43 +391,6 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
         case 2: {// time_class is `Datetime`
             break;
             }
-        
-        
-        // the first waiting time will be the min(diff) because we don't know the time origin of the study and therefore the waiting time to until the first event (we might want the user to specify a start time for the study)
-
-            // function getInerteventTime(time,start,time_class,time_unit) to work with the data type below, time_unit is the lowest measurable time unit : one might want the interevent time in seconds or hours or minutes or days as time unit (thus decimals will differentiate events one another)
-
-            // start time could be an input NULL by default (if NULL it will consider the min(diff) as waiting time, otherwise it will calculate it[ (1) check if the class object is the same as the time variable (2) if the start time is earlier than the first time point])
-            // if it is [[IntegerVector]] or [[NumericVector]] (time_unit is ignored here) :
-            // (1) check whether the variable is sorted (allow for equal numbers meaning that two or more events occurred at the same time)
-            // (2) compute the waiting time
-
-
-
-            // if it is [[DateVector]] (sensitivtiy is by default 'days') :
-            // (1) check whether the variable is sorted (allow for same dates meaning that two or more events occurred at the same time : assume equally spaced events within a day)
-            // (2) compute the waiting time
-            // if it is a [[DatetimeVector]] (time_unit is by default in 'seconds') :
-            // (1) check whether the variable is sorted (allow for same dates meaning that two or more events occurred at the same timestamp [very unlikely] : assume equally spaced events within a second [??] or get the microseconds)
-            // (2) compute the waiting time
-            // If the check about the ordering fails, return an errorMessage, user must check this issue by himself.
-            
-                
-                
-                // if(!is.null(start_time)){
-                //  if(is.Date(start_time) | is.numeric(start_time)){
-                
-                    // process the time variable here (getSeconds(), getMinutes(), getHours(), getDays(), getYears(), user should be able to specify the time scale)
-                    // calculate the intereventTime variable here
-                    // the starting point (t_0) is important to define: it can either be a day/hour/minute before by convention or a prespeficied by the user
-                //  }
-                //  else{stop(errorMessage(cond = 1))} // errorMessage() is a function coming from the header file messages.h (loaded on line 9 in this file)
-                // }
-                // else{ ...  process here when there is no start_time argument define, as it is by default ... }
-
-                //double t0 = 0.0; //it can be an argument of the function, a check for t0 being the actual minimum value must be provided in the future (just for now it is internally set)
-                //time_loc.push_front(t0);
-            break;
         }
     }
     out["intereventTime"] = intereventTime;     
