@@ -4,7 +4,14 @@
 \alias{convertInputREH}
 \title{convertInputREH}
 \usage{
-convertInputREH(edgelist, riskset, actorsDictionary, typesDictionary, M)
+convertInputREH(
+  edgelist,
+  riskset,
+  actorsDictionary,
+  typesDictionary,
+  M,
+  directed
+)
 }
 \arguments{
 \item{edgelist}{is the input data frame with information about [time,sender,receiver,type,weight] by row.}
@@ -14,6 +21,8 @@ convertInputREH(edgelist, riskset, actorsDictionary, typesDictionary, M)
 \item{actorsDictionary}{dictionary of actors names (input string name = integer id)}
 
 \item{M}{number of observed relational events}
+
+\item{directed}{boolean if the network is directed or not}
 
 \item{typesDicitonary}{dictionary of event types (input string name = integer id)}
 }

@@ -4,7 +4,7 @@
 \alias{getRisksetMatrix}
 \title{getRisksetMatrix (obtain permutations of actors' ids and event types).}
 \usage{
-getRisksetMatrix(actorID, typeID, N, C)
+getRisksetMatrix(actorID, typeID, N, C, directed)
 }
 \arguments{
 \item{actorID}{vector of actors' id's.}
@@ -14,6 +14,8 @@ getRisksetMatrix(actorID, typeID, N, C)
 \item{N}{number of actors in the dataset.}
 
 \item{C}{number of event types}
+
+\item{direcred}{are events directed or undirected?}
 }
 \value{
 matrix of possible dyadic events.

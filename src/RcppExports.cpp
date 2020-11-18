@@ -6,31 +6,9 @@
 
 using namespace Rcpp;
 
-// warningMessage
-std::string warningMessage(int cond);
-RcppExport SEXP _remify_warningMessage(SEXP condSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type cond(condSEXP);
-    rcpp_result_gen = Rcpp::wrap(warningMessage(cond));
-    return rcpp_result_gen;
-END_RCPP
-}
-// errorMessage
-std::string errorMessage(int cond);
-RcppExport SEXP _remify_errorMessage(SEXP condSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type cond(condSEXP);
-    rcpp_result_gen = Rcpp::wrap(errorMessage(cond));
-    return rcpp_result_gen;
-END_RCPP
-}
 // getRisksetMatrix
-arma::mat getRisksetMatrix(arma::uvec actorID, arma::uvec typeID, arma::uword N, arma::uword C);
-RcppExport SEXP _remify_getRisksetMatrix(SEXP actorIDSEXP, SEXP typeIDSEXP, SEXP NSEXP, SEXP CSEXP) {
+arma::mat getRisksetMatrix(arma::uvec actorID, arma::uvec typeID, arma::uword N, arma::uword C, bool directed);
+RcppExport SEXP _remify_getRisksetMatrix(SEXP actorIDSEXP, SEXP typeIDSEXP, SEXP NSEXP, SEXP CSEXP, SEXP directedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -38,7 +16,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::uvec >::type typeID(typeIDSEXP);
     Rcpp::traits::input_parameter< arma::uword >::type N(NSEXP);
     Rcpp::traits::input_parameter< arma::uword >::type C(CSEXP);
-    rcpp_result_gen = Rcpp::wrap(getRisksetMatrix(actorID, typeID, N, C));
+    Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
+    rcpp_result_gen = Rcpp::wrap(getRisksetMatrix(actorID, typeID, N, C, directed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -56,8 +35,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // convertInputREH
-Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::List actorsDictionary, Rcpp::List typesDictionary, arma::uword M);
-RcppExport SEXP _remify_convertInputREH(SEXP edgelistSEXP, SEXP risksetSEXP, SEXP actorsDictionarySEXP, SEXP typesDictionarySEXP, SEXP MSEXP) {
+Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::List actorsDictionary, Rcpp::List typesDictionary, arma::uword M, bool directed);
+RcppExport SEXP _remify_convertInputREH(SEXP edgelistSEXP, SEXP risksetSEXP, SEXP actorsDictionarySEXP, SEXP typesDictionarySEXP, SEXP MSEXP, SEXP directedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -66,7 +45,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type actorsDictionary(actorsDictionarySEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type typesDictionary(typesDictionarySEXP);
     Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
-    rcpp_result_gen = Rcpp::wrap(convertInputREH(edgelist, riskset, actorsDictionary, typesDictionary, M));
+    Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
+    rcpp_result_gen = Rcpp::wrap(convertInputREH(edgelist, riskset, actorsDictionary, typesDictionary, M, directed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -86,27 +66,43 @@ BEGIN_RCPP
 END_RCPP
 }
 // rehCpp
-Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::List covariates);
-RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP risksetSEXP, SEXP covariatesSEXP) {
+Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::List covariates, Rcpp::StringVector add_actors, Rcpp::StringVector add_types, bool directed, bool ordinal, std::string time_unit, std::string time_class);
+RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP risksetSEXP, SEXP covariatesSEXP, SEXP add_actorsSEXP, SEXP add_typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP time_unitSEXP, SEXP time_classSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type edgelist(edgelistSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type riskset(risksetSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
-    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, riskset, covariates));
+    Rcpp::traits::input_parameter< Rcpp::StringVector >::type add_actors(add_actorsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::StringVector >::type add_types(add_typesSEXP);
+    Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
+    Rcpp::traits::input_parameter< bool >::type ordinal(ordinalSEXP);
+    Rcpp::traits::input_parameter< std::string >::type time_unit(time_unitSEXP);
+    Rcpp::traits::input_parameter< std::string >::type time_class(time_classSEXP);
+    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, riskset, covariates, add_actors, add_types, directed, ordinal, time_unit, time_class));
+    return rcpp_result_gen;
+END_RCPP
+}
+// tryClone
+arma::uword tryClone(arma::vec time);
+RcppExport SEXP _remify_tryClone(SEXP timeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type time(timeSEXP);
+    rcpp_result_gen = Rcpp::wrap(tryClone(time));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_remify_warningMessage", (DL_FUNC) &_remify_warningMessage, 1},
-    {"_remify_errorMessage", (DL_FUNC) &_remify_errorMessage, 1},
-    {"_remify_getRisksetMatrix", (DL_FUNC) &_remify_getRisksetMatrix, 4},
+    {"_remify_getRisksetMatrix", (DL_FUNC) &_remify_getRisksetMatrix, 5},
     {"_remify_getRisksetCube", (DL_FUNC) &_remify_getRisksetCube, 3},
-    {"_remify_convertInputREH", (DL_FUNC) &_remify_convertInputREH, 5},
+    {"_remify_convertInputREH", (DL_FUNC) &_remify_convertInputREH, 6},
     {"_remify_getBinaryREH", (DL_FUNC) &_remify_getBinaryREH, 5},
-    {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 3},
+    {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 9},
+    {"_remify_tryClone", (DL_FUNC) &_remify_tryClone, 1},
     {NULL, NULL, 0}
 };
 

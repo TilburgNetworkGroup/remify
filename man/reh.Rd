@@ -7,7 +7,12 @@
 reh(
   edgelist,
   riskset = replicate(NROW(edgelist), NaN, simplify = FALSE),
-  covariates = list(a = NULL)
+  covariates = list(default = NULL),
+  add_actors = NULL,
+  add_types = NULL,
+  directed = TRUE,
+  ordinal = FALSE,
+  time_unit = NULL
 )
 }
 \arguments{
@@ -16,6 +21,16 @@ reh(
 \item{riskset}{is a list of length equal to the number of events, each object a matrix with unobserved dyads (using actors string names)}
 
 \item{covariates}{list of covariates to be provided according to the input structure working with 'remstats'}
+
+\item{add_actors}{vector of actors not in the network but to be considered in the analysis}
+
+\item{add_types}{vector of types not in the network but to considered in the analysis}
+
+\item{directed}{dyadic events directed (TRUE) or undirected (FALSE)}
+
+\item{ordinal}{TRUE if the only the time order of events is known, FALSE if also the time value is known}
+
+\item{time_unit}{string definind the time unit to consider when computing the waiting time between to subsequent relational events. If the `time` object class is `Date` then it can range in "day" (default), "month" and "year". If the class is `POSIXct` the time_unit can range in "second" (default), "minute", "hour", "day", "month", "year". If the class is either `integer` or `numeric` it is not necessary to define (it remains NULL by default) and the user should know which time unit measure the input edgelist refers to.}
 }
 \value{
 object list (the function saves also the output of optim)

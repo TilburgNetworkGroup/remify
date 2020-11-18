@@ -12,10 +12,6 @@
 
 
 //' warningMessage
-//'
-//' @param cond  it is the warning number
-//'
-// [[Rcpp::export]]
 std::string warningMessage(int cond){
       std::string message = "undefined";
       switch(cond){
@@ -33,15 +29,11 @@ std::string warningMessage(int cond){
 
 
 //' errorMessage
-//'
-//' @param cond  it is the error number
-//'
-// [[Rcpp::export]]
 std::string errorMessage(int cond){
       std::string message = "undefiend";
       switch(cond){
             case 0:
-                  message = "Hello Holland";
+                  message = "Time variable is not sorted or there are at least two events with the same time value.";
                   break;
             
             case 1:

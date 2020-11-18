@@ -4,14 +4,36 @@
 \alias{rehCpp}
 \title{rehCpp (a function for preprocessing data)}
 \usage{
-rehCpp(edgelist, riskset, covariates)
+rehCpp(
+  edgelist,
+  riskset,
+  covariates,
+  add_actors,
+  add_types,
+  directed,
+  ordinal,
+  time_unit,
+  time_class
+)
 }
 \arguments{
-\item{edgelist}{is a dataframe of relational events sorted by time: [time,sender,receiver,type,weight]}
+\item{edgelist}{is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]}
 
 \item{riskset}{is a list of length equal to the number of events, each object a matrix with unobserved dyads (using actors string names)}
 
 \item{covariates}{list of covariates to be provided according to the input structure working with 'remstats'}
+
+\item{add_actors}{vector of actors not in the network but to be considered in the analysis}
+
+\item{add_types}{vector of types not in the network but to considered in the analysis}
+
+\item{directed}{dyadic events directed (TRUE) or undirected (FALSE)}
+
+\item{ordinal}{TRUE if the only the time order of events is known, FALSE if also the time value is known}
+
+\item{time_unit}{n}
+
+\item{time_class}{n}
 }
 \value{
 list of objects

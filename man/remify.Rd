@@ -11,7 +11,7 @@ remify(input)
 \item{input}{}
 }
 \value{
-object list (the function saves also the output of optim)
+otuput of remify function
 }
 \description{
 A function that transform the REH input in one of the possible REH formats.
