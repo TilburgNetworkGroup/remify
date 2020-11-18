@@ -356,6 +356,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // Are there more than one event type? (if event type is only one, then no event types are considered)
     out["with_type"] = 0;
     if(type.length() > 1) out["with_type"] = 1;
+    
     // Is the network weighted?
     out["weighted"] = 0;
     Rcpp::NumericVector event_weights = edgelist[4];
