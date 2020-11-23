@@ -14,7 +14,7 @@ remify(input)
 otuput of remify function
 }
 \description{
-A function that transform the REH input in one of the possible REH formats.
+A function that transforms the REH input in one of the possible REH formats.
 
 The remify package provides a set of algorithms for the optimization of the relational even model likelihood
 }

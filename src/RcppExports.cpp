@@ -6,6 +6,76 @@
 
 using namespace Rcpp;
 
+// askYesNoQuestion
+int askYesNoQuestion(std::string message);
+RcppExport SEXP _remify_askYesNoQuestion(SEXP messageSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type message(messageSEXP);
+    rcpp_result_gen = Rcpp::wrap(askYesNoQuestion(message));
+    return rcpp_result_gen;
+END_RCPP
+}
+// warningMessage
+std::string warningMessage(int cond);
+RcppExport SEXP _remify_warningMessage(SEXP condSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type cond(condSEXP);
+    rcpp_result_gen = Rcpp::wrap(warningMessage(cond));
+    return rcpp_result_gen;
+END_RCPP
+}
+// errorMessage
+std::string errorMessage(int cond);
+RcppExport SEXP _remify_errorMessage(SEXP condSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type cond(condSEXP);
+    rcpp_result_gen = Rcpp::wrap(errorMessage(cond));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rearrangeDataFrame
+Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index);
+RcppExport SEXP _remify_rearrangeDataFrame(SEXP xSEXP, SEXP indexSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type index(indexSEXP);
+    rcpp_result_gen = Rcpp::wrap(rearrangeDataFrame(x, index));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rearrangeList
+Rcpp::List rearrangeList(Rcpp::List x, arma::uvec index);
+RcppExport SEXP _remify_rearrangeList(SEXP xSEXP, SEXP indexSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type index(indexSEXP);
+    rcpp_result_gen = Rcpp::wrap(rearrangeList(x, index));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getIntereventTime
+Rcpp::List getIntereventTime(Rcpp::RObject time, Rcpp::RObject origin, bool ordinal);
+RcppExport SEXP _remify_getIntereventTime(SEXP timeSEXP, SEXP originSEXP, SEXP ordinalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
+    Rcpp::traits::input_parameter< bool >::type ordinal(ordinalSEXP);
+    rcpp_result_gen = Rcpp::wrap(getIntereventTime(time, origin, ordinal));
+    return rcpp_result_gen;
+END_RCPP
+}
 // getRisksetMatrix
 arma::mat getRisksetMatrix(arma::uvec actorID, arma::uvec typeID, arma::uword N, arma::uword C, bool directed);
 RcppExport SEXP _remify_getRisksetMatrix(SEXP actorIDSEXP, SEXP typeIDSEXP, SEXP NSEXP, SEXP CSEXP, SEXP directedSEXP) {
@@ -66,43 +136,49 @@ BEGIN_RCPP
 END_RCPP
 }
 // rehCpp
-Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::List covariates, Rcpp::StringVector add_actors, Rcpp::StringVector add_types, bool directed, bool ordinal, std::string time_unit, std::string time_class);
-RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP risksetSEXP, SEXP covariatesSEXP, SEXP add_actorsSEXP, SEXP add_typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP time_unitSEXP, SEXP time_classSEXP) {
+Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::List covariates, Rcpp::RObject add_actors, Rcpp::RObject add_types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List riskset);
+RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP covariatesSEXP, SEXP add_actorsSEXP, SEXP add_typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP risksetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type edgelist(edgelistSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type riskset(risksetSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::StringVector >::type add_actors(add_actorsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::StringVector >::type add_types(add_typesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type add_actors(add_actorsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type add_types(add_typesSEXP);
     Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
     Rcpp::traits::input_parameter< bool >::type ordinal(ordinalSEXP);
-    Rcpp::traits::input_parameter< std::string >::type time_unit(time_unitSEXP);
-    Rcpp::traits::input_parameter< std::string >::type time_class(time_classSEXP);
-    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, riskset, covariates, add_actors, add_types, directed, ordinal, time_unit, time_class));
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type riskset(risksetSEXP);
+    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, covariates, add_actors, add_types, directed, ordinal, origin, riskset));
     return rcpp_result_gen;
 END_RCPP
 }
 // tryClone
-arma::uword tryClone(arma::vec time);
-RcppExport SEXP _remify_tryClone(SEXP timeSEXP) {
+arma::ucube tryClone(arma::uword N, arma::uword C);
+RcppExport SEXP _remify_tryClone(SEXP NSEXP, SEXP CSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type time(timeSEXP);
-    rcpp_result_gen = Rcpp::wrap(tryClone(time));
+    Rcpp::traits::input_parameter< arma::uword >::type N(NSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type C(CSEXP);
+    rcpp_result_gen = Rcpp::wrap(tryClone(N, C));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_remify_askYesNoQuestion", (DL_FUNC) &_remify_askYesNoQuestion, 1},
+    {"_remify_warningMessage", (DL_FUNC) &_remify_warningMessage, 1},
+    {"_remify_errorMessage", (DL_FUNC) &_remify_errorMessage, 1},
+    {"_remify_rearrangeDataFrame", (DL_FUNC) &_remify_rearrangeDataFrame, 2},
+    {"_remify_rearrangeList", (DL_FUNC) &_remify_rearrangeList, 2},
+    {"_remify_getIntereventTime", (DL_FUNC) &_remify_getIntereventTime, 3},
     {"_remify_getRisksetMatrix", (DL_FUNC) &_remify_getRisksetMatrix, 5},
     {"_remify_getRisksetCube", (DL_FUNC) &_remify_getRisksetCube, 3},
     {"_remify_convertInputREH", (DL_FUNC) &_remify_convertInputREH, 6},
     {"_remify_getBinaryREH", (DL_FUNC) &_remify_getBinaryREH, 5},
-    {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 9},
-    {"_remify_tryClone", (DL_FUNC) &_remify_tryClone, 1},
+    {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 8},
+    {"_remify_tryClone", (DL_FUNC) &_remify_tryClone, 2},
     {NULL, NULL, 0}
 };
 

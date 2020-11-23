@@ -4,10 +4,12 @@
 \alias{tryClone}
 \title{tryClone}
 \usage{
-tryClone(time)
+tryClone(N, C)
 }
 \arguments{
-\item{input}{data.frame object}
+\item{N}{N parameter}
+
+\item{C}{C parameter}
 }
 \value{
 NumericVector

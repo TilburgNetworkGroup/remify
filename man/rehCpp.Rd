@@ -6,20 +6,17 @@
 \usage{
 rehCpp(
   edgelist,
-  riskset,
   covariates,
   add_actors,
   add_types,
   directed,
   ordinal,
-  time_unit,
-  time_class
+  origin,
+  riskset
 )
 }
 \arguments{
 \item{edgelist}{is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]}
-
-\item{riskset}{is a list of length equal to the number of events, each object a matrix with unobserved dyads (using actors string names)}
 
 \item{covariates}{list of covariates to be provided according to the input structure working with 'remstats'}
 
@@ -31,9 +28,9 @@ rehCpp(
 
 \item{ordinal}{TRUE if the only the time order of events is known, FALSE if also the time value is known}
 
-\item{time_unit}{n}
+\item{origin}{time origin value}
 
-\item{time_class}{n}
+\item{riskset}{is a list of length equal to the number of events, each object a matrix with unobserved dyads (using actors string names)}
 }
 \value{
 list of objects
