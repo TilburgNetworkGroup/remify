@@ -597,7 +597,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     out["riskset"] = convertedInput["riskset"];
 
     // Create event binary matrix from the riskset and the edgelist, that is rehBinary
-   // out["rehBinary"] = getBinaryREH(out["edgelist"],out["riskset"],out["risksetCube"],out["M"],out["D"]);
+    out["rehBinary"] = getBinaryREH(Rcpp::as<Rcpp::DataFrame>(out["edgelist"]),out["riskset"],out["risksetCube"],out["M"],out["D"]);
                                     
     // Preprocess covariates here (we want to make 'remstats' understand our input)
     // ...
