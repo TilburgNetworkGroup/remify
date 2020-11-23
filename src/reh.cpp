@@ -259,7 +259,7 @@ arma::mat getRisksetMatrix(arma::uvec actorID, arma::uvec typeID, arma::uword N,
 //' @param N number of actors in the dataset.
 //' @param C number of event types
 //'
-//' @return cube of possible combination [sender,receiver,type]: the cell value is the column index in the rehBinary matrix
+//' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 //'
 // [[Rcpp::export]]
 arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword C) {
@@ -275,124 +275,115 @@ arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword 
 
 //' convertInputREH
 //'
-//' @param edgelist is the input data frame with information about [time,sender,receiver,type,weight] by row.
+//' @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
 //' @param riskset riskset list with old actors sitring names.
-//' @param actorsDictionary dictionary of actors names (input string name = integer id)
-//' @param typesDicitonary dictionary of event types (input string name = integer id)
+//' @param actorsDictionary dictionary of actors names 
+//' @param typesDicitonary dictionary of event types 
 //' @param M number of observed relational events
 //' @param directed boolean if the network is directed or not
 //'
-//' @return cube of possible combination [sender,receiver,type]: the cell value is the column index in the rehBinary matrix
+//' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 //'
 // [[Rcpp::export]]
-Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::List actorsDictionary, Rcpp::List typesDictionary, arma::uword M, bool directed) {
+Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, bool directed) {
 
     arma::uword m,d;
-    Rcpp::IntegerVector outputSender(M),outputReceiver(M),outputType(M);
+    Rcpp::IntegerVector outputActor1(M),outputActor2(M),outputType(M);
     Rcpp::List outRiskset = Rcpp::List::create();
-    std::vector<std::string> out_list_names;
-    if(directed){
-        std::vector<std::string> names_directed = {"time","sender","receiver","type","weight"};
-        out_list_names.insert(out_list_names.end(), std::begin(names_directed), std::end(names_directed)); 
-    }
-    else{
-        std::vector<std::string> names_undirected = {"time","actor1","actor2","type","weight"};
-        out_list_names.insert(out_list_names.end(), std::begin(names_undirected), std::end(names_undirected)); 
-    }
 
     // Creating output list object
     Rcpp::List out = Rcpp::List::create();
 
     // edgelist input to be recoded
-    std::vector<std::string> stringSender = Rcpp::as<std::vector<std::string>>(edgelist["actor1"]);
-    std::vector<std::string> stringReceiver = Rcpp::as<std::vector<std::string>>(edgelist["actor2"]);
+    std::vector<std::string> stringActor1 = Rcpp::as<std::vector<std::string>>(edgelist["actor1"]);
+    std::vector<std::string> stringActor2 = Rcpp::as<std::vector<std::string>>(edgelist["actor2"]);
     std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]);
 
     // strings in the dictionaries
-    std::vector<std::string> actor = Rcpp::as<std::vector<std::string>>(actorsDictionary["actor"]);
+    std::vector<std::string> actorName = Rcpp::as<std::vector<std::string>>(actorsDictionary["actorName"]);
     std::vector<int> actorID = actorsDictionary["actorID"];
-    std::vector<std::string> type = Rcpp::as<std::vector<std::string>>(typesDictionary["type"]);
+    std::vector<std::string> typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
     std::vector<int> typeID = typesDictionary["typeID"];
 
     for(m = 0; m < M; m++){
         // (1) converting m-th event in the edgelist input
-        // find sender
-        std::vector<std::string>::iterator i = std::find(actor.begin(), actor.end(), stringSender[m]);
-        int outputSender_m = actorID.at(std::distance(actor.begin(), i));
-        // find receiver
-        std::vector<std::string>::iterator j = std::find(actor.begin(), actor.end(), stringReceiver[m]);
-        int outputReceiver_m = actorID.at(std::distance(actor.begin(), j));
+        // find actor1
+        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+        int outputActor1_m = actorID.at(std::distance(actorName.begin(), i));
+        // find actor2
+        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+        int outputActor2_m = actorID.at(std::distance(actorName.begin(), j));
 
-        // sorting sender/actor1 and receiver/actor2 when directed = FALSE
+        // sorting actor1 and actor2 when directed = FALSE
         if(!directed){
-            if(outputSender_m < outputReceiver_m){
-                outputSender[m] = outputSender_m;
-                outputReceiver[m] = outputReceiver_m;
+            if(outputActor1_m < outputActor2_m){
+                outputActor1[m] = outputActor1_m;
+                outputActor2[m] = outputActor2_m;
             }
             else{
-                outputSender[m] = outputReceiver_m;
-                outputReceiver[m] = outputSender_m;
+                outputActor1[m] = outputActor2_m;
+                outputActor2[m] = outputActor1_m;
             }
         }
-        else{ // when directed == TRUE (we do not sort)
-            outputSender[m] = outputSender_m;
-            outputReceiver[m] = outputReceiver_m;
+        else{ // when directed == TRUE (we do not sort) (actor1 = sender, actor2 = receiver)
+            outputActor1[m] = outputActor1_m;
+            outputActor2[m] = outputActor2_m;
         }
         // find type 
-        std::vector<std::string>::iterator c = std::find(type.begin(), type.end(), stringType[m]);
-        outputType[m] = typeID.at(std::distance(type.begin(), c));
+        std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
+        outputType[m] = typeID.at(std::distance(typeName.begin(), c));
 
         // (2) converting m-th object in the riskset input list
         if(!R_IsNaN(riskset[m])){ //
-            // we expect a Rcpp::DataFrame (sender,receiver,type)
+            // we expect a Rcpp::DataFrame (actor1,actor2,type)
             Rcpp::StringMatrix omitDyads = riskset[m];
 
             // number of dyads to omit from the riskset at the m-th time point
             arma::uword D_m = omitDyads.nrow();
 
-            // converting input senders, receivers and types to std::string vectors
-            Rcpp::StringVector omitDyadsSender = omitDyads.column(0);
-            Rcpp::StringVector omitDyadsReceiver = omitDyads.column(1);
+            // converting input actor1, actor2 and types to std::string vectors
+            Rcpp::StringVector omitDyadsActor1 = omitDyads.column(0);
+            Rcpp::StringVector omitDyadsActor2 = omitDyads.column(1);
             Rcpp::StringVector omitDyadsType = omitDyads.column(2);
-            std::vector<std::string> stringOmitSender = Rcpp::as<std::vector<std::string>>(omitDyadsSender); // sender
-            std::vector<std::string> stringOmitReceiver = Rcpp::as<std::vector<std::string>>(omitDyadsReceiver); // receiver
-            std::vector<std::string> stringOmitType = Rcpp::as<std::vector<std::string>>(omitDyadsType); // type
+            std::vector<std::string> stringOmitActor1 = Rcpp::as<std::vector<std::string>>(omitDyadsActor1); // actor1 to omit
+            std::vector<std::string> stringOmitActor2 = Rcpp::as<std::vector<std::string>>(omitDyadsActor2); // actor2 to omit
+            std::vector<std::string> stringOmitType = Rcpp::as<std::vector<std::string>>(omitDyadsType); // type to omit
 
-            // allocating space for the converted senders, receivers and types
-            Rcpp::IntegerVector omitSender(D_m),omitReceiver(D_m),omitType(D_m);
+            // allocating space for the converted actor1, actor2 and type
+            Rcpp::IntegerVector omitActor1(D_m),omitActor2(D_m),omitType(D_m);
 
             
             for(d = 0; d < D_m; d++){
-                // find sender
-                std::vector<std::string>::iterator i = std::find(actor.begin(), actor.end(), stringOmitSender[d]);
-                int omitSender_d = actorID.at(std::distance(actor.begin(), i));
-                // find receiver
-                std::vector<std::string>::iterator j = std::find(actor.begin(), actor.end(), stringOmitReceiver[d]);
-                int omitReceiver_d = actorID.at(std::distance(actor.begin(), j));
+                // find actor1
+                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringOmitActor1[d]);
+                int omitActor1_d = actorID.at(std::distance(actorName.begin(), i));
+                // find actor2
+                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringOmitActor2[d]);
+                int omitActor2_d = actorID.at(std::distance(actorName.begin(), j));
 
-                // sorting sender/actor1 and receiver/actor2 when directed = FALSE
+                // sorting actor1 and actor2 when directed = FALSE
                 if(!directed){
-                    if(omitSender_d < omitReceiver_d){
-                        omitSender[d] = omitSender_d;
-                        omitReceiver[d] = omitReceiver_d;
+                    if(omitActor1_d < omitActor2_d){
+                        omitActor1[d] = omitActor1_d;
+                        omitActor2[d] = omitActor2_d;
                     }
                     else{
-                        omitSender[d] = omitReceiver_d;
-                        omitReceiver[d] = omitSender_d;
+                        omitActor1[d] = omitActor2_d;
+                        omitActor2[d] = omitActor1_d;
                     }
                 }
-                else{ // when directed == TRUE (we do not sort)
-                    omitSender[d] = omitSender_d;
-                    omitReceiver[d] = omitReceiver_d;
+                else{ // when directed == TRUE (we do not sort) (actor1 = sender, actor2 = receiver)
+                    omitActor1[d] = omitActor1_d;
+                    omitActor2[d] = omitActor2_d;
                 }
 
                 // find type 
-                std::vector<std::string>::iterator c = std::find(type.begin(), type.end(), stringOmitType[d]);
-                omitType[d] = typeID.at(std::distance(type.begin(), c));
+                std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringOmitType[d]);
+                omitType[d] = typeID.at(std::distance(typeName.begin(), c));
             }
 
-            Rcpp::DataFrame converted_m = Rcpp::DataFrame::create(Rcpp::Named("actor1") = omitSender, // out_list_names[1]
-                                                    Rcpp::Named("actor2") = omitReceiver,
+            Rcpp::DataFrame converted_m = Rcpp::DataFrame::create(Rcpp::Named("actor1") = omitActor1, 
+                                                    Rcpp::Named("actor2") = omitActor2,
                                                     Rcpp::Named("type") = omitType);
             outRiskset.push_back(converted_m);
               
@@ -404,8 +395,8 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::L
     }
 
     Rcpp::DataFrame outEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"], 
-                                                          Rcpp::Named("actor1") = outputSender,
-                                                          Rcpp::Named("actor2") = outputReceiver,
+                                                          Rcpp::Named("actor1") = outputActor1,
+                                                          Rcpp::Named("actor2") = outputActor2,
                                                           Rcpp::Named("type") = outputType,
                                                           Rcpp::Named("weight") = edgelist["weight"]);
     out["edgelist"] = outEdgelist; 
@@ -431,27 +422,27 @@ arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, arma::ucube
     arma::uword m,d;
     arma::mat outBinaryREH(M,D,arma::fill::zeros); // by setting the initial values to zero we already handle those
                                                     // relational events that could have occurred but didn't
-    Rcpp::IntegerVector sender = edgelist["actor1"];
-    Rcpp::IntegerVector receiver = edgelist["actor2"];
+    Rcpp::IntegerVector actor1 = edgelist["actor1"];
+    Rcpp::IntegerVector actor2 = edgelist["actor2"];
     Rcpp::IntegerVector type = edgelist["type"];
 
     for(m = 0; m < M; m++){
         // relational event that occurred
-        arma::uword event_m = risksetCube(sender[m],receiver[m],type[m]);
+        arma::uword event_m = risksetCube(actor1[m],actor2[m],type[m]);
         outBinaryREH(m,event_m) = 1;
         // relational events that couldn't occur
         if(!R_IsNaN(riskset[m])){
-            // we expect a Rcpp::DataFrame (sender,receiver,type)
+            // we expect a Rcpp::DataFrame (actor1,actor2,type)
             arma::mat omitDyads = riskset[m];
 
             // number of dyads to omit from the riskset at the m-th time point
             arma::uword D_m = omitDyads.n_rows;
-            // getting sender, receiver and type combinations to omit from the riskset at the m-th time point
-            arma::vec omitSender = omitDyads.col(0); // sender
-            arma::vec omitReceiver = omitDyads.col(1); // receiver
-            arma::vec omitType = omitDyads.col(2); // type
+            // getting actor1, actor2 and type combinations to omit from the riskset at the m-th time point
+            arma::vec omitActor1 = omitDyads.col(0); // actor1 
+            arma::vec omitActor2 = omitDyads.col(1); // actor2 
+            arma::vec omitType = omitDyads.col(2); // type 
             for(d = 0; d < D_m; d++){
-                arma::uword event_d = risksetCube(omitSender(d),omitReceiver(d),omitType(d));
+                arma::uword event_d = risksetCube(omitActor1(d),omitActor2(d),omitType(d));
                 outBinaryREH(m,event_d) = -1;
             }
         }
@@ -464,8 +455,8 @@ arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, arma::ucube
 //'
 //' @param edgelist is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]
 //' @param covariates list of covariates to be provided according to the input structure working with 'remstats'
-//' @param add_actors vector of actors not in the network but to be considered in the analysis
-//' @param add_types vector of types not in the network but to considered in the analysis
+//' @param actors vector of actors not in the network but to be considered in the analysis
+//' @param types vector of types not in the network but to considered in the analysis
 //' @param directed dyadic events directed (TRUE) or undirected (FALSE)
 //' @param ordinal TRUE if the only the time order of events is known, FALSE if also the time value is known
 //' @param origin time origin value 
@@ -476,8 +467,8 @@ arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, arma::ucube
 // [[Rcpp::export]]
 Rcpp::List rehCpp(Rcpp::DataFrame edgelist, 
                   Rcpp::List covariates, 
-                  Rcpp::RObject add_actors, 
-                  Rcpp::RObject add_types,  
+                  Rcpp::RObject actors, 
+                  Rcpp::RObject types,  
                   bool directed,
                   bool ordinal,
                   Rcpp::RObject origin,
@@ -533,53 +524,53 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
         riskset = rearrangeList(riskset,new_order);
     }
    
-    // StringVector of senders
-    Rcpp::StringVector senders = edgelist["actor1"]; // edgelist[1] is the actor1/sender
+    // StringVector of actor1
+    Rcpp::StringVector actor1 = edgelist["actor1"]; // actor1/sender
 
-    // StringVector of receivers
-    Rcpp::StringVector receivers = edgelist["actor2"]; // edgelist[2] is the actor2/receiver
+    // StringVector of actor2
+    Rcpp::StringVector actor2 = edgelist["actor2"]; // actor2/receiver
 
-    //StringVector of senders and receivers 
-    Rcpp::StringVector senders_and_receivers(senders.length()+receivers.length());
-    senders_and_receivers[Rcpp::Range(0,(senders.length()-1))] = senders;
-    senders_and_receivers[Rcpp::Range(senders.length(),(senders_and_receivers.length()-1))] = receivers;
-    if(!Rf_isNull(add_actors)){
-        Rcpp::StringVector add_actors_vector = Rcpp::as<Rcpp::StringVector>(add_actors);
-        for(arma::uword n = 0; n < add_actors_vector.length(); n++){
-            senders_and_receivers.push_back(add_actors_vector[n]);
+    //StringVector of actor1 and actor2 
+    Rcpp::StringVector actor1_and_actor2(actor1.length()+actor2.length());
+    actor1_and_actor2[Rcpp::Range(0,(actor1.length()-1))] = actor1;
+    actor1_and_actor2[Rcpp::Range(actor1.length(),(actor1_and_actor2.length()-1))] = actor2;
+    if(!Rf_isNull(actors)){
+        Rcpp::StringVector actors_vector = Rcpp::as<Rcpp::StringVector>(actors);
+        for(arma::uword n = 0; n < actors_vector.length(); n++){
+            actor1_and_actor2.push_back(actors_vector[n]);
         } 
     } 
-    // Finding unique strings in senders_and_receivers 
-    Rcpp::StringVector actor = Rcpp::unique(senders_and_receivers);
-    actor.sort(); // sorting actors
+    // Finding unique strings in actor1_and_actor2 
+    Rcpp::StringVector actorName = Rcpp::unique(actor1_and_actor2);
+    actorName.sort(); // sorting actors
 
     // Finding unique strings in event types 
     Rcpp::StringVector vector_of_types = edgelist["type"];
-    if(!Rf_isNull(add_types)){
-        Rcpp::StringVector add_types_vector = Rcpp::as<Rcpp::StringVector>(add_types);
-        for(arma::uword c = 0; c < add_types_vector.length(); c++){
-            vector_of_types.push_back(add_types_vector[c]);
+    if(!Rf_isNull(types)){
+        Rcpp::StringVector types_vector = Rcpp::as<Rcpp::StringVector>(types);
+        for(arma::uword c = 0; c < types_vector.length(); c++){
+            vector_of_types.push_back(types_vector[c]);
         } 
     } 
-    Rcpp::StringVector type = Rcpp::unique(vector_of_types);
-    type.sort(); // sorting types
+    Rcpp::StringVector typeName = Rcpp::unique(vector_of_types);
+    typeName.sort(); // sorting types
     
     // Storing some useful dimensions
     out["M"] = edgelist.nrows(); // number of events
-    out["N"] = actor.length(); // number of actors
-    out["C"] = type.length(); // number of events types
+    out["N"] = actorName.length(); // number of actors
+    out["C"] = typeName.length(); // number of events types
     
     // How many (possible) dyads? if `directed` N*(N-1), N*(N-1)/2 otherwise
     if(directed){
-        D = actor.length()*(actor.length()-1)*type.length();
+        D = actorName.length()*(actorName.length()-1)*typeName.length();
     }
     else{
-        D = ((actor.length()*(actor.length()-1))/2)*type.length();
+        D = ((actorName.length()*(actorName.length()-1))/2)*typeName.length();
     }
     out["D"] = D; // number of dyads
 
     // Are there more than one event type? (if event type is only one, then no event types are considered)
-    if(type.length() > 1) out["with_type"] = true;
+    if(typeName.length() > 1) out["with_type"] = true;
 
     // Is the network weighted?
     Rcpp::NumericVector event_weights = edgelist["weight"]; 
@@ -587,11 +578,12 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     if(unique_weights.length() > 1) out["weighted"] = true;   
 
     // Creating a dictionary for actors and event types, that is like: 'string_name' = integer (IDentifier)
-    Rcpp::List actorsDictionary = Rcpp::List::create(Rcpp::Named("actor") = actor, Rcpp::Named("actorID") = Rcpp::Range(0,actor.length()-1)); 
+    Rcpp::DataFrame actorsDictionary = Rcpp::DataFrame::create(Rcpp::Named("actorName") = actorName, Rcpp::Named("actorID") = Rcpp::Range(0,actorName.length()-1)); 
     out["actorsDictionary"] = actorsDictionary;
-    Rcpp::List typesDictionary = Rcpp::List::create(Rcpp::Named("type") = type, Rcpp::Named("typeID") = Rcpp::Range(0,type.length()-1)); 
+    Rcpp::DataFrame typesDictionary = Rcpp::DataFrame::create(Rcpp::Named("typeName") = typeName, Rcpp::Named("typeID") = Rcpp::Range(0,typeName.length()-1)); 
     out["typesDictionary"] = typesDictionary;
-    // Creating riskset objects (it is not the rehBinary but it just includes all the possible combination of [sender,receiver,type]) ...
+
+    // Creating riskset objects (it is not the rehBinary but it just includes all the possible combination of [actor1,actor2,type]) ...
 
     // ... arranged in a matrix [D*3]
     out["risksetMatrix"] = getRisksetMatrix(actorsDictionary["actorID"],typesDictionary["typeID"],out["N"],out["C"],directed);
@@ -605,7 +597,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     out["riskset"] = convertedInput["riskset"];
 
     // Create event binary matrix from the riskset and the edgelist, that is rehBinary
-    out["rehBinary"] = getBinaryREH(out["edgelist"],out["riskset"],out["risksetCube"],out["M"],out["D"]);
+   // out["rehBinary"] = getBinaryREH(out["edgelist"],out["riskset"],out["risksetCube"],out["M"],out["D"]);
                                     
     // Preprocess covariates here (we want to make 'remstats' understand our input)
     // ...

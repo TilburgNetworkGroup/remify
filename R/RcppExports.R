@@ -66,7 +66,7 @@ getRisksetMatrix <- function(actorID, typeID, N, C, directed) {
 #' @param N number of actors in the dataset.
 #' @param C number of event types
 #'
-#' @return cube of possible combination [sender,receiver,type]: the cell value is the column index in the rehBinary matrix
+#' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 #'
 getRisksetCube <- function(risksetMatrix, N, C) {
     .Call('_remify_getRisksetCube', PACKAGE = 'remify', risksetMatrix, N, C)
@@ -74,14 +74,14 @@ getRisksetCube <- function(risksetMatrix, N, C) {
 
 #' convertInputREH
 #'
-#' @param edgelist is the input data frame with information about [time,sender,receiver,type,weight] by row.
+#' @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
 #' @param riskset riskset list with old actors sitring names.
-#' @param actorsDictionary dictionary of actors names (input string name = integer id)
-#' @param typesDicitonary dictionary of event types (input string name = integer id)
+#' @param actorsDictionary dictionary of actors names 
+#' @param typesDicitonary dictionary of event types 
 #' @param M number of observed relational events
 #' @param directed boolean if the network is directed or not
 #'
-#' @return cube of possible combination [sender,receiver,type]: the cell value is the column index in the rehBinary matrix
+#' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 #'
 convertInputREH <- function(edgelist, riskset, actorsDictionary, typesDictionary, M, directed) {
     .Call('_remify_convertInputREH', PACKAGE = 'remify', edgelist, riskset, actorsDictionary, typesDictionary, M, directed)
@@ -105,8 +105,8 @@ getBinaryREH <- function(edgelist, riskset, risksetCube, M, D) {
 #'
 #' @param edgelist is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]
 #' @param covariates list of covariates to be provided according to the input structure working with 'remstats'
-#' @param add_actors vector of actors not in the network but to be considered in the analysis
-#' @param add_types vector of types not in the network but to considered in the analysis
+#' @param actors vector of actors not in the network but to be considered in the analysis
+#' @param types vector of types not in the network but to considered in the analysis
 #' @param directed dyadic events directed (TRUE) or undirected (FALSE)
 #' @param ordinal TRUE if the only the time order of events is known, FALSE if also the time value is known
 #' @param origin time origin value 
@@ -114,8 +114,8 @@ getBinaryREH <- function(edgelist, riskset, risksetCube, M, D) {
 #'
 #' @return list of objects
 #' @export
-rehCpp <- function(edgelist, covariates, add_actors, add_types, directed, ordinal, origin, riskset) {
-    .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, covariates, add_actors, add_types, directed, ordinal, origin, riskset)
+rehCpp <- function(edgelist, covariates, actors, types, directed, ordinal, origin, riskset) {
+    .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, covariates, actors, types, directed, ordinal, origin, riskset)
 }
 
 #' tryClone

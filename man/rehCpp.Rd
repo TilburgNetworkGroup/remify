@@ -4,25 +4,16 @@
 \alias{rehCpp}
 \title{rehCpp (a function for preprocessing data)}
 \usage{
-rehCpp(
-  edgelist,
-  covariates,
-  add_actors,
-  add_types,
-  directed,
-  ordinal,
-  origin,
-  riskset
-)
+rehCpp(edgelist, covariates, actors, types, directed, ordinal, origin, riskset)
 }
 \arguments{
 \item{edgelist}{is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]}
 
 \item{covariates}{list of covariates to be provided according to the input structure working with 'remstats'}
 
-\item{add_actors}{vector of actors not in the network but to be considered in the analysis}
+\item{actors}{vector of actors not in the network but to be considered in the analysis}
 
-\item{add_types}{vector of types not in the network but to considered in the analysis}
+\item{types}{vector of types not in the network but to considered in the analysis}
 
 \item{directed}{dyadic events directed (TRUE) or undirected (FALSE)}
 

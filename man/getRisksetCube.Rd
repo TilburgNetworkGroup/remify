@@ -14,7 +14,7 @@ getRisksetCube(risksetMatrix, N, C)
 \item{C}{number of event types}
 }
 \value{
-cube of possible combination [sender,receiver,type]: the cell value is the column index in the rehBinary matrix
+cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 }
 \description{
 getRisksetCube

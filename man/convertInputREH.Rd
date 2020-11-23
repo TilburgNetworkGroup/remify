@@ -14,20 +14,20 @@ convertInputREH(
 )
 }
 \arguments{
-\item{edgelist}{is the input data frame with information about [time,sender,receiver,type,weight] by row.}
+\item{edgelist}{is the input data frame with information about [time,actor1,actor2,type,weight] by row.}
 
 \item{riskset}{riskset list with old actors sitring names.}
 
-\item{actorsDictionary}{dictionary of actors names (input string name = integer id)}
+\item{actorsDictionary}{dictionary of actors names}
 
 \item{M}{number of observed relational events}
 
 \item{directed}{boolean if the network is directed or not}
 
-\item{typesDicitonary}{dictionary of event types (input string name = integer id)}
+\item{typesDicitonary}{dictionary of event types}
 }
 \value{
-cube of possible combination [sender,receiver,type]: the cell value is the column index in the rehBinary matrix
+cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 }
 \description{
 convertInputREH

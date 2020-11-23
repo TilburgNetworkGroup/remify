@@ -4,8 +4,8 @@
 #'
 #' @param edgelist a a dataframe of relational events sorted by time: [time,sender,receiver,type,weight]
 #' @param covariates list of covariates to be provided according to the input structure working with 'remstats'
-#' @param add_actors vector of actors not in the network but to be considered in the analysis
-#' @param add_types vector of types not in the network but to considered in the analysis
+#' @param actors vector of actors not in the network but to be considered in the analysis
+#' @param types vector of types not in the network but to considered in the analysis
 #' @param directed dyadic events directed (TRUE) or undirected (FALSE)
 #' @param ordinal  TRUE if the only the time order of events is known, FALSE if also the time value is known
 #' @param origin starting time point (default is NULL)
@@ -16,8 +16,8 @@
 
 reh <- function(edgelist,
                 covariates = list(default = NULL),
-                add_actors = NULL,
-                add_types = NULL,
+                actors = NULL,
+                types = NULL,
                 directed = TRUE,
                 ordinal = FALSE,
                 origin = NULL,
@@ -51,17 +51,17 @@ reh <- function(edgelist,
     # How are we going to handle this check?
 
 
-    # Check for additional actors input (add_actors) :
-  #  if(is.null(add_actors)) {add_actors <- character(0)} else{add_actors <- as.character(add_actors)}
+    # Check for additional actors input (actors) :
+  #  if(is.null(actors)) {actors <- character(0)} else{actors <- as.character(actors)}
 
-    # Check for additional types input (add_types) :
-  # if(is.null(add_types)) {add_types <- character(0)} else{add_types <- as.character(add_types)}
+    # Check for additional types input (types) :
+  # if(is.null(types)) {types <- character(0)} else{types <- as.character(types)}
 
     # Pre-processing relational event history (rehCpp.cpp)
     out <- rehCpp(edgelist = edgelist,
                     covariates = covariates, 
-                    add_actors = add_actors, 
-                    add_types = add_types, 
+                    actors = actors, 
+                    types = types, 
                     directed = directed,
                     ordinal = ordinal,
                     origin = origin,

@@ -105,15 +105,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // convertInputREH
-Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::List actorsDictionary, Rcpp::List typesDictionary, arma::uword M, bool directed);
+Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, bool directed);
 RcppExport SEXP _remify_convertInputREH(SEXP edgelistSEXP, SEXP risksetSEXP, SEXP actorsDictionarySEXP, SEXP typesDictionarySEXP, SEXP MSEXP, SEXP directedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type edgelist(edgelistSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type riskset(risksetSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type actorsDictionary(actorsDictionarySEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type typesDictionary(typesDictionarySEXP);
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type actorsDictionary(actorsDictionarySEXP);
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type typesDictionary(typesDictionarySEXP);
     Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
     Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
     rcpp_result_gen = Rcpp::wrap(convertInputREH(edgelist, riskset, actorsDictionary, typesDictionary, M, directed));
@@ -136,20 +136,20 @@ BEGIN_RCPP
 END_RCPP
 }
 // rehCpp
-Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::List covariates, Rcpp::RObject add_actors, Rcpp::RObject add_types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List riskset);
-RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP covariatesSEXP, SEXP add_actorsSEXP, SEXP add_typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP risksetSEXP) {
+Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::List covariates, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List riskset);
+RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP covariatesSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP risksetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type edgelist(edgelistSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::RObject >::type add_actors(add_actorsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::RObject >::type add_types(add_typesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type actors(actorsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
     Rcpp::traits::input_parameter< bool >::type ordinal(ordinalSEXP);
     Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type riskset(risksetSEXP);
-    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, covariates, add_actors, add_types, directed, ordinal, origin, riskset));
+    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, covariates, actors, types, directed, ordinal, origin, riskset));
     return rcpp_result_gen;
 END_RCPP
 }
