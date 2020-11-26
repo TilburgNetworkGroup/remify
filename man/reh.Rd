@@ -12,7 +12,7 @@ reh(
   directed = TRUE,
   ordinal = FALSE,
   origin = NULL,
-  riskset = replicate(NROW(edgelist), NaN, simplify = FALSE)
+  omit_dyad = list(default = NULL)
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ reh(
 
 \item{origin}{starting time point (default is NULL)}
 
-\item{riskset}{is a list of length equal to the number of events, each object a matrix with unobserved dyads (using actors string names)}
+\item{omit_dyad}{list where each element is a list of two elements: `time`, that is a vector of time points which to omit dyads from, `dyad`, which is a data.frame where dyads to omit are supplied (see more documentation about the potentials of omit_dyad in defining time varying risksets)}
 }
 \value{
 object list (the function saves also the output of optim)

@@ -3,6 +3,6 @@
 export(reh)
 export(rehCpp)
 export(remify)
-export(tryClone)
+export(tryFunction)
 importFrom(Rcpp,sourceCpp)
 useDynLib(remify)

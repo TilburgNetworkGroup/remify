@@ -11,6 +11,10 @@
 
 #define LOG(x) std::cout << x << "\n"
 
+
+
+
+
 //' rearrangeDataFrame
 //'
 //' @param x `data.frame` object to reorder
@@ -54,22 +58,9 @@ Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index) { // thi
     return x;
 }
 
-//' rearrangeList
-//'
-//' @param x `'list` object to reorder
-//' @param index vector with the new order
-//'
-//' @return list `x` rearranged according to `index` 
-// [[Rcpp::export]]
-Rcpp::List rearrangeList(Rcpp::List x, arma::uvec index) {
-    Rcpp::List x_loc = Rcpp::clone(x);
-    arma::uword j,j_new; 
-    for(j = 0; j < x.size(); j++){
-       j_new = index(j);
-      x[j] = x_loc[j_new];
-    }
-    return x;
-}
+
+
+
 
 //' getIntereventTime
 //'
@@ -194,6 +185,10 @@ Rcpp::List getIntereventTime(Rcpp::RObject time,
     return out;
 }
 
+
+
+
+
 //' getRisksetMatrix (obtain permutations of actors' ids and event types).
 //'
 //' @param actorID vector of actors' id's.
@@ -253,6 +248,9 @@ arma::mat getRisksetMatrix(arma::uvec actorID, arma::uvec typeID, arma::uword N,
 }
 
 
+
+
+
 //' getRisksetCube
 //'
 //' @param risksetMatrix output of getRiskset() function
@@ -273,28 +271,34 @@ arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword 
 }
 
 
+
+
+
 //' convertInputREH
 //'
 //' @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
-//' @param riskset riskset list with old actors sitring names.
 //' @param actorsDictionary dictionary of actors names 
 //' @param typesDicitonary dictionary of event types 
 //' @param M number of observed relational events
 //' @param directed boolean if the network is directed or not
+//' @param omit_dyad list.
 //'
 //' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 //'
 // [[Rcpp::export]]
-Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, bool directed) {
+Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, bool directed, Rcpp::List omit_dyad) {
 
-    arma::uword m,d;
-    Rcpp::IntegerVector outputActor1(M),outputActor2(M),outputType(M);
-    Rcpp::List outRiskset = Rcpp::List::create();
-
+    // for loop iterators
+    arma::uword m,r,z,d,Z_r,D_r;
+    // counters for warningMessages
+    int time_not_observed = 0;
+    int undefined_dyad = 0;
     // Creating output list object
+    Rcpp::IntegerVector convertedActor1(M),convertedActor2(M),convertedType(M);
     Rcpp::List out = Rcpp::List::create();
-
-    // edgelist input to be recoded
+         
+    // edgelist input 
+    std::vector<double> time = Rcpp::as<std::vector<double>>(edgelist["time"]);
     std::vector<std::string> stringActor1 = Rcpp::as<std::vector<std::string>>(edgelist["actor1"]);
     std::vector<std::string> stringActor2 = Rcpp::as<std::vector<std::string>>(edgelist["actor2"]);
     std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]);
@@ -305,112 +309,194 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::D
     std::vector<std::string> typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
     std::vector<int> typeID = typesDictionary["typeID"];
 
+    // (1) Converting `edgelist`
     for(m = 0; m < M; m++){
-        // (1) converting m-th event in the edgelist input
+        // m-th event in the edgelist input:
+
         // find actor1
         std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
-        int outputActor1_m = actorID.at(std::distance(actorName.begin(), i));
+        int convertedActor1_m = actorID.at(std::distance(actorName.begin(), i));
+
         // find actor2
         std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
-        int outputActor2_m = actorID.at(std::distance(actorName.begin(), j));
+        int convertedActor2_m = actorID.at(std::distance(actorName.begin(), j));
 
         // sorting actor1 and actor2 when directed = FALSE
         if(!directed){
-            if(outputActor1_m < outputActor2_m){
-                outputActor1[m] = outputActor1_m;
-                outputActor2[m] = outputActor2_m;
+            if(convertedActor1_m < convertedActor2_m){
+                convertedActor1[m] = convertedActor1_m;
+                convertedActor2[m] = convertedActor2_m;
             }
             else{
-                outputActor1[m] = outputActor2_m;
-                outputActor2[m] = outputActor1_m;
+                convertedActor1[m] = convertedActor2_m;
+                convertedActor2[m] = convertedActor1_m;
             }
         }
         else{ // when directed == TRUE (we do not sort) (actor1 = sender, actor2 = receiver)
-            outputActor1[m] = outputActor1_m;
-            outputActor2[m] = outputActor2_m;
+            convertedActor1[m] = convertedActor1_m;
+            convertedActor2[m] = convertedActor2_m;
         }
+
         // find type 
         std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
-        outputType[m] = typeID.at(std::distance(typeName.begin(), c));
-
-        // (2) converting m-th object in the riskset input list
-        if(!R_IsNaN(riskset[m])){ //
-            // we expect a Rcpp::DataFrame (actor1,actor2,type)
-            Rcpp::StringMatrix omitDyads = riskset[m];
-
-            // number of dyads to omit from the riskset at the m-th time point
-            arma::uword D_m = omitDyads.nrow();
-
-            // converting input actor1, actor2 and types to std::string vectors
-            Rcpp::StringVector omitDyadsActor1 = omitDyads.column(0);
-            Rcpp::StringVector omitDyadsActor2 = omitDyads.column(1);
-            Rcpp::StringVector omitDyadsType = omitDyads.column(2);
-            std::vector<std::string> stringOmitActor1 = Rcpp::as<std::vector<std::string>>(omitDyadsActor1); // actor1 to omit
-            std::vector<std::string> stringOmitActor2 = Rcpp::as<std::vector<std::string>>(omitDyadsActor2); // actor2 to omit
-            std::vector<std::string> stringOmitType = Rcpp::as<std::vector<std::string>>(omitDyadsType); // type to omit
-
-            // allocating space for the converted actor1, actor2 and type
-            Rcpp::IntegerVector omitActor1(D_m),omitActor2(D_m),omitType(D_m);
-
-            
-            for(d = 0; d < D_m; d++){
-                // find actor1
-                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringOmitActor1[d]);
-                int omitActor1_d = actorID.at(std::distance(actorName.begin(), i));
-                // find actor2
-                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringOmitActor2[d]);
-                int omitActor2_d = actorID.at(std::distance(actorName.begin(), j));
-
-                // sorting actor1 and actor2 when directed = FALSE
-                if(!directed){
-                    if(omitActor1_d < omitActor2_d){
-                        omitActor1[d] = omitActor1_d;
-                        omitActor2[d] = omitActor2_d;
-                    }
-                    else{
-                        omitActor1[d] = omitActor2_d;
-                        omitActor2[d] = omitActor1_d;
-                    }
-                }
-                else{ // when directed == TRUE (we do not sort) (actor1 = sender, actor2 = receiver)
-                    omitActor1[d] = omitActor1_d;
-                    omitActor2[d] = omitActor2_d;
-                }
-
-                // find type 
-                std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringOmitType[d]);
-                omitType[d] = typeID.at(std::distance(typeName.begin(), c));
-            }
-
-            Rcpp::DataFrame converted_m = Rcpp::DataFrame::create(Rcpp::Named("actor1") = omitActor1, 
-                                                    Rcpp::Named("actor2") = omitActor2,
-                                                    Rcpp::Named("type") = omitType);
-            outRiskset.push_back(converted_m);
-              
-        }
-        else{
-            outRiskset.push_back(R_NaN);
-        }
-
+        convertedType[m] = typeID.at(std::distance(typeName.begin(), c));
     }
 
-    Rcpp::DataFrame outEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"], 
-                                                          Rcpp::Named("actor1") = outputActor1,
-                                                          Rcpp::Named("actor2") = outputActor2,
-                                                          Rcpp::Named("type") = outputType,
+    Rcpp::DataFrame convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"], 
+                                                          Rcpp::Named("actor1") = convertedActor1,
+                                                          Rcpp::Named("actor2") = convertedActor2,
+                                                          Rcpp::Named("type") = convertedType,
                                                           Rcpp::Named("weight") = edgelist["weight"]);
-    out["edgelist"] = outEdgelist; 
-    out["riskset"] = outRiskset;
-    
+    // (2) Storing converted `edgelist`
+    out["edgelist"] = convertedEdgelist; 
 
+    // (3) Converting `omit_dyad` list
+    if(omit_dyad.length()>1){
+        Rcpp::List convertedOmitDyad = Rcpp::List::create(); // this is the list object where to append each element of the converted list `omit_dyad`
+        int N = actorName.size();
+        for(r = 0; r < omit_dyad.length(); r++){
+            // converting r-th element in omit_dyad
+            Rcpp::List omit_r = omit_dyad[r]; // r-th input of `omit_dyad`
+            Rcpp::List convertedOmit_r = Rcpp::List::create(); // r-th list with inputs converted into IDs
+
+            // (1) converting vector of time points
+            std::vector<double> time_r = Rcpp::as<std::vector<double>>(omit_r["time"]);
+            std::vector<int> timeID_r;
+            Z_r = time_r.size();
+    
+            for(z = 0 ; z < Z_r; z++){
+                std::vector<double>::iterator iterator_z = std::find(time.begin(), time.end(), time_r[z]); 
+                if(iterator_z !=  time.end()){
+                    timeID_r.push_back(iterator_z - time.begin());
+                }
+                else{
+                    time_not_observed++;
+                }
+            }
+            convertedOmit_r["time"] = timeID_r;
+
+            // (2) converting `dyad` DataFrame according to the dictionaries of actors and types
+            Rcpp::DataFrame dyad_r = Rcpp::as<Rcpp::DataFrame>(omit_r["dyad"]);
+            D_r = dyad_r.nrows();
+            // From Rcpp::StringVector to std::vector<std::string> : useful for the conversion to IDs
+            std::vector<std::string> actor1_r = Rcpp::as<std::vector<std::string>>(dyad_r["actor1"]);
+            std::vector<std::string> actor2_r = Rcpp::as<std::vector<std::string>>(dyad_r["actor2"]);
+            std::vector<std::string> type_r = Rcpp::as<std::vector<std::string>>(dyad_r["type"]);
+
+            Rcpp::IntegerVector convertedActor1, convertedActor2, convertedType; 
+            std::vector<std::string>::iterator iteratorActor1, iteratorActor2, iteratorType;
+
+            for(d = 0; d < D_r; d++){
+                //(1) get iterators and check whether they are found in the dictionaries of actor and types (if not, the d-th iteration will be skipped):
+
+                // iterator actor1:
+                if(actor1_r[d] != "NA"){
+                    iteratorActor1 = std::find(actorName.begin(), actorName.end(), actor1_r[d]);
+                }
+                // iterator actor2:
+                if(actor2_r[d] != "NA"){
+                    iteratorActor2 = std::find(actorName.begin(), actorName.end(), actor2_r[d]);
+                }
+                // iterator type:
+                if(type_r[d] != "NA"){
+                    iteratorType = std::find(typeName.begin(), typeName.end(), type_r[d]);
+                }
+
+                // checking for iterators:
+                if(((actor1_r[d] != "NA") & (iteratorActor1 == actorName.end())) || ((actor2_r[d] != "NA") & (iteratorActor2 == actorName.end())) ||((type_r[d] != "NA") & (iteratorType == typeName.end()))){
+                    undefined_dyad++;
+                    continue; // `continue` forces the for loop to continue with the next iteration
+                }  
+                else{ // all the three inputs [actor1,actor2,type] passed the check, therefore storing the ID's
+                    // storing id actor1
+                    if(actor1_r[d] != "NA"){
+                        convertedActor1.push_back(iteratorActor1 - actorName.begin());
+                    }
+                    else{
+                        convertedActor1.push_back(R_NaN);
+                    }
+                    // storing id actor2
+                    if(actor2_r[d] != "NA"){
+                        convertedActor2.push_back(iteratorActor2 - actorName.begin());
+                    }
+                    else{
+                        convertedActor2.push_back(R_NaN);
+                    }
+                    // storing id type
+                    if(type_r[d] != "NA"){
+                        convertedType.push_back(iteratorType - typeName.begin());
+                    }
+                    else{
+                        convertedType.push_back(R_NaN);
+                    }
+                }              
+            }
+            
+            // sorting actor1 and actor2 if directed FALSE (add it as input argument in the function)
+            // Rcpp::IntegerMatrix, then check actor1/actor2 and change in case the order, then create a dataframe
+            Rcpp::IntegerMatrix actor_1_2(convertedActor1.length(),2);
+            actor_1_2.column(0) = convertedActor1; 
+            actor_1_2.column(1) = convertedActor2; 
+            Rcpp::LogicalVector actor1_na = Rcpp::is_na(convertedActor1);
+            Rcpp::LogicalVector actor2_na = Rcpp::is_na(convertedActor2);
+
+            if(!directed){ 
+                for(d = 0; d < convertedActor1.length(); d++){
+                    if(!actor1_na(d) & !actor2_na(d)){ // both id actor1 and id actor2 are not NaN
+                        if(actor_1_2(d,0) > actor_1_2(d,1)){
+                            int actor1_loc = actor_1_2(d,0);
+                            int actor2_loc = actor_1_2(d,1);
+                            actor_1_2(d,0) = actor2_loc;
+                            actor_1_2(d,1) = actor1_loc;
+                        }
+                    }
+                    else{
+                        if(actor1_na(d) & (actor_1_2(d,1) == 0)){
+                                actor_1_2(d,0) = 0;
+                                actor_1_2(d,1) = R_NaN;
+                        }
+                        else{
+                            if((actor_1_2(d,0) == (N-1)) & actor2_na(d)){     // or make sure that ID = 0 is in actor1 or ID = N-1 is in actor2
+                                    actor_1_2(d,0) = R_NaN;
+                                    actor_1_2(d,1) = N-1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            convertedOmit_r["dyad"] = Rcpp::DataFrame::create(Rcpp::Named("actor1") = actor_1_2.column(0), 
+                                                                Rcpp::Named("actor2") = actor_1_2.column(1), 
+                                                            Rcpp::Named("type") = convertedType);
+            // (3) storing the r-th converted input into the output list convertedOmitDyad
+            convertedOmitDyad.push_back(convertedOmit_r);
+        }
+
+        // Warning messages
+        if(time_not_observed > 0){
+            Rcpp::Rcout << warningMessage(3); // when at least one time point supplied in omit_dyad was not found in the edgelist
+        }
+        if(undefined_dyad > 0){
+            Rcpp::Rcout << warningMessage(4); // when at least one actor supplied in omit_dyad was not found in the edgelist
+        }
+        // (4) Storing the converted `omit_dyad`
+        out["omit_dyad"] = convertedOmitDyad;
+    }
+    else{ // If the input list `omit_dyad` is NULL, then return a NULL value
+        out["omit_dyad"] = R_NilValue;
+        }
                                                  
     return out;
 }
 
+
+
+
+
 //' getBinaryREH (a function that returns a utility matrix used in optimization algorithms)
 //'
 //' @param edgelist edgelist converted according to actorID and typeID
-//' @param riskset riskset list converted according to actorID and typeID
+//' @param omit_dyad input list converted according to actorID and typeID, for handling the dynamic composition of the riskset
 //' @param risksetCube arma::cube object [N*N*C] where the cell value returns the column index to use in the outBinaryREH
 //' @param M number of observed relational events
 //' @param D number of possible dyads (accounting for event types as well)
@@ -418,37 +504,112 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, Rcpp::D
 //' @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
 //' 
 // [[Rcpp::export]]
-arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, arma::ucube risksetCube, arma::uword M, arma::uword D) {
-    arma::uword m,d;
+arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List omit_dyad, arma::ucube risksetCube, arma::uword M, arma::uword D) {
+    arma::uword m;
     arma::mat outBinaryREH(M,D,arma::fill::zeros); // by setting the initial values to zero we already handle those
                                                     // relational events that could have occurred but didn't
     Rcpp::IntegerVector actor1 = edgelist["actor1"];
     Rcpp::IntegerVector actor2 = edgelist["actor2"];
     Rcpp::IntegerVector type = edgelist["type"];
 
+    // (1) occurred events ( = 1)
     for(m = 0; m < M; m++){
         // relational event that occurred
         arma::uword event_m = risksetCube(actor1[m],actor2[m],type[m]);
         outBinaryREH(m,event_m) = 1;
-        // relational events that couldn't occur
-        if(!R_IsNaN(riskset[m])){
-            // we expect a Rcpp::DataFrame (actor1,actor2,type)
-            arma::mat omitDyads = riskset[m];
+    }
+   
+    // (2) omitting relational events from the riskset ( = -1)
+    if(omit_dyad.length()>1){
+        
+        arma::uword r,d,c,D_r; 
+        arma::uword R = omit_dyad.length();
+        arma::uword C = risksetCube.n_slices;
+        for(r = 0; r < R; r++){
+            Rcpp::List omit_dyad_r = Rcpp::as<Rcpp::List>(omit_dyad[r]);
+            arma::uvec time_r = Rcpp::as<arma::uvec>(omit_dyad_r["time"]); // `time` : vector of index positions of time point where to apply the exclusion of the dyad
+            Rcpp::DataFrame dyad_r = Rcpp::as<Rcpp::DataFrame>(omit_dyad_r["dyad"]); // data.frame of dyads to be ecluded at time points defined in `time`
+            Rcpp::IntegerVector actor1_r = Rcpp::as<Rcpp::IntegerVector>(dyad_r["actor1"]);
+            Rcpp::IntegerVector actor2_r = Rcpp::as<Rcpp::IntegerVector>(dyad_r["actor2"]);
+            Rcpp::IntegerVector type_r = Rcpp::as<Rcpp::IntegerVector>(dyad_r["type"]);
+            Rcpp::LogicalVector actor1_na = Rcpp::is_na(actor1_r);
+            Rcpp::LogicalVector actor2_na = Rcpp::is_na(actor2_r);
+            Rcpp::LogicalVector type_na = Rcpp::is_na(type_r);
+            D_r = dyad_r.nrows();
 
-            // number of dyads to omit from the riskset at the m-th time point
-            arma::uword D_m = omitDyads.n_rows;
-            // getting actor1, actor2 and type combinations to omit from the riskset at the m-th time point
-            arma::vec omitActor1 = omitDyads.col(0); // actor1 
-            arma::vec omitActor2 = omitDyads.col(1); // actor2 
-            arma::vec omitType = omitDyads.col(2); // type 
-            for(d = 0; d < D_m; d++){
-                arma::uword event_d = risksetCube(omitActor1(d),omitActor2(d),omitType(d));
-                outBinaryREH(m,event_d) = -1;
+            for(d = 0; d < D_r; d++){
+                // (1) find case:
+                if(type_na(d)){ // when [?,?,NA] (type is NA)
+                    if(!actor1_na(d) & !actor2_na(d)){ // when [X,Y,NA]
+                        arma::uvec dyad_r_d(1);
+                        for(c = 0; c < C; c++){  // for all the event types
+                            dyad_r_d(0) = risksetCube(actor1_r(d),actor2_r(d),c);
+                            outBinaryREH(time_r,dyad_r_d).fill(-1); // for the specified time points in the `time` object
+                        }   
+                    }
+                    else{
+                        if(!actor1_na(d)){ // when [X,NA,NA] 
+                            for(c = 0; c < C; c++){  // for all the event types
+                                arma::umat slice_c = risksetCube.slice(c);
+                                // transposing slice_c so as to be able to select senders by column
+                                slice_c.t();
+                                slice_c.shed_row(actor1_r(d)); // removing actor1 from the receivers (avoiding self-edfges)
+                                arma::uvec dyad_r_d = slice_c.col(actor1_r(d));
+                                outBinaryREH(time_r,dyad_r_d).fill(-1);
+                            }
+                        }
+                        else{ // when [NA,Y,NA]
+                            for(c = 0; c < C; c++){  // for all the event types
+                                arma::umat slice_c = risksetCube.slice(c);
+                                slice_c.shed_row(actor2_r(d)); // removing actor2 from the senders (avoiding self-edfges)
+                                arma::uvec dyad_r_d = slice_c.col(actor2_r(d));
+                                outBinaryREH(time_r,dyad_r_d).fill(-1);
+                            }
+                        }
+                    }
+                }
+                else{ // when [?,?,C] (type is defined)
+                    if(actor1_na(d) & actor2_na(d)){ // when [NA,NA,C]
+                        arma::umat slice_r_d = risksetCube.slice(type_r(d));
+                        arma::uvec upper_indices = arma::trimatu_ind(arma::size(slice_r_d),1); // upper triangular (excluding main diagonal)
+                        arma::uvec lower_indices = arma::trimatl_ind(arma::size(slice_r_d),-1); // lower triangular (excluding main diagonal)
+                        arma::uvec slice_indices = arma::join_cols(upper_indices,lower_indices); // concatenating vectors
+                        arma::uvec dyad_r_d = slice_r_d(slice_indices);
+                        outBinaryREH(time_r,dyad_r_d).fill(-1);
+                    }
+                    else{    
+                        if(!actor1_na(d) & !actor2_na(d)){ // when [X,Y,C]
+                            arma::uvec dyad_r_d(1);
+                            dyad_r_d(0) = risksetCube(actor1_r(d),actor2_r(d),type_r(d));
+                            outBinaryREH(time_r,dyad_r_d).fill(-1); // for the specified time points in the `time` object
+                        }
+                        else{
+                            if(!actor1_na(d)){ // when [X,NA,C]          
+                                arma::umat slice_r_d = risksetCube.slice(type_r(d));
+                                // transposing slice_r_d so as to be able to select senders by column
+                                slice_r_d.t();
+                                slice_r_d.shed_row(actor1_r(d)); // removing actor1 from the receivers (avoiding self-edfges)
+                                arma::uvec dyad_r_d = slice_r_d.col(actor1_r(d));
+                                outBinaryREH(time_r,dyad_r_d).fill(-1);
+                            }
+                            else{ // when [NA,Y,C] 
+                                arma::umat slice_r_d = risksetCube.slice(type_r(d));
+                                slice_r_d.shed_row(actor2_r(d)); // removing actor2 from the senders (avoiding self-edfges)
+                                arma::uvec dyad_r_d = slice_r_d.col(actor2_r(d));
+                                outBinaryREH(time_r,dyad_r_d).fill(-1);
+                            }
+                        }
+                    }                    
+                }
             }
         }
     }
+
     return outBinaryREH;
 }
+
+
+
 
 
 //' rehCpp (a function for preprocessing data)
@@ -460,7 +621,7 @@ arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List riskset, arma::ucube
 //' @param directed dyadic events directed (TRUE) or undirected (FALSE)
 //' @param ordinal TRUE if the only the time order of events is known, FALSE if also the time value is known
 //' @param origin time origin value 
-//' @param riskset is a list of length equal to the number of events, each object a matrix with unobserved dyads (using actors string names)
+//' @param omit_dyad is an object list where each element describes with a dataframe (stored in $dyads) the dyad to remove from the riskset and with a vector (stored in $time) the time points where dyads will be excluded from the riskset. 
 //'
 //' @return list of objects
 //' @export
@@ -472,7 +633,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
                   bool directed,
                   bool ordinal,
                   Rcpp::RObject origin,
-                  Rcpp::List riskset) {
+                  Rcpp::List omit_dyad) {
 
     // Allocating memory for some variables and the output list
     arma::uword D; // number of dyads which depends on the directed input value 
@@ -516,12 +677,11 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // processing `time` variable
     Rcpp::List intereventTime = getIntereventTime(edgelist["time"],origin,ordinal);
     out["intereventTime"] = intereventTime["value"];
-    // Reordering `edgelist` and `riskset` if `intereventTime` was sorted
+    // Reordering `edgelist` and if `intereventTime` was sorted
     if(intereventTime.containsElementNamed("order")){  
         arma::uvec new_order = intereventTime["order"];
-        // reordering edgelist and riskset
+        // reordering edgelist
         edgelist = rearrangeDataFrame(edgelist,new_order);
-        riskset = rearrangeList(riskset,new_order);
     }
    
     // StringVector of actor1
@@ -591,13 +751,13 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // ... arranged in a cube [N*N*C]
     out["risksetCube"] = getRisksetCube(out["risksetMatrix"],out["N"],out["C"]);
 
-    // Converting input edgelist and riskset list according to the new id's for both actors and event types
-    Rcpp::List convertedInput = convertInputREH(edgelist,riskset,actorsDictionary,typesDictionary,out["M"],directed);
+    // Converting input edgelist and omit_dyad list according to the new id's for both actors and event types
+    Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],directed,omit_dyad);
     out["edgelist"] = convertedInput["edgelist"];
-    out["riskset"] = convertedInput["riskset"];
+    out["omit_dyad"] = convertedInput["omit_dyad"]; // perhaps remove from the (final) output
 
-    // Create event binary matrix from the riskset and the edgelist, that is rehBinary
-    out["rehBinary"] = getBinaryREH(Rcpp::as<Rcpp::DataFrame>(out["edgelist"]),out["riskset"],out["risksetCube"],out["M"],out["D"]);
+    // Create event binary matrix from the riskset and the edgelist, that is `rehBinary`
+    out["rehBinary"] = getBinaryREH(Rcpp::as<Rcpp::DataFrame>(out["edgelist"]),out["omit_dyad"],out["risksetCube"],out["M"],out["D"]);
                                     
     // Preprocess covariates here (we want to make 'remstats' understand our input)
     // ...
@@ -610,19 +770,14 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
 
 
 
-//' tryClone
+
+//' tryFunction
 //'
-//' @param N N parameter
-//' @param C C parameter
+//' @param input integer
 //'
-//' @return NumericVector
+//' @return something
 //'
 //' @export
 // [[Rcpp::export]]
-arma::ucube tryClone(arma::uword N, arma::uword C) {
-
-    arma::ucube risksetCube(N,N,C);
-    risksetCube.fill(arma::datum::nan); 
-
-   return risksetCube;
+void tryFunction(int input) {       
 }

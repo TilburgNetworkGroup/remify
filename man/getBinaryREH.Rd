@@ -4,12 +4,12 @@
 \alias{getBinaryREH}
 \title{getBinaryREH (a function that returns a utility matrix used in optimization algorithms)}
 \usage{
-getBinaryREH(edgelist, riskset, risksetCube, M, D)
+getBinaryREH(edgelist, omit_dyad, risksetCube, M, D)
 }
 \arguments{
 \item{edgelist}{edgelist converted according to actorID and typeID}
 
-\item{riskset}{riskset list converted according to actorID and typeID}
+\item{omit_dyad}{input list converted according to actorID and typeID, for handling the dynamic composition of the riskset}
 
 \item{risksetCube}{arma::cube object [N*N*C] where the cell value returns the column index to use in the outBinaryREH}
 

@@ -4,7 +4,16 @@
 \alias{rehCpp}
 \title{rehCpp (a function for preprocessing data)}
 \usage{
-rehCpp(edgelist, covariates, actors, types, directed, ordinal, origin, riskset)
+rehCpp(
+  edgelist,
+  covariates,
+  actors,
+  types,
+  directed,
+  ordinal,
+  origin,
+  omit_dyad
+)
 }
 \arguments{
 \item{edgelist}{is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]}
@@ -21,7 +30,7 @@ rehCpp(edgelist, covariates, actors, types, directed, ordinal, origin, riskset)
 
 \item{origin}{time origin value}
 
-\item{riskset}{is a list of length equal to the number of events, each object a matrix with unobserved dyads (using actors string names)}
+\item{omit_dyad}{is an object list where each element describes with a dataframe (stored in $dyads) the dyad to remove from the riskset and with a vector (stored in $time) the time points where dyads will be excluded from the riskset.}
 }
 \value{
 list of objects

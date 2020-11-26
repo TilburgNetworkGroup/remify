@@ -9,7 +9,7 @@
 #' @param directed dyadic events directed (TRUE) or undirected (FALSE)
 #' @param ordinal  TRUE if the only the time order of events is known, FALSE if also the time value is known
 #' @param origin starting time point (default is NULL)
-#' @param riskset is a list of length equal to the number of events, each object a matrix with unobserved dyads (using actors string names)
+#' @param omit_dyad list where each element is a list of two elements: `time`, that is a vector of time points which to omit dyads from, `dyad`, which is a data.frame where dyads to omit are supplied (see more documentation about the potentials of omit_dyad in defining time varying risksets)
 #'
 #' @return  object list (the function saves also the output of optim)
 #' @export
@@ -21,7 +21,7 @@ reh <- function(edgelist,
                 directed = TRUE,
                 ordinal = FALSE,
                 origin = NULL,
-                riskset = replicate(NROW(edgelist),NaN,simplify=FALSE)){
+                omit_dyad = list(default=NULL)){
 
     # (2) Checking for `edgelist` columns (names and class of time variable)
 
@@ -38,16 +38,10 @@ reh <- function(edgelist,
 		to_remove <- which(is.na(edgelist), arr.ind = T)[,1]
 		edgelist <- edgelist[-to_remove,]
     if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
-    else{
-      riskset <- riskset[-to_remove]
-    }
     }
 
-    # (1.2) NA's in `riskset` :
-    # Checked per each m: if the matrix of dyads to remove from the risk set at t_m as any NA
-    for(m in 1:dim(edgelist)[1]) if(is.matrix(riskset[[m]]) & anyNA(riskset[[m]])) stop(errorMessage(0))
     
-    # (1.3) Check NA's in `covariates` :
+    # (1.2) Check NA's in `covariates` :
     # How are we going to handle this check?
 
 
@@ -65,16 +59,20 @@ reh <- function(edgelist,
                     directed = directed,
                     ordinal = ordinal,
                     origin = origin,
-                    riskset = riskset)
+                    omit_dyad = omit_dyad)
 
     # possibly these won't be returned anymore
-    out$old_edgelist <- edgelist
-    out$old_riskset <- riskset
-    out$old_covariates <- covariates
+    #out$old_edgelist <- edgelist
+    #out$old_omit_dyad <- omit_dyad
+    #out$old_covariates <- covariates
     
     class(out) <- "reh"
     return(out)
 }
+
+
+
+
 
 #' remify 
 #'

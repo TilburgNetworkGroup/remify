@@ -6,23 +6,23 @@
 \usage{
 convertInputREH(
   edgelist,
-  riskset,
   actorsDictionary,
   typesDictionary,
   M,
-  directed
+  directed,
+  omit_dyad
 )
 }
 \arguments{
 \item{edgelist}{is the input data frame with information about [time,actor1,actor2,type,weight] by row.}
-
-\item{riskset}{riskset list with old actors sitring names.}
 
 \item{actorsDictionary}{dictionary of actors names}
 
 \item{M}{number of observed relational events}
 
 \item{directed}{boolean if the network is directed or not}
+
+\item{omit_dyad}{list.}
 
 \item{typesDicitonary}{dictionary of event types}
 }

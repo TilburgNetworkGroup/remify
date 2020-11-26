@@ -26,16 +26,6 @@ rearrangeDataFrame <- function(x, index) {
     .Call('_remify_rearrangeDataFrame', PACKAGE = 'remify', x, index)
 }
 
-#' rearrangeList
-#'
-#' @param x `'list` object to reorder
-#' @param index vector with the new order
-#'
-#' @return list `x` rearranged according to `index` 
-rearrangeList <- function(x, index) {
-    .Call('_remify_rearrangeList', PACKAGE = 'remify', x, index)
-}
-
 #' getIntereventTime
 #'
 #' @param time first column of the edgelist (time variable) 
@@ -75,30 +65,30 @@ getRisksetCube <- function(risksetMatrix, N, C) {
 #' convertInputREH
 #'
 #' @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
-#' @param riskset riskset list with old actors sitring names.
 #' @param actorsDictionary dictionary of actors names 
 #' @param typesDicitonary dictionary of event types 
 #' @param M number of observed relational events
 #' @param directed boolean if the network is directed or not
+#' @param omit_dyad list.
 #'
 #' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 #'
-convertInputREH <- function(edgelist, riskset, actorsDictionary, typesDictionary, M, directed) {
-    .Call('_remify_convertInputREH', PACKAGE = 'remify', edgelist, riskset, actorsDictionary, typesDictionary, M, directed)
+convertInputREH <- function(edgelist, actorsDictionary, typesDictionary, M, directed, omit_dyad) {
+    .Call('_remify_convertInputREH', PACKAGE = 'remify', edgelist, actorsDictionary, typesDictionary, M, directed, omit_dyad)
 }
 
 #' getBinaryREH (a function that returns a utility matrix used in optimization algorithms)
 #'
 #' @param edgelist edgelist converted according to actorID and typeID
-#' @param riskset riskset list converted according to actorID and typeID
+#' @param omit_dyad input list converted according to actorID and typeID, for handling the dynamic composition of the riskset
 #' @param risksetCube arma::cube object [N*N*C] where the cell value returns the column index to use in the outBinaryREH
 #' @param M number of observed relational events
 #' @param D number of possible dyads (accounting for event types as well)
 #'
 #' @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
 #' 
-getBinaryREH <- function(edgelist, riskset, risksetCube, M, D) {
-    .Call('_remify_getBinaryREH', PACKAGE = 'remify', edgelist, riskset, risksetCube, M, D)
+getBinaryREH <- function(edgelist, omit_dyad, risksetCube, M, D) {
+    .Call('_remify_getBinaryREH', PACKAGE = 'remify', edgelist, omit_dyad, risksetCube, M, D)
 }
 
 #' rehCpp (a function for preprocessing data)
@@ -110,23 +100,22 @@ getBinaryREH <- function(edgelist, riskset, risksetCube, M, D) {
 #' @param directed dyadic events directed (TRUE) or undirected (FALSE)
 #' @param ordinal TRUE if the only the time order of events is known, FALSE if also the time value is known
 #' @param origin time origin value 
-#' @param riskset is a list of length equal to the number of events, each object a matrix with unobserved dyads (using actors string names)
+#' @param omit_dyad is an object list where each element describes with a dataframe (stored in $dyads) the dyad to remove from the riskset and with a vector (stored in $time) the time points where dyads will be excluded from the riskset. 
 #'
 #' @return list of objects
 #' @export
-rehCpp <- function(edgelist, covariates, actors, types, directed, ordinal, origin, riskset) {
-    .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, covariates, actors, types, directed, ordinal, origin, riskset)
+rehCpp <- function(edgelist, covariates, actors, types, directed, ordinal, origin, omit_dyad) {
+    .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, covariates, actors, types, directed, ordinal, origin, omit_dyad)
 }
 
-#' tryClone
+#' tryFunction
 #'
-#' @param N N parameter
-#' @param C C parameter
+#' @param input integer
 #'
-#' @return NumericVector
+#' @return something
 #'
 #' @export
-tryClone <- function(N, C) {
-    .Call('_remify_tryClone', PACKAGE = 'remify', N, C)
+tryFunction <- function(input) {
+    invisible(.Call('_remify_tryFunction', PACKAGE = 'remify', input))
 }
 
