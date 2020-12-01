@@ -65,7 +65,7 @@ Anne|`<NA>`|`<NA>`|
 Will|`<NA>`|`<NA>`|
 `<NA>`|Will|`<NA>`| 
 
-The `data.frame` above will give instruction such that it will make the function remove all the events where Anne and Will are senders or receivers (the `<NA>` values mean that all the actors/types are considered). 
+The `data.frame` above will give instruction such that it will make the function remove from the riskset all the events where Anne and Will are senders or receivers (the `<NA>` values mean that all the actors/types are considered) from t_s to t_M. 
 
 For the change in 2. the inpuy will be the following
 ```
@@ -79,7 +79,7 @@ actor1|actor2|type|
 :---:|:---:|:---:|
 `<NA>`|`<NA>`|cooperation|
 
-Given that we need to remove all the possible combinations of `(actor1,actor2)` having type `cooperation`, we left both `actor1` and `actor2` unspecified. To sum up, every time one field (`actor1`,`actor2`,`type`) is left undefined, the omission from the riskset applies to all the values of that field.
+Given that we need to remove from the riskset all the possible combinations of `(actor1,actor2)` having type `cooperation` (from t_r to t_M), we left both `actor1` and `actor2` unspecified. To sum up, every time one field (`actor1`,`actor2`,`type`) is left undefined, the omission from the riskset applies to all the values of that field.
 
 Finally, the function is run
 ```
