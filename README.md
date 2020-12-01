@@ -87,4 +87,4 @@ actor1|actor2|type|
 
 Given that we want to remove all the possible combinations of `(actor1,actor2)` having type `cooperation`, we left them unspecified.
 
-To sum up, every time one field is left unspecified, the editing apply to all the values of that field.
+To sum up, every time one field (actor1,actor2,type) is left unspecified, the omission from the riskset applies to all the values of that field.
