@@ -52,7 +52,7 @@ An example of input list `omit_dyad` that we call here `exclude_from_riskset` is
 ```
 exclude_from_riskset <- list() # create an empty list
 
- # first change : Anne and Will
+# first change : Anne and Will
 exclude_from_riskset[[1]] <- list(time = c(t_s, ..., t_M), dyad = see table below)
 ```
 
@@ -69,6 +69,7 @@ The `data.frame` above will give instruction such that it will make the function
 
 For the change in 2. the inpuy will be the following
 ```
+# second change : cooperation
 exclude_from_riskset[[2]] <- list(time = c(t_r, ..., t_M), dyad = see table below)
 ```
 
