@@ -1,6 +1,3 @@
-# remify
-
-
 # remify (Version: 1.1.0)
 # 
 ### Table of contents
