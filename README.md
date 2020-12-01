@@ -83,11 +83,11 @@ Given that we need to remove all the possible combinations of `(actor1,actor2)` 
 
 Finally, the function is run
 ```
-reh_processed <- remify::reh(edgelist = edgelist, # edgelist to process
+reh_processed <- remify::reh(edgelist = edgelist,
                 covariates = list(default = NULL), 
-                actors = NULL, # vector of actor names (can be also left NULL)
-                types = NULL,  # vector of type names (can be also left NULL)
-                directed = TRUE, # are events directed?
+                actors = NULL, 
+                types = NULL,  
+                directed = TRUE, 
                 ordinal = FALSE, 
                 origin = NULL, 
                 omit_dyad = list(default=NULL)) 
