@@ -432,7 +432,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
                 }              
             }
             
-            // sorting actor1 and actor2 if directed FALSE (add it as input argument in the function)
+            // sorting actor1 and actor2 if directed FALSE 
             // Rcpp::IntegerMatrix, then check actor1/actor2 and change in case the order, then create a dataframe
             Rcpp::IntegerMatrix actor_1_2(convertedActor1.length(),2);
             actor_1_2.column(0) = convertedActor1; 
@@ -677,7 +677,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // processing `time` variable
     Rcpp::List intereventTime = getIntereventTime(edgelist["time"],origin,ordinal);
     out["intereventTime"] = intereventTime["value"];
-    // Reordering `edgelist` and if `intereventTime` was sorted
+    // Reordering `edgelist` if `intereventTime` was sorted
     if(intereventTime.containsElementNamed("order")){  
         arma::uvec new_order = intereventTime["order"];
         // reordering edgelist
@@ -727,7 +727,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     else{
         D = ((actorName.length()*(actorName.length()-1))/2)*typeName.length();
     }
-    out["D"] = D; // number of dyads
+    out["D"] = D; // number of dyads (this dimension is the largest possible and doesn't account for the dynamic riskset)
 
     // Are there more than one event type? (if event type is only one, then no event types are considered)
     if(typeName.length() > 1) out["with_type"] = true;

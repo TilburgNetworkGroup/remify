@@ -21,7 +21,7 @@ reh <- function(edgelist,
                 directed = TRUE,
                 ordinal = FALSE,
                 origin = NULL,
-                omit_dyad = list(default=NULL)){
+                omit_dyad = NULL){
 
     # (2) Checking for `edgelist` columns (names and class of time variable)
 

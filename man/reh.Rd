@@ -12,7 +12,7 @@ reh(
   directed = TRUE,
   ordinal = FALSE,
   origin = NULL,
-  omit_dyad = list(default = NULL)
+  omit_dyad = NULL
 )
 }
 \arguments{
