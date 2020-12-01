@@ -28,7 +28,7 @@ library(remify)
 ```
 
 ### How to process data
-Short tutorial about supplying arguments to the function `remify::reh()` and get the preprocessed data as output (note: the initial check of inputs is not yet part of the function as well as attributes and methods are not yet implemented in this version of the package).
+Short tutorial about supplying arguments to the function `remify::reh()` and obtaining the preprocessed data as output (note: the initial check of inputs is not yet part of the function as well as attributes and methods are not yet implemented in this version of the package).
 
 The edgelist must be a `data.frame` with colum names `[time,actor1,actor2,type,weight]` (Note: it is not necessary to supply a type or a weight column but if they are present in the edgelist they must be named `type` and `weight`, whereas it is compulsory to supply `[time,actor1,actor2]`.
 ```
