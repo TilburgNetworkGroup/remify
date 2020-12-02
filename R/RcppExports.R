@@ -73,6 +73,7 @@ getRisksetCube <- function(risksetMatrix, N, C) {
 #'
 #' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 #'
+#' @export
 convertInputREH <- function(edgelist, actorsDictionary, typesDictionary, M, directed, omit_dyad) {
     .Call('_remify_convertInputREH', PACKAGE = 'remify', edgelist, actorsDictionary, typesDictionary, M, directed, omit_dyad)
 }
@@ -94,7 +95,6 @@ getBinaryREH <- function(edgelist, omit_dyad, risksetCube, M, D) {
 #' rehCpp (a function for preprocessing data)
 #'
 #' @param edgelist is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]
-#' @param covariates list of covariates to be provided according to the input structure working with 'remstats'
 #' @param actors vector of actors not in the network but to be considered in the analysis
 #' @param types vector of types not in the network but to considered in the analysis
 #' @param directed dyadic events directed (TRUE) or undirected (FALSE)
@@ -104,8 +104,8 @@ getBinaryREH <- function(edgelist, omit_dyad, risksetCube, M, D) {
 #'
 #' @return list of objects
 #' @export
-rehCpp <- function(edgelist, covariates, actors, types, directed, ordinal, origin, omit_dyad) {
-    .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, covariates, actors, types, directed, ordinal, origin, omit_dyad)
+rehCpp <- function(edgelist, actors, types, directed, ordinal, origin, omit_dyad) {
+    .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, actors, types, directed, ordinal, origin, omit_dyad)
 }
 
 #' tryFunction

@@ -6,7 +6,6 @@
 \usage{
 reh(
   edgelist,
-  covariates = list(default = NULL),
   actors = NULL,
   types = NULL,
   directed = TRUE,
@@ -17,8 +16,6 @@ reh(
 }
 \arguments{
 \item{edgelist}{a a dataframe of relational events sorted by time: [time,sender,receiver,type,weight]}
-
-\item{covariates}{list of covariates to be provided according to the input structure working with 'remstats'}
 
 \item{actors}{vector of actors not in the network but to be considered in the analysis}
 

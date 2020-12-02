@@ -3,7 +3,6 @@
 #' A function that returns a 'reh' S3 object 
 #'
 #' @param edgelist a a dataframe of relational events sorted by time: [time,sender,receiver,type,weight]
-#' @param covariates list of covariates to be provided according to the input structure working with 'remstats'
 #' @param actors vector of actors not in the network but to be considered in the analysis
 #' @param types vector of types not in the network but to considered in the analysis
 #' @param directed dyadic events directed (TRUE) or undirected (FALSE)
@@ -15,7 +14,6 @@
 #' @export
 
 reh <- function(edgelist,
-                covariates = list(default = NULL),
                 actors = NULL,
                 types = NULL,
                 directed = TRUE,
@@ -53,7 +51,6 @@ reh <- function(edgelist,
 
     # Pre-processing relational event history (rehCpp.cpp)
     out <- rehCpp(edgelist = edgelist,
-                    covariates = covariates, 
                     actors = actors, 
                     types = types, 
                     directed = directed,
@@ -64,7 +61,7 @@ reh <- function(edgelist,
     # possibly these won't be returned anymore
     #out$old_edgelist <- edgelist
     #out$old_omit_dyad <- omit_dyad
-    #out$old_covariates <- covariates
+ 
     
     class(out) <- "reh"
     return(out)

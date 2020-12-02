@@ -124,20 +124,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // rehCpp
-Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::List covariates, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List omit_dyad);
-RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP covariatesSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP omit_dyadSEXP) {
+Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List omit_dyad);
+RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP omit_dyadSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type edgelist(edgelistSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
     Rcpp::traits::input_parameter< Rcpp::RObject >::type actors(actorsSEXP);
     Rcpp::traits::input_parameter< Rcpp::RObject >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
     Rcpp::traits::input_parameter< bool >::type ordinal(ordinalSEXP);
     Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type omit_dyad(omit_dyadSEXP);
-    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, covariates, actors, types, directed, ordinal, origin, omit_dyad));
+    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, actors, types, directed, ordinal, origin, omit_dyad));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -162,7 +161,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_remify_getRisksetCube", (DL_FUNC) &_remify_getRisksetCube, 3},
     {"_remify_convertInputREH", (DL_FUNC) &_remify_convertInputREH, 6},
     {"_remify_getBinaryREH", (DL_FUNC) &_remify_getBinaryREH, 5},
-    {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 8},
+    {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 7},
     {"_remify_tryFunction", (DL_FUNC) &_remify_tryFunction, 1},
     {NULL, NULL, 0}
 };

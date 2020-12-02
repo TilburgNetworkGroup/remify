@@ -4,21 +4,10 @@
 \alias{rehCpp}
 \title{rehCpp (a function for preprocessing data)}
 \usage{
-rehCpp(
-  edgelist,
-  covariates,
-  actors,
-  types,
-  directed,
-  ordinal,
-  origin,
-  omit_dyad
-)
+rehCpp(edgelist, actors, types, directed, ordinal, origin, omit_dyad)
 }
 \arguments{
 \item{edgelist}{is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]}
-
-\item{covariates}{list of covariates to be provided according to the input structure working with 'remstats'}
 
 \item{actors}{vector of actors not in the network but to be considered in the analysis}
 

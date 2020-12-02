@@ -272,8 +272,6 @@ arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword 
 
 
 
-
-
 //' convertInputREH
 //'
 //' @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
@@ -285,6 +283,7 @@ arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword 
 //'
 //' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 //'
+//' @export
 // [[Rcpp::export]]
 Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, bool directed, Rcpp::List omit_dyad) {
 
@@ -296,7 +295,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
     // Creating output list object
     Rcpp::IntegerVector convertedActor1(M),convertedActor2(M),convertedType(M);
     Rcpp::List out = Rcpp::List::create();
-         
+        
     // edgelist input 
     std::vector<double> time = Rcpp::as<std::vector<double>>(edgelist["time"]);
     std::vector<std::string> stringActor1 = Rcpp::as<std::vector<std::string>>(edgelist["actor1"]);
@@ -351,7 +350,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
     out["edgelist"] = convertedEdgelist; 
 
     // (3) Converting `omit_dyad` list
-    if(omit_dyad.length()>1){
+    if(omit_dyad.length()>0){
         Rcpp::List convertedOmitDyad = Rcpp::List::create(); // this is the list object where to append each element of the converted list `omit_dyad`
         int N = actorName.size();
         for(r = 0; r < omit_dyad.length(); r++){
@@ -374,14 +373,29 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
                 }
             }
             convertedOmit_r["time"] = timeID_r;
-
             // (2) converting `dyad` DataFrame according to the dictionaries of actors and types
             Rcpp::DataFrame dyad_r = Rcpp::as<Rcpp::DataFrame>(omit_r["dyad"]);
-            D_r = dyad_r.nrows();
-            // From Rcpp::StringVector to std::vector<std::string> : useful for the conversion to IDs
-            std::vector<std::string> actor1_r = Rcpp::as<std::vector<std::string>>(dyad_r["actor1"]);
-            std::vector<std::string> actor2_r = Rcpp::as<std::vector<std::string>>(dyad_r["actor2"]);
-            std::vector<std::string> type_r = Rcpp::as<std::vector<std::string>>(dyad_r["type"]);
+            D_r = dyad_r.nrow();
+            std::vector<std::string> actor1_r, actor2_r, type_r;
+            // Converting to std::vector<std::string> : useful for the conversion to IDs
+            if(TYPEOF(dyad_r["actor1"]) == LGLSXP){ // this check is needed because if one of the three columns is only filled with NA's then the type becomes logical (LGLSXP) and cannot be converted to a std::vector of std::string
+                for(d = 0; d < D_r; d++) actor1_r.push_back("NA");
+            }
+            else{
+                actor1_r = Rcpp::as<std::vector<std::string>>(dyad_r["actor1"]); // actor1
+            }
+            if(TYPEOF(dyad_r["actor2"]) == LGLSXP){
+                for(d = 0; d < D_r; d++) actor2_r.push_back("NA");
+            }
+            else{
+                actor2_r = Rcpp::as<std::vector<std::string>>(dyad_r["actor2"]); // actor2
+            }
+            if(TYPEOF(dyad_r["type"]) == LGLSXP){
+                for(d = 0; d < D_r; d++) type_r.push_back("NA");
+            }
+            else{
+                type_r = Rcpp::as<std::vector<std::string>>(dyad_r["type"]); // type
+            }
 
             Rcpp::IntegerVector convertedActor1, convertedActor2, convertedType; 
             std::vector<std::string>::iterator iteratorActor1, iteratorActor2, iteratorType;
@@ -520,7 +534,7 @@ arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List omit_dyad, arma::ucu
     }
    
     // (2) omitting relational events from the riskset ( = -1)
-    if(omit_dyad.length()>1){
+    if(omit_dyad.length()>0){
         
         arma::uword r,d,c,D_r; 
         arma::uword R = omit_dyad.length();
@@ -615,7 +629,6 @@ arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List omit_dyad, arma::ucu
 //' rehCpp (a function for preprocessing data)
 //'
 //' @param edgelist is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]
-//' @param covariates list of covariates to be provided according to the input structure working with 'remstats'
 //' @param actors vector of actors not in the network but to be considered in the analysis
 //' @param types vector of types not in the network but to considered in the analysis
 //' @param directed dyadic events directed (TRUE) or undirected (FALSE)
@@ -627,7 +640,6 @@ arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List omit_dyad, arma::ucu
 //' @export
 // [[Rcpp::export]]
 Rcpp::List rehCpp(Rcpp::DataFrame edgelist, 
-                  Rcpp::List covariates, 
                   Rcpp::RObject actors, 
                   Rcpp::RObject types,  
                   bool directed,
@@ -642,13 +654,13 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // START of the processing
 
     // Converting (overwriting) actor1, actor2, type, weight columns to StringVector or NumericVector (process [3-4] columns when they miss here)
-
+Rcpp::Rcout << "here -1 \n";
     // actor1
     edgelist["actor1"] = Rcpp::as<Rcpp::StringVector>(edgelist["actor1"]);
     // actor2 
     edgelist["actor2"] = Rcpp::as<Rcpp::StringVector>(edgelist["actor2"]);
     // type
-
+Rcpp::Rcout << "here 0 \n";
     out["with_type"] = false;
     if(!edgelist.containsElementNamed("type")){ // if type is not defined, one event type `0` is created for
         Rcpp::DataFrame edgelist_loc = Rcpp::clone(edgelist);
@@ -660,7 +672,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     else{
         edgelist["type"] = Rcpp::as<Rcpp::StringVector>(edgelist["type"]); 
     }
-     
+Rcpp::Rcout << "here1 \n";
     // weight
     out["weighted"] = false;
     if(!edgelist.containsElementNamed("weight")){ // if type is not 
@@ -673,7 +685,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     else{
         edgelist["weight"] = Rcpp::as<Rcpp::NumericVector>(edgelist["weight"]); 
     }
-
+Rcpp::Rcout << "here2 \n";
     // processing `time` variable
     Rcpp::List intereventTime = getIntereventTime(edgelist["time"],origin,ordinal);
     out["intereventTime"] = intereventTime["value"];
@@ -683,7 +695,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
         // reordering edgelist
         edgelist = rearrangeDataFrame(edgelist,new_order);
     }
-   
+Rcpp::Rcout << "here3 \n";   
     // StringVector of actor1
     Rcpp::StringVector actor1 = edgelist["actor1"]; // actor1/sender
 
@@ -754,16 +766,12 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // Converting input edgelist and omit_dyad list according to the new id's for both actors and event types
     Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],directed,omit_dyad);
     out["edgelist"] = convertedInput["edgelist"];
-    out["omit_dyad"] = convertedInput["omit_dyad"]; // perhaps remove from the (final) output
+    out["omit_dyad"] = convertedInput["omit_dyad"]; // perhaps remove from the (final) output (?)
 
     // Create event binary matrix from the riskset and the edgelist, that is `rehBinary`
     out["rehBinary"] = getBinaryREH(Rcpp::as<Rcpp::DataFrame>(out["edgelist"]),out["omit_dyad"],out["risksetCube"],out["M"],out["D"]);
                                     
-    // Preprocess covariates here (we want to make 'remstats' understand our input)
-    // ...
-
     // END of the processing and returning output
-
     return out;
 }
 
