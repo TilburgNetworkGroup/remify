@@ -64,7 +64,7 @@ Anne|`<NA>`|`<NA>`|
 Will|`<NA>`|`<NA>`|
 `<NA>`|Will|`<NA>`| 
 
-The `data.frame` above will give instruction such that it will make the function remove from the riskset all the events where Anne and Will are senders or receivers (the `<NA>` values mean that all the actors/types are considered) from t_s to t_M. 
+The `data.frame` above will give instruction such that will make the function remove from the riskset all the events where Anne and Will are senders or receivers (the `<NA>` values mean that all the actors/types are considered) from t_s to t_M. 
 
 For the change in 2. the inpuy will be the following
 ```
