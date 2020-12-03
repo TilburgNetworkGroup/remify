@@ -38,7 +38,6 @@ load(file.choose()) # load edgelist object
 Before running the function `remify::reh()`, we briefly go through the input arguments:
 
 - `edgelist` = edgelist to process;
-- `covariates` = covariates are not actually processed in this function, they will be processed by `remstats`. This argument will be removed with the next update;
 - `actors` = vector of actor names (if left unspecified it will find them from the `edgelist`);
 - `types`= vector of type names (if left unspecified it will find them from the `edgelist`);
 - `directed` = logical TRUE/FALSE, are events directed? (if FALSE, dyads `[actor1,actor2]` will be sorted according to their names;
