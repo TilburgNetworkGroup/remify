@@ -288,7 +288,7 @@ arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword 
 Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, bool directed, Rcpp::List omit_dyad) {
 
     // for loop iterators
-    arma::uword m,r,z,d,Z_r,D_r;
+    arma::uword m,r,z,d,R,D,Z_r,D_r;
     // counters for warningMessages
     int time_not_observed = 0;
     int undefined_dyad = 0;
@@ -353,7 +353,8 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
     if(omit_dyad.length()>0){
         Rcpp::List convertedOmitDyad = Rcpp::List::create(); // this is the list object where to append each element of the converted list `omit_dyad`
         int N = actorName.size();
-        for(r = 0; r < omit_dyad.length(); r++){
+        R = omit_dyad.length();
+        for(r = 0; r < R; r++){
             // converting r-th element in omit_dyad
             Rcpp::List omit_r = omit_dyad[r]; // r-th input of `omit_dyad`
             Rcpp::List convertedOmit_r = Rcpp::List::create(); // r-th list with inputs converted into IDs
@@ -453,9 +454,9 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
             actor_1_2.column(1) = convertedActor2; 
             Rcpp::LogicalVector actor1_na = Rcpp::is_na(convertedActor1);
             Rcpp::LogicalVector actor2_na = Rcpp::is_na(convertedActor2);
-
+            D = convertedActor1.length();    
             if(!directed){ 
-                for(d = 0; d < convertedActor1.length(); d++){
+                for(d = 0; d < D; d++){
                     if(!actor1_na(d) & !actor2_na(d)){ // both id actor1 and id actor2 are not NaN
                         if(actor_1_2(d,0) > actor_1_2(d,1)){
                             int actor1_loc = actor_1_2(d,0);
@@ -654,13 +655,13 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // START of the processing
 
     // Converting (overwriting) actor1, actor2, type, weight columns to StringVector or NumericVector (process [3-4] columns when they miss here)
-Rcpp::Rcout << "here -1 \n";
+
     // actor1
     edgelist["actor1"] = Rcpp::as<Rcpp::StringVector>(edgelist["actor1"]);
     // actor2 
     edgelist["actor2"] = Rcpp::as<Rcpp::StringVector>(edgelist["actor2"]);
     // type
-Rcpp::Rcout << "here 0 \n";
+
     out["with_type"] = false;
     if(!edgelist.containsElementNamed("type")){ // if type is not defined, one event type `0` is created for
         Rcpp::DataFrame edgelist_loc = Rcpp::clone(edgelist);
@@ -672,7 +673,7 @@ Rcpp::Rcout << "here 0 \n";
     else{
         edgelist["type"] = Rcpp::as<Rcpp::StringVector>(edgelist["type"]); 
     }
-Rcpp::Rcout << "here1 \n";
+
     // weight
     out["weighted"] = false;
     if(!edgelist.containsElementNamed("weight")){ // if type is not 
@@ -685,7 +686,7 @@ Rcpp::Rcout << "here1 \n";
     else{
         edgelist["weight"] = Rcpp::as<Rcpp::NumericVector>(edgelist["weight"]); 
     }
-Rcpp::Rcout << "here2 \n";
+
     // processing `time` variable
     Rcpp::List intereventTime = getIntereventTime(edgelist["time"],origin,ordinal);
     out["intereventTime"] = intereventTime["value"];
@@ -695,7 +696,7 @@ Rcpp::Rcout << "here2 \n";
         // reordering edgelist
         edgelist = rearrangeDataFrame(edgelist,new_order);
     }
-Rcpp::Rcout << "here3 \n";   
+   
     // StringVector of actor1
     Rcpp::StringVector actor1 = edgelist["actor1"]; // actor1/sender
 
@@ -708,7 +709,8 @@ Rcpp::Rcout << "here3 \n";
     actor1_and_actor2[Rcpp::Range(actor1.length(),(actor1_and_actor2.length()-1))] = actor2;
     if(!Rf_isNull(actors)){
         Rcpp::StringVector actors_vector = Rcpp::as<Rcpp::StringVector>(actors);
-        for(arma::uword n = 0; n < actors_vector.length(); n++){
+        arma::uword N_loc = actors_vector.length();
+        for(arma::uword n = 0; n < N_loc; n++){
             actor1_and_actor2.push_back(actors_vector[n]);
         } 
     } 
@@ -720,7 +722,8 @@ Rcpp::Rcout << "here3 \n";
     Rcpp::StringVector vector_of_types = edgelist["type"];
     if(!Rf_isNull(types)){
         Rcpp::StringVector types_vector = Rcpp::as<Rcpp::StringVector>(types);
-        for(arma::uword c = 0; c < types_vector.length(); c++){
+        arma::uword C_loc = types_vector.length();
+        for(arma::uword c = 0; c < C_loc; c++){
             vector_of_types.push_back(types_vector[c]);
         } 
     } 
