@@ -38,7 +38,6 @@ load(file.choose()) # load edgelist object
 Before running the function `remify::reh()`, we briefly go through the input arguments:
 
 - `edgelist` = edgelist to process;
-- `covariates` = covariates are not actually processed in this function, they will be processed by `remstats`. This argument will be removed with the next update;
 - `actors` = vector of actor names (if left unspecified it will find them from the `edgelist`);
 - `types`= vector of type names (if left unspecified it will find them from the `edgelist`);
 - `directed` = logical TRUE/FALSE, are events directed? (if FALSE, dyads `[actor1,actor2]` will be sorted according to their names;
@@ -46,7 +45,7 @@ Before running the function `remify::reh()`, we briefly go through the input arg
 - `origin` = t_0 if exists, otherwise (when NULL) the day/second/1unit earlier that t_1 is chosen;
 - `omit_dyad`: list of lists where each element contains two objects: `dyad` (specifying the dyad to remove from the riskset) and `time` (vector of time points when to remove the dyads in `dyad`). For instance, we want to alter (reduce) the riskset according to two changes that apply on different time intervals:
 1. two actors `Anne` and `Will` that couldn't interact with anybody else after a specific time point, t_s (until the last observed time point, t_M);
-2. an event type `cooperation` that was no more feasible since t_r (until t_M).
+2. an event type `conflict` that was no more feasible since t_r (until t_M).
 
 An example of input list `omit_dyad` that we call here `exclude_from_riskset` is the following 
 ```
@@ -65,11 +64,11 @@ Anne|`<NA>`|`<NA>`|
 Will|`<NA>`|`<NA>`|
 `<NA>`|Will|`<NA>`| 
 
-The `data.frame` above will give instruction such that it will make the function remove from the riskset all the events where Anne and Will are senders or receivers (the `<NA>` values mean that all the actors/types are considered) from t_s to t_M. 
+The `data.frame` above will give instruction such that will make the function remove from the riskset all the events where Anne and Will are senders or receivers (the `<NA>` values mean that all the actors/types are considered) from t_s to t_M. 
 
 For the change in 2. the inpuy will be the following
 ```
-# second change : cooperation
+# second change : conflict
 exclude_from_riskset[[2]] <- list(time = c(t_r, ..., t_M), dyad = see table below)
 ```
 
@@ -77,9 +76,9 @@ In this case the `data.frame` in `dyad` will be
 
 actor1|actor2|type| 
 :---:|:---:|:---:|
-`<NA>`|`<NA>`|cooperation|
+`<NA>`|`<NA>`|conflict|
 
-Given that we need to remove from the riskset all the possible combinations of `(actor1,actor2)` having type `cooperation` (from t_r to t_M), we left both `actor1` and `actor2` unspecified. To sum up, every time one field (`actor1`,`actor2`,`type`) is left undefined, the omission from the riskset applies to all the values of that field.
+Given that we need to remove from the riskset all the possible combinations of `(actor1,actor2)` having type `conflict` (from t_r to t_M), we left both `actor1` and `actor2` unspecified. To sum up, every time one field (`actor1`,`actor2`,`type`) is left undefined, the omission from the riskset applies to all the values of that field.
 
 Finally, the function is run
 ```
