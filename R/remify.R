@@ -61,12 +61,97 @@ reh <- function(edgelist,
     # possibly these won't be returned anymore
     #out$old_edgelist <- edgelist
     #out$old_omit_dyad <- omit_dyad
- 
+
     
-    class(out) <- "reh"
-    return(out)
+    str_out <- structure(list(
+      M = out$M,
+      N = out$N,
+      C = out$C,
+      D = out$D,
+      directed = directed,
+      ordinal = ordinal,
+      weighted = out$weighted,
+      with_type = out$with_type,
+      riskset = ifelse(length(omit_dyad)>0,"dynamic","static"),
+      dictionary = list(actors = out$actorsDictionary, types = out$typesDictionary) ,
+      time = list(class = class(edgelist$time), value = data.frame(time = edgelist$time, intereventTime = out$intereventTime), origin = origin),
+      edgelist = out$edgelist,
+      risksetMatrix = out$risksetMatrix,
+      risksetCube = out$risksetCube,
+      rehBinary = out$rehBinary
+    ), class="reh")
+
+    return(str_out)
 }
 
+
+#######################################################################################
+#######################################################################################
+##########(START)           Methods for `reh` object           (START)#################
+#######################################################################################
+#######################################################################################
+
+#' @title getName
+#' 
+#' A function that returns the name of a vector of actors or types given their ID's
+#' 
+#' @param reh an reh object
+#' @param actorID other arguments
+#' @param typeID other arguments
+#' @param ... other arguments
+#' @examples
+#' data("randomREH")
+#' edgelist_reh <- reh(edgelist = edgelist,
+#'                    actors = actors,
+#'                    types = types, 
+#'                    directed = TRUE,
+#'                   ordinal = FALSE,
+#'                    origin = origin,
+#'                    omit_dyad = omit_dyad)
+#'getName(reh = edgelist_reh, actorID = c(0,12,16))
+#' @export
+getName <- function(reh, actorID = NULL, typeID = NULL, ...){
+  UseMethod("getName")
+}
+
+#' @export
+getName.reh <- function(reh, actorID = NULL, typeID = NULL, ...) {
+  names <- NULL
+  if((is.null(actorID) & is.null(typeID))) stop("Provide at least one actorID or typeID.")
+  else{ 
+    if(!is.null(actorID)){
+      actors <- attr(reh, "dictionary")$actors
+      which_actor <- sapply(actorID, function(x) which(actors$actorID == x))
+      which_actor <- unlist(which_actor)
+      names$actorName <- actors$actorName[which_actor]
+      if(length(names$actorName) == 0) warning("No actorID was found in the dictionary")
+      else if(length(names$actorName) < length(actorID)) warning("Some or all actorID's were not found in the dictionary.") 
+    }
+    if(!is.null(typeID)){
+      types <- attr(reh, "dictionary")$types
+      which_type <- sapply(typeID, function(x) which(types$typeID == x))
+      which_type <- unlist(which_type)
+      names$typeName <- types$typeName[which_type]
+      if(length(names$typeName) == 0) warning("No typeID was found in the dictionary")
+      else if(length(names$typeName) < length(typeID)) warning("Some or all typeID's were not found in the dictionary.")       
+    }
+  }
+  return(names)
+}
+
+#' @export
+dim.reh <- function(reh, ...){
+  dimensions <- c(reh$M, reh$N, reh$C, reh$D)
+  names(dimensions) <- c("events","actors","types","dyads")
+  return(dimensions)
+}
+
+
+#######################################################################################
+#######################################################################################
+##########(END)             Methods for `reh` object             (END)#################
+#######################################################################################
+#######################################################################################
 
 
 
@@ -79,7 +164,6 @@ reh <- function(edgelist,
 #'
 #' @return  otuput of remify function
 #' @export
-
 remify <- function(input){
 # [...] do stuff here
                 }                   

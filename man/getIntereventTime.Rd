@@ -9,10 +9,9 @@ getIntereventTime(time, origin, ordinal)
 \arguments{
 \item{time}{first column of the edgelist (time variable)}
 
+\item{origin}{origin time point (t_0)}
+
 \item{ordinal}{}
-}
-\value{
-list of objects
 }
 \description{
 getIntereventTime

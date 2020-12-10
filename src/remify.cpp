@@ -65,9 +65,9 @@ Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index) { // thi
 //' getIntereventTime
 //'
 //' @param time first column of the edgelist (time variable) 
+//' @param origin origin time point (t_0)
 //' @param ordinal 
 //'
-//' @return list of objects
 // [[Rcpp::export]]
 Rcpp::List getIntereventTime(Rcpp::RObject time,
                              Rcpp::RObject origin,
@@ -283,7 +283,6 @@ arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword 
 //'
 //' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 //'
-//' @export
 // [[Rcpp::export]]
 Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, bool directed, Rcpp::List omit_dyad) {
 
@@ -769,10 +768,10 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // Converting input edgelist and omit_dyad list according to the new id's for both actors and event types
     Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],directed,omit_dyad);
     out["edgelist"] = convertedInput["edgelist"];
-    out["omit_dyad"] = convertedInput["omit_dyad"]; // perhaps remove from the (final) output (?)
+    Rcpp::List convertedOmit_dyad = convertedInput["omit_dyad"]; // perhaps remove from the (final) output (?)
 
     // Create event binary matrix from the riskset and the edgelist, that is `rehBinary`
-    out["rehBinary"] = getBinaryREH(Rcpp::as<Rcpp::DataFrame>(out["edgelist"]),out["omit_dyad"],out["risksetCube"],out["M"],out["D"]);
+    out["rehBinary"] = getBinaryREH(Rcpp::as<Rcpp::DataFrame>(out["edgelist"]),convertedOmit_dyad,out["risksetCube"],out["M"],out["D"]);
                                     
     // END of the processing and returning output
     return out;

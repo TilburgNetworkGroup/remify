@@ -29,9 +29,9 @@ rearrangeDataFrame <- function(x, index) {
 #' getIntereventTime
 #'
 #' @param time first column of the edgelist (time variable) 
+#' @param origin origin time point (t_0)
 #' @param ordinal 
 #'
-#' @return list of objects
 getIntereventTime <- function(time, origin, ordinal) {
     .Call('_remify_getIntereventTime', PACKAGE = 'remify', time, origin, ordinal)
 }
@@ -73,7 +73,6 @@ getRisksetCube <- function(risksetMatrix, N, C) {
 #'
 #' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 #'
-#' @export
 convertInputREH <- function(edgelist, actorsDictionary, typesDictionary, M, directed, omit_dyad) {
     .Call('_remify_convertInputREH', PACKAGE = 'remify', edgelist, actorsDictionary, typesDictionary, M, directed, omit_dyad)
 }
