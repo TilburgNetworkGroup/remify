@@ -68,18 +68,22 @@ reh <- function(edgelist,
       N = out$N,
       C = out$C,
       D = out$D,
-      directed = directed,
-      ordinal = ordinal,
-      weighted = out$weighted,
-      with_type = out$with_type,
-      riskset = ifelse(length(omit_dyad)>0,"dynamic","static"),
-      dictionary = list(actors = out$actorsDictionary, types = out$typesDictionary) ,
-      time = list(class = class(edgelist$time), value = data.frame(time = edgelist$time, intereventTime = out$intereventTime), origin = origin),
+      intereventTime = out$intereventTime,
       edgelist = out$edgelist,
       risksetMatrix = out$risksetMatrix,
       risksetCube = out$risksetCube,
       rehBinary = out$rehBinary
     ), class="reh")
+
+   
+    
+    attr(str_out, "with_type") <- out$with_type
+    attr(str_out, "weighted") <- out$weighted
+    attr(str_out, "directed") <- directed
+    attr(str_out, "ordinal") <- ordinal
+    attr(str_out, "riskset") <- ifelse(length(omit_dyad)>0,"dynamic","static")
+    attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary) 
+    attr(str_out, "time") <- list(class = class(edgelist$time), value = data.frame(time = edgelist$time, intereventTime = out$intereventTime), origin = origin)
 
     return(str_out)
 }
