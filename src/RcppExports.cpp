@@ -141,13 +141,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // tryFunction
-void tryFunction(int input);
-RcppExport SEXP _remify_tryFunction(SEXP inputSEXP) {
+Rcpp::IntegerVector tryFunction(Rcpp::IntegerVector input, Rcpp::IntegerVector x);
+RcppExport SEXP _remify_tryFunction(SEXP inputSEXP, SEXP xSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type input(inputSEXP);
-    tryFunction(input);
-    return R_NilValue;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type input(inputSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(tryFunction(input, x));
+    return rcpp_result_gen;
 END_RCPP
 }
 
@@ -162,7 +164,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_remify_convertInputREH", (DL_FUNC) &_remify_convertInputREH, 6},
     {"_remify_getBinaryREH", (DL_FUNC) &_remify_getBinaryREH, 5},
     {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 7},
-    {"_remify_tryFunction", (DL_FUNC) &_remify_tryFunction, 1},
+    {"_remify_tryFunction", (DL_FUNC) &_remify_tryFunction, 2},
     {NULL, NULL, 0}
 };
 

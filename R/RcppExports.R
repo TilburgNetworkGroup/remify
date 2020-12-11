@@ -110,11 +110,12 @@ rehCpp <- function(edgelist, actors, types, directed, ordinal, origin, omit_dyad
 #' tryFunction
 #'
 #' @param input integer
+#' @param x
 #'
 #' @return something
 #'
 #' @export
-tryFunction <- function(input) {
-    invisible(.Call('_remify_tryFunction', PACKAGE = 'remify', input))
+tryFunction <- function(input, x) {
+    .Call('_remify_tryFunction', PACKAGE = 'remify', input, x)
 }
 

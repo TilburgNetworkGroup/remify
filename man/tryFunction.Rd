@@ -4,10 +4,12 @@
 \alias{tryFunction}
 \title{tryFunction}
 \usage{
-tryFunction(input)
+tryFunction(input, x)
 }
 \arguments{
 \item{input}{integer}
+
+\item{x}{}
 }
 \value{
 something

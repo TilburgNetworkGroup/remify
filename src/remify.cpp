@@ -784,10 +784,13 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
 //' tryFunction
 //'
 //' @param input integer
+//' @param x
 //'
 //' @return something
 //'
 //' @export
 // [[Rcpp::export]]
-void tryFunction(int input) {       
+Rcpp::IntegerVector tryFunction(Rcpp::IntegerVector input, Rcpp::IntegerVector x) { 
+    Rcpp::IntegerVector dd = Rcpp::match(x,input);      
+    return dd;
 }
