@@ -181,7 +181,7 @@ actorName.reh <- function(reh, actorID = NULL) {
       which_actor <- unlist(which_actor)
       names <- actors$actorName[which_actor]
       if(length(names) == 0) stop("No actorID was found in the dictionary.")
-      else if(length(names) < length(actorID)) warning("Some or all actorID's were not found in the dictionary.") 
+      else if(length(names) < length(actorID)) warning("Some actorID was not found in the dictionary.") 
     }
   }
   return(names)
@@ -210,7 +210,7 @@ typeName.reh <- function(reh, typeID = NULL) {
       which_type <- unlist(which_type)
       names <- types$typeName[which_type]
       if(length(names) == 0) stop("No typeID was found in the dictionary.")
-      else if(length(names) < length(typeID)) warning("Some or all typeID's were not found in the dictionary.")       
+      else if(length(names) < length(typeID)) warning("Some typeID was not found in the dictionary.")       
     }
   }
   return(names)
@@ -238,7 +238,7 @@ actorID.reh <- function(reh, actorName = NULL) {
       which_actor <- unlist(which_actor)
       IDs <- actors$actorID[which_actor]
       if(length(IDs) == 0) stop("No actorName was found in the dictionary.")
-      else if(length(IDs) < length(actorName)) warning("Some or all actorName's were not found in the dictionary.") 
+      else if(length(IDs) < length(actorName)) warning("Some actorName was not found in the dictionary.") 
     }
   }
   return(IDs)
@@ -266,7 +266,7 @@ typeID.reh <- function(reh, typeName = NULL) {
       which_type <- unlist(which_type)
       IDs <- types$typeID[which_type]
       if(length(IDs) == 0) stop("No typeName was found in the dictionary.")
-      else if(length(IDs) < length(typeName)) warning("Some or all typeName's were not found in the dictionary.")       
+      else if(length(IDs) < length(typeName)) warning("Some typeName was not found in the dictionary.")       
     }
   }
   return(IDs)
@@ -296,7 +296,7 @@ dyad.info.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, info =
   else if(!(info %in% c("time","weight","summary"))) stop("The argument `info` must be one of the following: `time`, `weight`, `summary`.")
   # ... [actor1,actor2,type]
   if(is.null(actor1) & is.null(actor2) & is.null(type)) stop("User must supply at least one of the three components of a dyad: `actor1`, `actor2`, `type`.")
-  if(any(c(length(actor1)>1,length(actor2)>1,length(type)>1))) stop("Only one dyad at a time can be specified: `actor1`, `actor2` and `type` must have length = 1.")
+  if(any(c(length(actor1)>1,length(actor2)>1,length(type)>1))) stop("`actor1`, `actor2` and `type`, if specified, must have length = 1.")
   if(!is.null(actor1) & !is.null(actor2)){if(actor1 == actor2) stop("`actor1` and `actor2` cannot be the same actor.")}
   # ... [begin,end]
   if(is.null(begin) & is.null(end)) {begin <- 1; end <- reh$M}
@@ -310,7 +310,7 @@ dyad.info.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, info =
     }
   }
   if(begin<1) {begin <- 1; warning("Cannot input `begin < 1`, `begin` is set to 1.")}
-  if(end>reh$M) {end <- M; warning(paste("Cannot input `end >",reh$M,"`, `end` is set to ",reh$M,"."))}
+  if(end>reh$M) {end <- reh$M; warning(paste("Cannot input `end >",reh$M,"`, `end` is set to ",reh$M,"."))}
 
   # Converting input dyad according to ID's
   actor_names <- attr(reh,"dictionary")$actors$actorName 
@@ -343,20 +343,71 @@ dyad.info.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, info =
         return(summary_out)
       }
     }
-    if(!is.null(actor2) & is.null(type)) # [NULL,actor2,NULL]
+    if(!is.null(actor2) & is.null(type)){ # [NULL,actor2,NULL]
       indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,])
-    if(!is.null(actor2) & !is.null(type)) # [NULL,actor2,type]
+      if(info == "summary"){
+        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+        events_loc <- apply(events_loc,2,sum)
+        frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
+        rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
+        colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
+        return(frequencies)
+      }
+    }
+    if(!is.null(actor2) & !is.null(type)){ # [NULL,actor2,type]
       indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,typeID])
+      if(info == "summary"){
+        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+        events_loc <- apply(events_loc,2,sum)
+        frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
+        rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
+        colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
+        return(frequencies)
+      }  
+    }    
   }
   else{ #[actor1,?,?]
-    if(is.null(actor2) & is.null(type)) #[actor1,NULL,NULL]
-      indices <- as.vector(reh$risksetCube[-actor1ID,actor1ID,]) 
-    if(is.null(actor2) & !is.null(type)) #[actor1,NULL,type]
+    if(is.null(actor2) & is.null(type)){ #[actor1,NULL,NULL]
+      indices <- as.vector(reh$risksetCube[-actor1ID,actor1ID,])
+      if(info == "summary"){
+        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+        events_loc <- apply(events_loc,2,sum)
+        frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
+        rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
+        colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
+        return(frequencies)
+      }             
+    }
+    if(is.null(actor2) & !is.null(type)){ #[actor1,NULL,type]
       indices <- as.vector(reh$risksetCube[-actor1ID,actor1ID,typeID])
-    if(!is.null(actor2) & is.null(type)) # [actor1,actor2,NULL]
+      if(info == "summary"){
+        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+        events_loc <- apply(events_loc,2,sum)
+        frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
+        rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
+        colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
+        return(frequencies)
+      }            
+    }
+    if(!is.null(actor2) & is.null(type)){ # [actor1,actor2,NULL]
       indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,])
-    if(!is.null(actor2) & !is.null(type)) # [actor1,actor2,type]
+      if(info == "summary"){
+        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+        events_loc <- apply(events_loc,2,sum)
+        frequencies <- matrix(events_loc,nrow=reh$C,ncol=1,byrow=FALSE) 
+        rownames(frequencies) <- attr(reh, "dictionary")$types$typeName
+        colnames(frequencies) <- c(paste(actor1,actor2,sep="->"))
+        return(frequencies)
+      }            
+    }
+    if(!is.null(actor2) & !is.null(type)){ # [actor1,actor2,type]
       indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,typeID])
+      if(info == "summary"){
+        events_loc  <- (reh$rehBinary[begin:end,indices]>=1)*1
+        frequencies <- sum(events_loc)
+        return(frequencies)
+      }      
+    }
   }
 
   # Considering only events
@@ -373,10 +424,6 @@ dyad.info.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, info =
     w <- reh$edgelist$weight
     w <- w[which(events_loc == 1)]
     return(w)
-  }
-  if(info == "summary"){
-    # ...
-    return(0)
   }
 }
 
