@@ -2,7 +2,10 @@
 #'
 #' A function that returns a 'reh' S3 object 
 #'
-#' @param edgelist a a dataframe of relational events sorted by time: [time,sender,receiver,type,weight]
+#' @param edgelist an object of class \code{"\link[base]{data.frame}"} or 
+#' \code{"\link[base]{matrix}"} with the relational event history sorted by 
+#' time with columns 'time', 'actor1', 'actor2' and optionally 'type' and 
+#' 'weight'.  
 #' @param actors vector of actors not in the network but to be considered in the analysis
 #' @param types vector of types not in the network but to considered in the analysis
 #' @param directed dyadic events directed (TRUE) or undirected (FALSE)
@@ -20,6 +23,26 @@ reh <- function(edgelist,
                 ordinal = FALSE,
                 origin = NULL,
                 omit_dyad = NULL){
+
+    # Make sure edgelist is a dataframe
+    edgelist <- as.data.frame(edgelist)
+     
+    # Checking `edgelist$time` column
+    if(!("time" %in% names(edgelist))) {
+      stop("Edgelist should contain a column named 'time' with the timing/order information for the events.")
+    }
+
+    # Checking `edgelist$actor1` column
+    if(!("actor1" %in% names(edgelist))) {
+      stop("Edgelist should contain a column named 'actor1' with the first actors/senders of the events.")
+    }
+
+    # Checking `edgelist$actor2` column
+    if(!("actor2" %in% names(edgelist))) {
+      stop("Edgelist should contain a column named 'actor2' with the second actors/receivers of the events.")
+    }
+
+    
 
     # (2) Checking for `edgelist` columns (names and class of time variable)
 
