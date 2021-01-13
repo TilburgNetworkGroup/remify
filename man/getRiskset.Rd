@@ -2,17 +2,13 @@
 % Please edit documentation in R/remify.R
 \name{getRiskset}
 \alias{getRiskset}
-\title{getRiskset
-
-A function that returns the name of a vector of actors or types given their ID's}
+\title{getRiskset}
 \usage{
 getRiskset(reh)
 }
 \arguments{
-\item{reh}{an reh object}
+\item{reh}{an \code{reh} object}
 }
 \description{
-getRiskset
-
-A function that returns the name of a vector of actors or types given their ID's
+A function that returns a logical matrix where by row (time point), dyads that could occur at a specific time point assume value \code{TRUE}, \code{FALSE} otherwise.
 }

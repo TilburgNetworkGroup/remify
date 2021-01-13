@@ -39,90 +39,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rearrangeDataFrame
-Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index);
-RcppExport SEXP _remify_rearrangeDataFrame(SEXP xSEXP, SEXP indexSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type x(xSEXP);
-    Rcpp::traits::input_parameter< arma::uvec >::type index(indexSEXP);
-    rcpp_result_gen = Rcpp::wrap(rearrangeDataFrame(x, index));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getIntereventTime
-Rcpp::List getIntereventTime(Rcpp::RObject time, Rcpp::RObject origin, bool ordinal);
-RcppExport SEXP _remify_getIntereventTime(SEXP timeSEXP, SEXP originSEXP, SEXP ordinalSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::RObject >::type time(timeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
-    Rcpp::traits::input_parameter< bool >::type ordinal(ordinalSEXP);
-    rcpp_result_gen = Rcpp::wrap(getIntereventTime(time, origin, ordinal));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getRisksetMatrix
-arma::mat getRisksetMatrix(arma::uvec actorID, arma::uvec typeID, arma::uword N, arma::uword C, bool directed);
-RcppExport SEXP _remify_getRisksetMatrix(SEXP actorIDSEXP, SEXP typeIDSEXP, SEXP NSEXP, SEXP CSEXP, SEXP directedSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::uvec >::type actorID(actorIDSEXP);
-    Rcpp::traits::input_parameter< arma::uvec >::type typeID(typeIDSEXP);
-    Rcpp::traits::input_parameter< arma::uword >::type N(NSEXP);
-    Rcpp::traits::input_parameter< arma::uword >::type C(CSEXP);
-    Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
-    rcpp_result_gen = Rcpp::wrap(getRisksetMatrix(actorID, typeID, N, C, directed));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getRisksetCube
-arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword C);
-RcppExport SEXP _remify_getRisksetCube(SEXP risksetMatrixSEXP, SEXP NSEXP, SEXP CSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::umat >::type risksetMatrix(risksetMatrixSEXP);
-    Rcpp::traits::input_parameter< arma::uword >::type N(NSEXP);
-    Rcpp::traits::input_parameter< arma::uword >::type C(CSEXP);
-    rcpp_result_gen = Rcpp::wrap(getRisksetCube(risksetMatrix, N, C));
-    return rcpp_result_gen;
-END_RCPP
-}
-// convertInputREH
-Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, bool directed, Rcpp::List omit_dyad);
-RcppExport SEXP _remify_convertInputREH(SEXP edgelistSEXP, SEXP actorsDictionarySEXP, SEXP typesDictionarySEXP, SEXP MSEXP, SEXP directedSEXP, SEXP omit_dyadSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type edgelist(edgelistSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type actorsDictionary(actorsDictionarySEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type typesDictionary(typesDictionarySEXP);
-    Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
-    Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type omit_dyad(omit_dyadSEXP);
-    rcpp_result_gen = Rcpp::wrap(convertInputREH(edgelist, actorsDictionary, typesDictionary, M, directed, omit_dyad));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getBinaryREH
-arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List omit_dyad, arma::ucube risksetCube, arma::uword M, arma::uword D);
-RcppExport SEXP _remify_getBinaryREH(SEXP edgelistSEXP, SEXP omit_dyadSEXP, SEXP risksetCubeSEXP, SEXP MSEXP, SEXP DSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type edgelist(edgelistSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type omit_dyad(omit_dyadSEXP);
-    Rcpp::traits::input_parameter< arma::ucube >::type risksetCube(risksetCubeSEXP);
-    Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
-    Rcpp::traits::input_parameter< arma::uword >::type D(DSEXP);
-    rcpp_result_gen = Rcpp::wrap(getBinaryREH(edgelist, omit_dyad, risksetCube, M, D));
-    return rcpp_result_gen;
-END_RCPP
-}
 // rehCpp
 Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List omit_dyad);
 RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP omit_dyadSEXP) {
@@ -140,31 +56,12 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// tryFunction
-Rcpp::IntegerVector tryFunction(Rcpp::IntegerVector input, Rcpp::IntegerVector x);
-RcppExport SEXP _remify_tryFunction(SEXP inputSEXP, SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type input(inputSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(tryFunction(input, x));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_remify_askYesNoQuestion", (DL_FUNC) &_remify_askYesNoQuestion, 1},
     {"_remify_warningMessage", (DL_FUNC) &_remify_warningMessage, 1},
     {"_remify_errorMessage", (DL_FUNC) &_remify_errorMessage, 1},
-    {"_remify_rearrangeDataFrame", (DL_FUNC) &_remify_rearrangeDataFrame, 2},
-    {"_remify_getIntereventTime", (DL_FUNC) &_remify_getIntereventTime, 3},
-    {"_remify_getRisksetMatrix", (DL_FUNC) &_remify_getRisksetMatrix, 5},
-    {"_remify_getRisksetCube", (DL_FUNC) &_remify_getRisksetCube, 3},
-    {"_remify_convertInputREH", (DL_FUNC) &_remify_convertInputREH, 6},
-    {"_remify_getBinaryREH", (DL_FUNC) &_remify_getBinaryREH, 5},
     {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 7},
-    {"_remify_tryFunction", (DL_FUNC) &_remify_tryFunction, 2},
     {NULL, NULL, 0}
 };
 

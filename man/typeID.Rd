@@ -2,17 +2,15 @@
 % Please edit documentation in R/remify.R
 \name{typeID}
 \alias{typeID}
-\title{typeID
-A function that returns the type's ID given they type's name}
+\title{typeID}
 \usage{
 typeID(reh, typeName = NULL)
 }
 \arguments{
-\item{reh}{an reh object}
+\item{reh}{an \code{reh} object}
 
-\item{typeName}{other arguments}
+\item{typeName}{a vector of type names}
 }
 \description{
-typeID
-A function that returns the type's ID given they type's name
+A function that given a vector of type names returns the corresponding vector of ID's
 }

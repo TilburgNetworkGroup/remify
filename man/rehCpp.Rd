@@ -2,28 +2,13 @@
 % Please edit documentation in R/RcppExports.R
 \name{rehCpp}
 \alias{rehCpp}
-\title{rehCpp (a function for preprocessing data)}
+\title{rehCpp (the Rcpp alias of \code{reh()})}
 \usage{
 rehCpp(edgelist, actors, types, directed, ordinal, origin, omit_dyad)
 }
-\arguments{
-\item{edgelist}{is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]}
-
-\item{actors}{vector of actors not in the network but to be considered in the analysis}
-
-\item{types}{vector of types not in the network but to considered in the analysis}
-
-\item{directed}{dyadic events directed (TRUE) or undirected (FALSE)}
-
-\item{ordinal}{TRUE if the only the time order of events is known, FALSE if also the time value is known}
-
-\item{origin}{time origin value}
-
-\item{omit_dyad}{is an object list where each element describes with a dataframe (stored in $dyads) the dyad to remove from the riskset and with a vector (stored in $time) the time points where dyads will be excluded from the riskset.}
-}
-\value{
-list of objects
-}
 \description{
-rehCpp (a function for preprocessing data)
+rehCpp (the Rcpp alias of \code{reh()})
+}
+\details{
+more details can be found at the following documentation: \link[remify]{reh}.
 }

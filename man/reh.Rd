@@ -15,23 +15,29 @@ reh(
 )
 }
 \arguments{
-\item{edgelist}{a a dataframe of relational events sorted by time: [time,sender,receiver,type,weight]}
+\item{edgelist}{an object of class \code{"\link[base]{data.frame}"} or 
+\code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
+time with columns 'time', 'actor1', 'actor2' and optionally 'type' and 
+'weight'.}
 
-\item{actors}{vector of actors not in the network but to be considered in the analysis}
+\item{actors}{vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be drawn from the input edgelist.}
 
-\item{types}{vector of types not in the network but to considered in the analysis}
+\item{types}{vector of event types that may occur in the network. If \code{NULL}, type names will be drawn from the input edgelist.}
 
-\item{directed}{dyadic events directed (TRUE) or undirected (FALSE)}
+\item{directed}{logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).}
 
-\item{ordinal}{TRUE if the only the time order of events is known, FALSE if also the time value is known}
+\item{ordinal}{logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).}
 
-\item{origin}{starting time point (default is NULL)}
+\item{origin}{time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.}
 
-\item{omit_dyad}{list where each element is a list of two elements: `time`, that is a vector of time points which to omit dyads from, `dyad`, which is a data.frame where dyads to omit are supplied (see more documentation about the potentials of omit_dyad in defining time varying risksets)}
+\item{omit_dyad}{list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.}
 }
 \value{
-object list (the function saves also the output of optim)
+'reh' S3 object
 }
 \description{
-A function that returns a 'reh' S3 object
+A function that processes raw data and returns a 'reh' S3 object which is used as input in other functions in \code{remverse}.
+}
+\details{
+for more details about inputs, outputs, attributes and methods of \code{remify::reh()}, see \code{vignette("reh")}.
 }

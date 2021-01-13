@@ -37,7 +37,7 @@ actors
 # types names
 types
 
-# look into the first modification of the riskset: omit_dyad[[1]]
+# looking into the first modification of the riskset: omit_dyad[[1]]
 ## the data.frame `dyad` specifies which dyads will be omitted from the riskset 
 ## (all the dyads that expressed a `conflict` between actor won't be part of the riskset):
 omit_dyad[[1]]$dyad 

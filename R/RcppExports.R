@@ -18,23 +18,18 @@ errorMessage <- function(cond) {
 
 #' rearrangeDataFrame
 #'
-#' @param x `data.frame` object to reorder
+#' @param x \code{data.frame} object to reorder
 #' @param index vector with the new order
 #'
-#' @return data.frame `x` whose columns are rearranged according to `index`
-rearrangeDataFrame <- function(x, index) {
-    .Call('_remify_rearrangeDataFrame', PACKAGE = 'remify', x, index)
-}
+#' @return \code{data.frame} whose columns are rearranged according to the input index
+NULL
 
 #' getIntereventTime
 #'
 #' @param time first column of the edgelist (time variable) 
 #' @param origin origin time point (t_0)
-#' @param ordinal 
-#'
-getIntereventTime <- function(time, origin, ordinal) {
-    .Call('_remify_getIntereventTime', PACKAGE = 'remify', time, origin, ordinal)
-}
+#' @param ordinal boolean value  
+NULL
 
 #' getRisksetMatrix (obtain permutations of actors' ids and event types).
 #'
@@ -42,13 +37,10 @@ getIntereventTime <- function(time, origin, ordinal) {
 #' @param typeID vector of types' id's.
 #' @param N number of actors in the dataset.
 #' @param C number of event types
-#' @param direcred are events directed or undirected?
+#' @param direcred boolean value: are events directed (1) or undirected (0)?
 #'
 #' @return matrix of possible dyadic events.
-#'
-getRisksetMatrix <- function(actorID, typeID, N, C, directed) {
-    .Call('_remify_getRisksetMatrix', PACKAGE = 'remify', actorID, typeID, N, C, directed)
-}
+NULL
 
 #' getRisksetCube
 #'
@@ -57,27 +49,21 @@ getRisksetMatrix <- function(actorID, typeID, N, C, directed) {
 #' @param C number of event types
 #'
 #' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
-#'
-getRisksetCube <- function(risksetMatrix, N, C) {
-    .Call('_remify_getRisksetCube', PACKAGE = 'remify', risksetMatrix, N, C)
-}
+NULL
 
 #' convertInputREH
 #'
 #' @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
-#' @param actorsDictionary dictionary of actors names 
+#' @param actorsDictionary dictionary of actor names 
 #' @param typesDicitonary dictionary of event types 
 #' @param M number of observed relational events
-#' @param directed boolean if the network is directed or not
-#' @param omit_dyad list.
+#' @param direcred boolean value: are events directed (1) or undirected (0)?
+#' @param omit_dyad list. The same input in rehCpp.
 #'
 #' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
-#'
-convertInputREH <- function(edgelist, actorsDictionary, typesDictionary, M, directed, omit_dyad) {
-    .Call('_remify_convertInputREH', PACKAGE = 'remify', edgelist, actorsDictionary, typesDictionary, M, directed, omit_dyad)
-}
+NULL
 
-#' getBinaryREH (a function that returns a utility matrix used in optimization algorithms)
+#' getBinaryREH (a function that returns an utility matrix used in optimization algorithms)
 #'
 #' @param edgelist edgelist converted according to actorID and typeID
 #' @param omit_dyad input list converted according to actorID and typeID, for handling the dynamic composition of the riskset
@@ -86,36 +72,14 @@ convertInputREH <- function(edgelist, actorsDictionary, typesDictionary, M, dire
 #' @param D number of possible dyads (accounting for event types as well)
 #'
 #' @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
-#' 
-getBinaryREH <- function(edgelist, omit_dyad, risksetCube, M, D) {
-    .Call('_remify_getBinaryREH', PACKAGE = 'remify', edgelist, omit_dyad, risksetCube, M, D)
-}
+NULL
 
-#' rehCpp (a function for preprocessing data)
+#' rehCpp (the Rcpp alias of \code{reh()})
 #'
-#' @param edgelist is a dataframe of relational events sorted by time: [time,actor1,actor2,type,weight]
-#' @param actors vector of actors not in the network but to be considered in the analysis
-#' @param types vector of types not in the network but to considered in the analysis
-#' @param directed dyadic events directed (TRUE) or undirected (FALSE)
-#' @param ordinal TRUE if the only the time order of events is known, FALSE if also the time value is known
-#' @param origin time origin value 
-#' @param omit_dyad is an object list where each element describes with a dataframe (stored in $dyads) the dyad to remove from the riskset and with a vector (stored in $time) the time points where dyads will be excluded from the riskset. 
+#' @details more details can be found at the following documentation: \link[remify]{reh}.
 #'
-#' @return list of objects
 #' @export
 rehCpp <- function(edgelist, actors, types, directed, ordinal, origin, omit_dyad) {
     .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, actors, types, directed, ordinal, origin, omit_dyad)
-}
-
-#' tryFunction
-#'
-#' @param input integer
-#' @param x
-#'
-#' @return something
-#'
-#' @export
-tryFunction <- function(input, x) {
-    .Call('_remify_tryFunction', PACKAGE = 'remify', input, x)
 }
 

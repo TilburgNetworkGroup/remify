@@ -1,21 +1,23 @@
 #' reh  
 #'
-#' A function that returns a 'reh' S3 object 
+#' A function that processes raw data and returns a 'reh' S3 object which is used as input in other functions in \code{remverse}.
 #'
 #' @param edgelist an object of class \code{"\link[base]{data.frame}"} or 
-#' \code{"\link[base]{matrix}"} with the relational event history sorted by 
+#' \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
 #' time with columns 'time', 'actor1', 'actor2' and optionally 'type' and 
 #' 'weight'.  
-#' @param actors vector of actors not in the network but to be considered in the analysis
-#' @param types vector of types not in the network but to considered in the analysis
-#' @param directed dyadic events directed (TRUE) or undirected (FALSE)
-#' @param ordinal  TRUE if the only the time order of events is known, FALSE if also the time value is known
-#' @param origin starting time point (default is NULL)
-#' @param omit_dyad list where each element is a list of two elements: `time`, that is a vector of time points which to omit dyads from, `dyad`, which is a data.frame where dyads to omit are supplied (see more documentation about the potentials of omit_dyad in defining time varying risksets)
+#' @param actors vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be drawn from the input edgelist.
+#' @param types vector of event types that may occur in the network. If \code{NULL}, type names will be drawn from the input edgelist.
+#' @param directed logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).
+#' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
+#' @param origin time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
+#' @param omit_dyad list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.
 #'
-#' @return  object list (the function saves also the output of optim)
+#' @return  'reh' S3 object 
+#'
+#' @details for more details about inputs, outputs, attributes and methods of \code{remify::reh()}, see \code{vignette("reh")}.
+#'
 #' @export
-
 reh <- function(edgelist,
                 actors = NULL,
                 types = NULL,
@@ -52,7 +54,7 @@ reh <- function(edgelist,
 
     # (1) Checking for NA's 
 
-    # (1.1) NA's in `edgelist` :
+    ## (1.1) NA's in `edgelist` :
     if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
 	  if(anyNA(edgelist)) {
 		warning("The `edgelist` object contains missing data: incomplete events (rows) are dropped.")
@@ -60,17 +62,6 @@ reh <- function(edgelist,
 		edgelist <- edgelist[-to_remove,]
     if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
     }
-
-    
-    # (1.2) Check NA's in `covariates` :
-    # How are we going to handle this check?
-
-
-    # Check for additional actors input (actors) :
-  #  if(is.null(actors)) {actors <- character(0)} else{actors <- as.character(actors)}
-
-    # Check for additional types input (types) :
-  # if(is.null(types)) {types <- character(0)} else{types <- as.character(types)}
 
     # Pre-processing relational event history (rehCpp.cpp)
     out <- rehCpp(edgelist = edgelist,
@@ -80,10 +71,6 @@ reh <- function(edgelist,
                     ordinal = ordinal,
                     origin = origin,
                     omit_dyad = omit_dyad)
-
-    # possibly these won't be returned anymore
-    #out$old_edgelist <- edgelist
-    #out$old_omit_dyad <- omit_dyad
 
     
     str_out <- structure(list(
@@ -122,9 +109,36 @@ reh <- function(edgelist,
 
 #' @export
 summary.reh <- function(reh){
-  print("this is a summary of an `reh` object")
-}
+  title <- "Relational Event Network:"
+  events <- paste("\t> events = ",reh$M,sep="")
+  actors <- paste("\t> actors = ",reh$N,sep="")
+  types <- paste("\t> (event) types = ",reh$C,sep="")
+  riskset <- paste("\t> riskset = ",attr(reh,"riskset"),sep="")
+  directed <- paste("\t> directed = ",attr(reh,"directed"),sep="")
+  ordinal <- paste("\t> ordinal = ",attr(reh,"ordinal"),sep="")
+  weighted <- paste("\t> weighted = ",attr(reh,"weighted"),sep="")
+  time_length <- NULL
+  if(!attr(reh,"ordinal")){
+    time_length_loc <- reh$edgelist$time[reh$M]-attr(reh,"time")$origin
+    time_length <- paste("\t> time length ~ ",round(time_length_loc)," ",attr(time_length_loc, "units"),sep="")
+  }
 
+  interevent_time <- NULL
+  if(!attr(reh,"ordinal")){
+    min_interevent_time <- min(reh$intereventTime) 
+    max_interevent_time <- max(reh$intereventTime)
+    units_minmax <- NULL # in case it is either numeric or integer
+    if(class(reh$edgelist$time)[1] == "Date"){ # is a Date (until days)
+      units_minmax <- "days"   
+    }
+    else if(!is.numeric(reh$edgelist$time) & !is.integer(reh$edgelist$time)){ # is a timestamp (until seconds)
+      units_minmax <- "seconds"
+    }
+    interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ",round(min_interevent_time,4)," ",units_minmax,"\n\t\t >> maximum ~ ",round(max_interevent_time,4)," ",units_minmax,sep="")
+  }
+
+  cat(paste(title,events,actors,types,riskset,directed,ordinal,weighted,time_length,interevent_time,sep="\n"))
+}
 
 
 #' @export
@@ -135,19 +149,16 @@ dim.reh <- function(reh){
 }
 
 
-
-#' @export
-print.reh <- function(reh){
-  print(reh$edgelist)
-}
-
-
-
 #' @export
 View.reh <- function(reh){
   View(reh$edgelist)
 }
 
+
+#' @export
+print.reh <- function(reh){
+  print(reh$edgelist)
+}
 
 
 #' @export
@@ -156,19 +167,15 @@ head.reh <- function(reh, ...){
 }
 
 
-
 #' @export
 tail.reh <- function(reh, ...){
   tail(reh$edgelist)
 }
 
 
-
 #' @title getRiskset
-#' 
-#' A function that returns the name of a vector of actors or types given their ID's
-#' 
-#' @param reh an reh object
+#' @description A function that returns a logical matrix where by row (time point), dyads that could occur at a specific time point assume value \code{TRUE}, \code{FALSE} otherwise.
+#' @param reh an \code{reh} object
 #' @export
 getRiskset <- function(reh){
   UseMethod("getRiskset")
@@ -176,16 +183,17 @@ getRiskset <- function(reh){
 
 #' @export
 getRiskset.reh <- function(reh) {
-  return(reh$rehBinary>=0) # only show actors at risk (-1 = FALSE, meaning to be omitted by the riskset on that time point)
+  return(reh$rehBinary>=0) # only show dyads at risk. In other terms, those dyads that have value 0 (didn't occur but could) or 1 (occurred).
 }
 
 
 
 
 #' @title actorName
-#' A function that given a vector of actor ID's returns the corresponding vector of actor names
-#' @param reh an reh object
-#' @param actorID other arguments
+#'
+#' A function that given a vector of actor ID's returns the corresponding vector of actor (input) names
+#' @param reh an \code{reh} object
+#' @param actorID a vector of actor ID's
 #' @export
 actorName <- function(reh, actorID = NULL){
   UseMethod("actorName")
@@ -213,9 +221,9 @@ actorName.reh <- function(reh, actorID = NULL) {
 
 
 #' @title typeName
-#' A function that given a vector of type ID's returns the corresponding vector of type names
-#' @param reh an reh object
-#' @param typeID other arguments
+#' @description A function that given a vector of type ID's returns the corresponding vector of type (input) names
+#' @param reh an \code{reh} object
+#' @param typeID a vector of type ID's
 #' @export
 typeName <- function(reh, typeID = NULL){
   UseMethod("typeName")
@@ -242,9 +250,9 @@ typeName.reh <- function(reh, typeID = NULL) {
 
 
 #' @title actorID
-#' A function that returns the actors's ID given the actors's name
-#' @param reh an reh object
-#' @param actorName other arguments
+#' @description A function that given a vector of actor names returns the corresponding vector of ID's
+#' @param reh an \code{reh} object
+#' @param actorName a vector of actor names
 #' @export
 actorID <- function(reh, actorName = NULL){
   UseMethod("actorID")
@@ -269,12 +277,12 @@ actorID.reh <- function(reh, actorName = NULL) {
 
 
 #' @title typeID
-#' A function that returns the type's ID given they type's name
-#' @param reh an reh object
-#' @param typeName other arguments
+#' @description A function that given a vector of type names returns the corresponding vector of ID's
+#' @param reh an \code{reh} object
+#' @param typeName a vector of type names
 #' @export
 typeID <- function(reh, typeName = NULL){
-  UseMethod("actorID")
+  UseMethod("typeID")
 }
 
 
@@ -295,32 +303,30 @@ typeID.reh <- function(reh, typeName = NULL) {
   return(IDs)
 }
 
-#' @title dyad.info
-#' A function that returns several information about the dyad specified according to the original names
-#' @param reh an reh object
-#' @param actor1 name of actor1
-#' @param actor2 name of actor2
-#' @param type name of type
-#' @param info information to return. It can be a vector of times when the dyad occurred, or the vector of weights
-#' @param begin first time index from which to consider events when computing the output (computing info only for a specific time window)
-#' @param end last time index until which to consider events when computing the output (computing info only for a specific time window)
+#' @title dyad.count
+#' @description A function that returns the count of a dyad (or a subset of dyads) that is specified according to the (original) actors and type names. The method allows for counting also on a restricted sequence of events by specifying arguments \code{begin} and/or \code{end}.
+#' @param reh an \code{reh} object
+#' @param actor1 input name of actor1
+#' @param actor2 input name of actor2
+#' @param type input name of event type
+#' @param begin first time index from which to consider events when computing the output 
+#' @param end last time index until which to consider events when computing the output
 #' @export
-dyad.info <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, info = NULL, begin = NULL, end = NULL){
-  UseMethod("dyad.info")
+dyad.count <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin = NULL, end = NULL){
+  UseMethod("dyad.count")
 }
 
 
 
 #' @export
-dyad.info.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, info = NULL, begin = NULL, end = NULL){ #add start and stop
+dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin = NULL, end = NULL){ #add start and stop
   # Checking input arguments :
-  # ... info
-  if(is.null(info)) info <- "summary"
-  else if(!(info %in% c("time","weight","summary"))) stop("The argument `info` must be one of the following: `time`, `weight`, `summary`.")
+
   # ... [actor1,actor2,type]
   if(is.null(actor1) & is.null(actor2) & is.null(type)) stop("User must supply at least one of the three components of a dyad: `actor1`, `actor2`, `type`.")
   if(any(c(length(actor1)>1,length(actor2)>1,length(type)>1))) stop("`actor1`, `actor2` and `type`, if specified, must have length = 1.")
   if(!is.null(actor1) & !is.null(actor2)){if(actor1 == actor2) stop("`actor1` and `actor2` cannot be the same actor.")}
+
   # ... [begin,end]
   if(is.null(begin) & is.null(end)) {begin <- 1; end <- reh$M}
   else{
@@ -355,98 +361,68 @@ dyad.info.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, info =
     if(is.null(actor2) & !is.null(type)){ #[NULL,NULL,type]
       indices_loc <- reh$risksetCube[,,typeID]
       indices <- c(indices_loc[upper.tri(indices_loc,diag=FALSE)],indices_loc[lower.tri(indices_loc,diag=FALSE)])
-      if(info == "summary"){
-        events_loc <- (reh$rehBinary[begin:end,]>=1)*1
-        frequencies <- apply(events_loc,2,sum)
-        summary_out <- matrix(0,nrow=reh$N,ncol=reh$N)
-        summary_out[upper.tri(summary_out,diag=FALSE)] <- frequencies[indices_loc[upper.tri(indices_loc,diag=FALSE)]]
-        summary_out[lower.tri(summary_out,diag=FALSE)] <- frequencies[indices_loc[lower.tri(indices_loc,diag=FALSE)]]
-        rownames(summary_out) <- attr(reh, "dictionary")$actors$actorName
-        colnames(summary_out) <- attr(reh, "dictionary")$actors$actorName
-        return(summary_out)
-      }
+      events_loc <- (reh$rehBinary[begin:end,]>=1)*1
+      frequencies <- apply(events_loc,2,sum)
+      summary_out <- matrix(0,nrow=reh$N,ncol=reh$N)
+      summary_out[upper.tri(summary_out,diag=FALSE)] <- frequencies[indices_loc[upper.tri(indices_loc,diag=FALSE)]]
+      summary_out[lower.tri(summary_out,diag=FALSE)] <- frequencies[indices_loc[lower.tri(indices_loc,diag=FALSE)]]
+      rownames(summary_out) <- attr(reh, "dictionary")$actors$actorName
+      colnames(summary_out) <- attr(reh, "dictionary")$actors$actorName
+      return(summary_out)
     }
     if(!is.null(actor2) & is.null(type)){ # [NULL,actor2,NULL]
       indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,])
-      if(info == "summary"){
-        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-        events_loc <- apply(events_loc,2,sum)
-        frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
-        rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
-        colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
-        return(frequencies)
-      }
+      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+      events_loc <- apply(events_loc,2,sum)
+      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
+      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
+      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
+      return(frequencies)
     }
     if(!is.null(actor2) & !is.null(type)){ # [NULL,actor2,type]
       indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,typeID])
-      if(info == "summary"){
-        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-        events_loc <- apply(events_loc,2,sum)
-        frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
-        rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
-        colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
-        return(frequencies)
-      }  
+      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+      events_loc <- apply(events_loc,2,sum)
+      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
+      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
+      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
+      return(frequencies) 
     }    
   }
   else{ #[actor1,?,?]
     if(is.null(actor2) & is.null(type)){ #[actor1,NULL,NULL]
       indices <- as.vector(reh$risksetCube[-actor1ID,actor1ID,])
-      if(info == "summary"){
-        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-        events_loc <- apply(events_loc,2,sum)
-        frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
-        rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
-        colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
-        return(frequencies)
-      }             
+      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+      events_loc <- apply(events_loc,2,sum)
+      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
+      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
+      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
+      return(frequencies)             
     }
     if(is.null(actor2) & !is.null(type)){ #[actor1,NULL,type]
       indices <- as.vector(reh$risksetCube[-actor1ID,actor1ID,typeID])
-      if(info == "summary"){
-        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-        events_loc <- apply(events_loc,2,sum)
-        frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
-        rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
-        colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
-        return(frequencies)
-      }            
+      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+      events_loc <- apply(events_loc,2,sum)
+      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
+      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
+      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
+      return(frequencies)            
     }
     if(!is.null(actor2) & is.null(type)){ # [actor1,actor2,NULL]
       indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,])
-      if(info == "summary"){
-        events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-        events_loc <- apply(events_loc,2,sum)
-        frequencies <- matrix(events_loc,nrow=reh$C,ncol=1,byrow=FALSE) 
-        rownames(frequencies) <- attr(reh, "dictionary")$types$typeName
-        colnames(frequencies) <- c(paste(actor1,actor2,sep="->"))
-        return(frequencies)
-      }            
+      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+      events_loc <- apply(events_loc,2,sum)
+      frequencies <- matrix(events_loc,nrow=reh$C,ncol=1,byrow=FALSE) 
+      rownames(frequencies) <- attr(reh, "dictionary")$types$typeName
+      colnames(frequencies) <- c(paste(actor1,actor2,sep="->"))
+      return(frequencies)            
     }
     if(!is.null(actor2) & !is.null(type)){ # [actor1,actor2,type]
       indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,typeID])
-      if(info == "summary"){
-        events_loc  <- (reh$rehBinary[begin:end,indices]>=1)*1
-        frequencies <- sum(events_loc)
-        return(frequencies)
-      }      
+      events_loc  <- (reh$rehBinary[begin:end,indices]>=1)*1
+      frequencies <- sum(events_loc)
+      return(frequencies)  
     }
-  }
-
-  # Considering only events
-  events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-  events_loc <- apply(rbind(events_loc),1,sum)
-
-  if(info == "time"){
-    time <- attr(reh,"time")$value
-    time <- time[which(events_loc == 1),]
-    return(time)
-  }
-
-  if(info == "weight"){
-    w <- reh$edgelist$weight
-    w <- w[which(events_loc == 1)]
-    return(w)
   }
 }
 
@@ -457,16 +433,14 @@ dyad.info.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, info =
 #######################################################################################
 
 
-
-
 #' remify 
 #'
-#' A function that transforms the REH input in one of the possible REH formats.
+#' A function that transforms a \code{reh} object into one of the possible formats that suits external packages.
 #'
-#' @param input
+#' @param input an input argument for the function \code{remify()}
 #'
-#' @return  otuput of remify function
+#' @return  otuput of \code{remify()}
 #' @export
 remify <- function(input){
-# [...] do stuff here
+                  # [...] 
                 }                   

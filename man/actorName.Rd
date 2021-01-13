@@ -3,16 +3,18 @@
 \name{actorName}
 \alias{actorName}
 \title{actorName
-A function that given a vector of actor ID's returns the corresponding vector of actor names}
+
+A function that given a vector of actor ID's returns the corresponding vector of actor (input) names}
 \usage{
 actorName(reh, actorID = NULL)
 }
 \arguments{
-\item{reh}{an reh object}
+\item{reh}{an \code{reh} object}
 
-\item{actorID}{other arguments}
+\item{actorID}{a vector of actor ID's}
 }
 \description{
 actorName
-A function that given a vector of actor ID's returns the corresponding vector of actor names
+
+A function that given a vector of actor ID's returns the corresponding vector of actor (input) names
 }
