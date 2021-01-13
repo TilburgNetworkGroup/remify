@@ -30,10 +30,12 @@ library(remify)
 ```
 
 ### Vignettes
-In order to provide as much information as possible over the use of the two functions, both function has a vignette where inputs, outputs, attributes and methods are explained.
-(Note: currently only the vignette for `reh()` is available)
+In order to provide a thorough explanation over the two functions, both of them have a vignette where inputs, outputs, attributes and methods are described in detail.
+(_Note_: currently only the vignette for `reh()` is available)
+
 ```
-vignette(package = "remify") # returns all the vignette available with the current version of the package
+vignette(package = "remify") # returns all the vignettes available with the current version of the package
+
 vignette(topic = "reh", package = "remify") # or simply vignette("reh") opens the vignette for the processing function reh()
 ```
 
