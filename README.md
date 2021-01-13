@@ -21,7 +21,7 @@ To install the package in R using `devtools`:
 
 ```
 library(devtools)
-devtools::install_github("TilburgNetworkGroup/remify", build_vignettes = TRUE)
+devtools::install_github(repo = "TilburgNetworkGroup/remify", build_vignettes = TRUE)
 
 # load the package
 library(remify)
