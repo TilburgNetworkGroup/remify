@@ -31,6 +31,7 @@ library(remify)
 
 ### Vignettes
 In order to provide a thorough explanation over the two functions, both of them have a vignette where inputs, outputs, attributes and methods are described in detail.
+
 (_Note_: currently only the vignette for `reh()` is available)
 
 ```
