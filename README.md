@@ -10,6 +10,7 @@
 The aim of the `remify` package is twofold:
  * processing REH data and arranging them in a new structure (`reh`) that is used by the packages of `remverse`;
  * transforming REH data from other formats or other sources to a `reh` structure (or vice versa).
+ 
 The two main functions `reh()` and `remify()` perform respectively the processing and the conversion of the REH data.
 
 ### Programming Languages
@@ -30,7 +31,7 @@ library(remify)
 ```
 
 ### Vignettes
-In order to provide a thorough explanation over the two functions, both of them have a vignette where inputs, outputs, attributes and methods are described in detail.
+In order to provide a thorough explanation over the two main functions, both of them have a vignette where inputs, outputs, attributes and methods are described in detail.
 
 (_Note_: currently only the vignette for `reh()` is available)
 
