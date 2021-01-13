@@ -4,11 +4,13 @@
 * [About the package](#about-the-package)
 * [Programming Languages](#programming-languages)
 * [Installing the package](#installing-the-package)
-* [Main functions](#main-functions)
+* [Vignettes](#Vignettes)
 
 ### About the package
-The `remify` package transforms REH data from/to other formats or other sources to a REH structure that is suitable for the packages in `remverse`
-
+The aim of the `remify` package is twofold:
+ * processing REH data and arranging them in a new structure (`reh`) that is used by the packages of `remverse`;
+ * transforming REH data from other formats or other sources to a `reh` structure (or vice versa).
+The two main functions `reh()` and `remify()` perform respectively the processing and the conversion of the REH data.
 
 ### Programming Languages
 The package contains code written in:
@@ -27,6 +29,11 @@ devtools::install_github(repo = "TilburgNetworkGroup/remify", build_vignettes = 
 library(remify)
 ```
 
-### Main functions
+### Vignettes
+In order to provide as much information as possible over the use of the two functions, both function has a vignette where inputs, outputs, attributes and methods are explained.
+(Note: currently only the vignette for `reh()` is available)
+```
+vignette(package = "remify") # returns all the vignette available with the current version of the package
+vignette(topic = "reh", package = "remify") # or simply vignette("reh") opens the vignette for the processing function reh()
+```
 
-(...)
