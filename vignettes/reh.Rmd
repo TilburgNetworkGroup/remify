@@ -14,7 +14,7 @@ This vignette aims to explain inputs, outputs, attributes and methods of the fun
 ```{r}
 library(remify) # loading library
 data(randomREH) # loading data
-ls(envir = .GlobalEnv) # objects loaded with 'randomREH'
+names(randomREH) # objects inside the list 'randomREH'
 ```
 
 
@@ -35,7 +35,7 @@ ls(envir = .GlobalEnv) # objects loaded with 'randomREH'
 The edgelist must be a `data.frame` or a `matrix` with column names `[time,actor1,actor2,type,weight]` (<i>Note</i>: it is not necessary to supply a column for `type` or `weight` but if they are included in the input edgelist, columns must be named `type` and `weight`, whereas it is compulsory to supply `[time,actor1,actor2]` and use such names for the columns).
 
 ```{r}
-head(edgelist)
+head(randomREH$edgelist)
 ```  
 ------
 
@@ -44,7 +44,7 @@ head(edgelist)
 It is the vector of actor names (if left unspecified it will be drawn from the input `edgelist`). Their data type can be either `numeric` or `character`. In the `randomREH` data a vector of actor names is provided.
 
 ```{r}
-actors
+randomREH$actors
 ``` 
 ------
 
@@ -53,7 +53,7 @@ actors
 It is the vector of type names (if left unspecified it will be drawn from the input `edgelist`). The data type can be either `numeric` or `character`. In the `randomREH` data a vector of types is provided.
 
 ```{r}
-types
+randomREH$types
 ```
 ------
 
@@ -72,7 +72,7 @@ It is a logical `TRUE`/`FALSE` value, indicating whether only the order of event
 If the initial time point $t_0$ is known it can be specified by means of the argument `origin` and it must have the same class of the `time` column in the input `edgelist`. In the case such field is left unspecified (`NULL`), it is set by default to one day/second/time unit earlier than $t_1$ (time of the first observed event). Therefore if `origin = NULL`, when time is measured until seconds then $t_0 = t_1 - 1sec$ , when time is measured until minutes then $t_0 = t_1 - 1min$ and so forth. In the `randomREH` data a $t_0$ is provided.
 
 ```{r}
-origin
+randomREH$origin
 ``` 
 
 ------
@@ -85,21 +85,21 @@ Consider the example on the `randomREH` data. For instance, we want to modify (s
 1. an event type `conflict` that was no more feasible since $t_r$ (until the last observed time point).
 
 ```{r}
-omit_dyad[[1]]$dyad
+randomREH$omit_dyad[[1]]$dyad
 ```
 
 ```{r}
-head(omit_dyad[[1]]$time) # printing out only a few time points
+head(randomREH$omit_dyad[[1]]$time) # printing out only a few time points
 ```
 
 2. two actors `Michaela` and `Zackary` that couldn't interact with anybody else after a specific time point, $t_s$ (until the last observed time point);
 
 ```{r}
-omit_dyad[[2]]$dyad
+randomREH$omit_dyad[[2]]$dyad
 ```
 
 ```{r}
-head(omit_dyad[[2]]$time) # printing out only a few time points
+head(randomREH$omit_dyad[[2]]$time) # printing out only a few time points
 ``` 
 
 The object `dyad` will give instructions such that the function will remove from the riskset at the indicated time points all the events where: (1) type is `conflict`, (2) `Michaela` and ``Zackary` are senders or receivers.
@@ -109,13 +109,13 @@ Therefore, every time one field among (`actor1`,`actor2`,`type`) is left undefin
 
 ### Running the example
 ```{r}
-edgelist_reh <- reh(edgelist = edgelist,
-                    actors = actors,
-                    types = types, 
+edgelist_reh <- reh(edgelist = randomREH$edgelist,
+                    actors = randomREH$actors,
+                    types = randomREH$types, 
                     directed = TRUE, # events are directed
                     ordinal = FALSE, # REM with waiting times
-                    origin = origin,
-                    omit_dyad = omit_dyad)
+                    origin = randomREH$origin,
+                    omit_dyad = randomREH$omit_dyad)
 ```
 ## Output
 

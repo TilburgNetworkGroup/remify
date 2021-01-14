@@ -7,10 +7,10 @@
 actorID(reh, actorName = NULL)
 }
 \arguments{
-\item{reh}{an \code{reh} object}
+\item{reh}{an \code{reh} object.}
 
-\item{actorName}{a vector of actor names}
+\item{actorName}{a vector of actor names.}
 }
 \description{
-A function that given a vector of actor names returns the corresponding vector of ID's
+A function that given a vector of actor names returns the corresponding vector of ID's.
 }

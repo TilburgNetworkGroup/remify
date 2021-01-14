@@ -8,10 +8,10 @@
 remify(input)
 }
 \arguments{
-\item{input}{an input argument for the function \code{remify()}}
+\item{input}{an input argument for the function \code{remify()}.}
 }
 \value{
-otuput of \code{remify()}
+otuput of \code{remify()}.
 }
 \description{
 A function that transforms a \code{reh} object into one of the possible formats that suits external packages.

@@ -12,7 +12,6 @@
 
 
 //' askYesNoQuestion
-// [[Rcpp::export]]
 int askYesNoQuestion(std::string message) {
         Rcpp::Environment base = Rcpp::Environment("package:base");
         Rcpp::Function readline = base["readline"];
@@ -26,7 +25,6 @@ int askYesNoQuestion(std::string message) {
 }
 
 //' warningMessage
-// [[Rcpp::export]]
 std::string warningMessage(int cond){
       std::string message = "undefined";
       switch(cond){
@@ -51,7 +49,6 @@ std::string warningMessage(int cond){
 
 
 //' errorMessage
-// [[Rcpp::export]]
 std::string errorMessage(int cond){
       std::string message = "undefiend";
       switch(cond){

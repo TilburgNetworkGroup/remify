@@ -1,6 +1,6 @@
-#' reh  
+#' @title reh  
 #'
-#' A function that processes raw data and returns a 'reh' S3 object which is used as input in other functions in \code{remverse}.
+#' @description A function that processes raw data and returns a 'reh' S3 object which is used as input in other functions in \code{remverse}.
 #'
 #' @param edgelist an object of class \code{"\link[base]{data.frame}"} or 
 #' \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
@@ -105,33 +105,35 @@ reh <- function(edgelist,
 #######################################################################################
 #######################################################################################
 
-
-
+#' @title summary.reh
+#' @description A function that returns a summary of the temporal network.
+#' @param object is an \code{reh} object 
+#' @param ... further arguments to be passed.
 #' @export
-summary.reh <- function(reh){
+summary.reh <- function(object,...){
   title <- "Relational Event Network:"
-  events <- paste("\t> events = ",reh$M,sep="")
-  actors <- paste("\t> actors = ",reh$N,sep="")
-  types <- paste("\t> (event) types = ",reh$C,sep="")
-  riskset <- paste("\t> riskset = ",attr(reh,"riskset"),sep="")
-  directed <- paste("\t> directed = ",attr(reh,"directed"),sep="")
-  ordinal <- paste("\t> ordinal = ",attr(reh,"ordinal"),sep="")
-  weighted <- paste("\t> weighted = ",attr(reh,"weighted"),sep="")
+  events <- paste("\t> events = ",object$M,sep="")
+  actors <- paste("\t> actors = ",object$N,sep="")
+  types <- paste("\t> (event) types = ",object$C,sep="")
+  riskset <- paste("\t> riskset = ",attr(object,"riskset"),sep="")
+  directed <- paste("\t> directed = ",attr(object,"directed"),sep="")
+  ordinal <- paste("\t> ordinal = ",attr(object,"ordinal"),sep="")
+  weighted <- paste("\t> weighted = ",attr(object,"weighted"),sep="")
   time_length <- NULL
-  if(!attr(reh,"ordinal")){
-    time_length_loc <- reh$edgelist$time[reh$M]-attr(reh,"time")$origin
+  if(!attr(object,"ordinal")){
+    time_length_loc <- object$edgelist$time[object$M]-attr(object,"time")$origin
     time_length <- paste("\t> time length ~ ",round(time_length_loc)," ",attr(time_length_loc, "units"),sep="")
   }
 
   interevent_time <- NULL
-  if(!attr(reh,"ordinal")){
-    min_interevent_time <- min(reh$intereventTime) 
-    max_interevent_time <- max(reh$intereventTime)
+  if(!attr(object,"ordinal")){
+    min_interevent_time <- min(object$intereventTime) 
+    max_interevent_time <- max(object$intereventTime)
     units_minmax <- NULL # in case it is either numeric or integer
-    if(class(reh$edgelist$time)[1] == "Date"){ # is a Date (until days)
+    if(class(object$edgelist$time)[1] == "Date"){ # is a Date (until days)
       units_minmax <- "days"   
     }
-    else if(!is.numeric(reh$edgelist$time) & !is.integer(reh$edgelist$time)){ # is a timestamp (until seconds)
+    else if(!is.numeric(object$edgelist$time) & !is.integer(object$edgelist$time)){ # is a timestamp (until seconds)
       units_minmax <- "seconds"
     }
     interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ",round(min_interevent_time,4)," ",units_minmax,"\n\t\t >> maximum ~ ",round(max_interevent_time,4)," ",units_minmax,sep="")
@@ -140,42 +142,75 @@ summary.reh <- function(reh){
   cat(paste(title,events,actors,types,riskset,directed,ordinal,weighted,time_length,interevent_time,sep="\n"))
 }
 
+#######################################################################################
+#######################################################################################
 
+#' @title dim.reh
+#' @description A function that returns the dimension of the temporal network.
+#' @param x an \code{reh} object.
+#' @rdname dim.reh
 #' @export
-dim.reh <- function(reh){
-  dimensions <- c(reh$M, reh$N, reh$C, reh$D)
+dim.reh <- function(x){
+  dimensions <- c(x$M, x$N, x$C, x$D)
   names(dimensions) <- c("events","actors","types","dyads")
   return(dimensions)
 }
 
+#######################################################################################
+#######################################################################################
 
+
+#' @title View.reh
+#' @description A function that opens a view of the output edgelist in a new window. 
+#' @param x an \code{reh} object.
+#' @param title a title for the window. Default title is 'x'.
 #' @export
-View.reh <- function(reh){
-  View(reh$edgelist)
+View.reh <- function(x,title){
+  View(x$edgelist)
 }
 
+#######################################################################################
+#######################################################################################
 
+#' @title print.reh
+#' @description A function that prints out the output edgelist on the console.
+#' @param x an \code{reh} object.
+#' @param ... further arguments to be passed.
 #' @export
-print.reh <- function(reh){
-  print(reh$edgelist)
+print.reh <- function(x,...){
+  print(x$edgelist)
 }
 
+#######################################################################################
+#######################################################################################
 
+#' @title head.reh
+#' @description A function that returns the first 6 rows (by default) of the output edgelist.
+#' @param x an \code{reh} object.
+#' @param ... further arguments to be passed.
 #' @export
-head.reh <- function(reh, ...){
-  head(reh$edgelist)
+head.reh <- function(x,...){
+  head(x$edgelist)
 }
 
+#######################################################################################
+#######################################################################################
 
+#' @title tail.reh
+#' @description A function that returns the last 6 rows (by default) of the output edgelist.
+#' @param x an \code{reh} object.
+#' @param ... further arguments to be passed.
 #' @export
-tail.reh <- function(reh, ...){
-  tail(reh$edgelist)
+tail.reh <- function(x,...){
+  tail(x$edgelist)
 }
 
+#######################################################################################
+#######################################################################################
 
 #' @title getRiskset
 #' @description A function that returns a logical matrix where by row (time point), dyads that could occur at a specific time point assume value \code{TRUE}, \code{FALSE} otherwise.
-#' @param reh an \code{reh} object
+#' @param reh an \code{reh} object.
 #' @export
 getRiskset <- function(reh){
   UseMethod("getRiskset")
@@ -186,19 +221,17 @@ getRiskset.reh <- function(reh) {
   return(reh$rehBinary>=0) # only show dyads at risk. In other terms, those dyads that have value 0 (didn't occur but could) or 1 (occurred).
 }
 
-
-
+#######################################################################################
+#######################################################################################
 
 #' @title actorName
-#'
-#' A function that given a vector of actor ID's returns the corresponding vector of actor (input) names
-#' @param reh an \code{reh} object
-#' @param actorID a vector of actor ID's
+#' @description A function that given a vector of actor ID's returns the corresponding vector of actor (input) names.
+#' @param reh an \code{reh} object.
+#' @param actorID a vector of actor ID's.
 #' @export
 actorName <- function(reh, actorID = NULL){
   UseMethod("actorName")
 }
-
 
 
 #' @export
@@ -218,12 +251,13 @@ actorName.reh <- function(reh, actorID = NULL) {
   return(names)
 }
 
-
+#######################################################################################
+#######################################################################################
 
 #' @title typeName
-#' @description A function that given a vector of type ID's returns the corresponding vector of type (input) names
-#' @param reh an \code{reh} object
-#' @param typeID a vector of type ID's
+#' @description A function that given a vector of type ID's returns the corresponding vector of type (input) names.
+#' @param reh an \code{reh} object.
+#' @param typeID a vector of type ID's.
 #' @export
 typeName <- function(reh, typeID = NULL){
   UseMethod("typeName")
@@ -247,12 +281,13 @@ typeName.reh <- function(reh, typeID = NULL) {
   return(names)
 }
 
-
+#######################################################################################
+#######################################################################################
 
 #' @title actorID
-#' @description A function that given a vector of actor names returns the corresponding vector of ID's
-#' @param reh an \code{reh} object
-#' @param actorName a vector of actor names
+#' @description A function that given a vector of actor names returns the corresponding vector of ID's.
+#' @param reh an \code{reh} object.
+#' @param actorName a vector of actor names.
 #' @export
 actorID <- function(reh, actorName = NULL){
   UseMethod("actorID")
@@ -275,11 +310,13 @@ actorID.reh <- function(reh, actorName = NULL) {
   return(IDs)
 }
 
+#######################################################################################
+#######################################################################################
 
 #' @title typeID
-#' @description A function that given a vector of type names returns the corresponding vector of ID's
-#' @param reh an \code{reh} object
-#' @param typeName a vector of type names
+#' @description A function that given a vector of type names returns the corresponding vector of ID's.
+#' @param reh an \code{reh} object.
+#' @param typeName a vector of type names.
 #' @export
 typeID <- function(reh, typeName = NULL){
   UseMethod("typeID")
@@ -303,20 +340,21 @@ typeID.reh <- function(reh, typeName = NULL) {
   return(IDs)
 }
 
+#######################################################################################
+#######################################################################################
+
 #' @title dyad.count
 #' @description A function that returns the count of a dyad (or a subset of dyads) that is specified according to the (original) actors and type names. The method allows for counting also on a restricted sequence of events by specifying arguments \code{begin} and/or \code{end}.
-#' @param reh an \code{reh} object
-#' @param actor1 input name of actor1
-#' @param actor2 input name of actor2
-#' @param type input name of event type
-#' @param begin first time index from which to consider events when computing the output 
-#' @param end last time index until which to consider events when computing the output
+#' @param reh an \code{reh} object.
+#' @param actor1 input name of actor1.
+#' @param actor2 input name of actor2.
+#' @param type input name of event type.
+#' @param begin first time index from which to consider events when computing the output.
+#' @param end last time index until which to consider events when computing the output.
 #' @export
 dyad.count <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin = NULL, end = NULL){
   UseMethod("dyad.count")
 }
-
-
 
 #' @export
 dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin = NULL, end = NULL){ #add start and stop
@@ -433,13 +471,13 @@ dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin
 #######################################################################################
 
 
-#' remify 
+#' @title remify 
 #'
-#' A function that transforms a \code{reh} object into one of the possible formats that suits external packages.
+#' @description A function that transforms a \code{reh} object into one of the possible formats that suits external packages.
 #'
-#' @param input an input argument for the function \code{remify()}
+#' @param input an input argument for the function \code{remify()}.
 #'
-#' @return  otuput of \code{remify()}
+#' @return  otuput of \code{remify()}.
 #' @export
 remify <- function(input){
                   # [...] 

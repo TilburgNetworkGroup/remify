@@ -6,39 +6,6 @@
 
 using namespace Rcpp;
 
-// askYesNoQuestion
-int askYesNoQuestion(std::string message);
-RcppExport SEXP _remify_askYesNoQuestion(SEXP messageSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type message(messageSEXP);
-    rcpp_result_gen = Rcpp::wrap(askYesNoQuestion(message));
-    return rcpp_result_gen;
-END_RCPP
-}
-// warningMessage
-std::string warningMessage(int cond);
-RcppExport SEXP _remify_warningMessage(SEXP condSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type cond(condSEXP);
-    rcpp_result_gen = Rcpp::wrap(warningMessage(cond));
-    return rcpp_result_gen;
-END_RCPP
-}
-// errorMessage
-std::string errorMessage(int cond);
-RcppExport SEXP _remify_errorMessage(SEXP condSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type cond(condSEXP);
-    rcpp_result_gen = Rcpp::wrap(errorMessage(cond));
-    return rcpp_result_gen;
-END_RCPP
-}
 // rehCpp
 Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List omit_dyad);
 RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP omit_dyadSEXP) {
@@ -58,9 +25,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_remify_askYesNoQuestion", (DL_FUNC) &_remify_askYesNoQuestion, 1},
-    {"_remify_warningMessage", (DL_FUNC) &_remify_warningMessage, 1},
-    {"_remify_errorMessage", (DL_FUNC) &_remify_errorMessage, 1},
     {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 7},
     {NULL, NULL, 0}
 };

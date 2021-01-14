@@ -7,10 +7,10 @@
 typeID(reh, typeName = NULL)
 }
 \arguments{
-\item{reh}{an \code{reh} object}
+\item{reh}{an \code{reh} object.}
 
-\item{typeName}{a vector of type names}
+\item{typeName}{a vector of type names.}
 }
 \description{
-A function that given a vector of type names returns the corresponding vector of ID's
+A function that given a vector of type names returns the corresponding vector of ID's.
 }

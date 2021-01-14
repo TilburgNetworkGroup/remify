@@ -7,7 +7,7 @@
 getRiskset(reh)
 }
 \arguments{
-\item{reh}{an \code{reh} object}
+\item{reh}{an \code{reh} object.}
 }
 \description{
 A function that returns a logical matrix where by row (time point), dyads that could occur at a specific time point assume value \code{TRUE}, \code{FALSE} otherwise.

@@ -14,17 +14,17 @@ dyad.count(
 )
 }
 \arguments{
-\item{reh}{an \code{reh} object}
+\item{reh}{an \code{reh} object.}
 
-\item{actor1}{input name of actor1}
+\item{actor1}{input name of actor1.}
 
-\item{actor2}{input name of actor2}
+\item{actor2}{input name of actor2.}
 
-\item{type}{input name of event type}
+\item{type}{input name of event type.}
 
-\item{begin}{first time index from which to consider events when computing the output}
+\item{begin}{first time index from which to consider events when computing the output.}
 
-\item{end}{last time index until which to consider events when computing the output}
+\item{end}{last time index until which to consider events when computing the output.}
 }
 \description{
 A function that returns the count of a dyad (or a subset of dyads) that is specified according to the (original) actors and type names. The method allows for counting also on a restricted sequence of events by specifying arguments \code{begin} and/or \code{end}.

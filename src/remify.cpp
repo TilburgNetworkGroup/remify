@@ -12,12 +12,14 @@
 #define LOG(x) std::cout << x << "\n"
 
 
-//' rearrangeDataFrame
-//'
-//' @param x \code{data.frame} object to reorder
-//' @param index vector with the new order
-//'
-//' @return \code{data.frame} whose columns are rearranged according to the input index
+// @title rearrangeDataFrame
+//
+// @details function that rearrange a data.frame according to the input index (vector of integers)
+//
+// @param x \code{data.frame} object to reorder
+// @param index vector with the new order
+//
+// @return \code{data.frame} whose columns are rearranged according to the input index
 Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index) {
     int j,m; 
     for(j = 0; j < x.size(); j++){
@@ -58,11 +60,13 @@ Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index) {
 
 
 
-//' getIntereventTime
-//'
-//' @param time first column of the edgelist (time variable) 
-//' @param origin origin time point (t_0)
-//' @param ordinal boolean value  
+// @title getIntereventTime
+//
+// @param time first column of the edgelist (time variable) 
+// @param origin origin time point (t_0)
+// @param ordinal boolean value  
+//
+// @return list object with: interevent time (object name 'value') and the order of the time variable if it changed (object name 'order').
 Rcpp::List getIntereventTime(Rcpp::RObject time,
                              Rcpp::RObject origin,
                              bool ordinal) {
@@ -183,15 +187,15 @@ Rcpp::List getIntereventTime(Rcpp::RObject time,
 
 
 
-//' getRisksetMatrix (obtain permutations of actors' ids and event types).
-//'
-//' @param actorID vector of actors' id's.
-//' @param typeID vector of types' id's.
-//' @param N number of actors in the dataset.
-//' @param C number of event types
-//' @param direcred boolean value: are events directed (1) or undirected (0)?
-//'
-//' @return matrix of possible dyadic events.
+// @title getRisksetMatrix (obtain permutations of actors' ids and event types).
+//
+// @param actorID vector of actors' id's.
+// @param typeID vector of types' id's.
+// @param N number of actors in the dataset.
+// @param C number of event types
+// @param direcred boolean value: are events directed (1) or undirected (0)?
+//
+// @return matrix of possible dyadic events.
 arma::mat getRisksetMatrix(arma::uvec actorID, arma::uvec typeID, arma::uword N, arma::uword C, bool directed){
     switch(directed){
     case 0: { // for undirected network
@@ -243,13 +247,13 @@ arma::mat getRisksetMatrix(arma::uvec actorID, arma::uvec typeID, arma::uword N,
 
 
 
-//' getRisksetCube
-//'
-//' @param risksetMatrix output of getRiskset() function
-//' @param N number of actors in the dataset.
-//' @param C number of event types
-//'
-//' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
+// @title getRisksetCube
+//
+// @param risksetMatrix output of getRiskset() function
+// @param N number of actors in the dataset.
+// @param C number of event types
+//
+// @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword C) {
     arma::uword d;
     arma::ucube risksetCube(N,N,C);
@@ -262,16 +266,16 @@ arma::ucube getRisksetCube(arma::umat risksetMatrix, arma::uword N, arma::uword 
 
 
 
-//' convertInputREH
-//'
-//' @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
-//' @param actorsDictionary dictionary of actor names 
-//' @param typesDicitonary dictionary of event types 
-//' @param M number of observed relational events
-//' @param direcred boolean value: are events directed (1) or undirected (0)?
-//' @param omit_dyad list. The same input in rehCpp.
-//'
-//' @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
+// @title convertInputREH
+//
+// @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
+// @param actorsDictionary dictionary of actor names 
+// @param typesDicitonary dictionary of event types 
+// @param M number of observed relational events
+// @param direcred boolean value: are events directed (1) or undirected (0)?
+// @param omit_dyad list. The same input in rehCpp.
+//
+// @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, bool directed, Rcpp::List omit_dyad) {
 
     // for loop iterators
@@ -495,15 +499,15 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
 
 
 
-//' getBinaryREH (a function that returns an utility matrix used in optimization algorithms)
-//'
-//' @param edgelist edgelist converted according to actorID and typeID
-//' @param omit_dyad input list converted according to actorID and typeID, for handling the dynamic composition of the riskset
-//' @param risksetCube arma::cube object [N*N*C] where the cell value returns the column index to use in the outBinaryREH
-//' @param M number of observed relational events
-//' @param D number of possible dyads (accounting for event types as well)
-//'
-//' @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
+// @title getBinaryREH (a function that returns an utility matrix used in optimization algorithms)
+//
+// @param edgelist edgelist converted according to actorID and typeID
+// @param omit_dyad input list converted according to actorID and typeID, for handling the dynamic composition of the riskset
+// @param risksetCube arma::cube object [N*N*C] where the cell value returns the column index to use in the outBinaryREH
+// @param M number of observed relational events
+// @param D number of possible dyads (accounting for event types as well)
+//
+// @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
 arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List omit_dyad, arma::ucube risksetCube, arma::uword M, arma::uword D) {
     arma::uword m;
     arma::mat outBinaryREH(M,D,arma::fill::zeros); // by setting the initial values to zero we already handle those
@@ -612,9 +616,22 @@ arma::mat getBinaryREH(Rcpp::DataFrame edgelist, Rcpp::List omit_dyad, arma::ucu
 
 
 
-//' rehCpp (the Rcpp alias of \code{reh()})
+//' @title rehCpp (the Rcpp alias of \code{reh()})
 //'
 //' @details more details can be found at the following documentation: \link[remify]{reh}.
+//' 
+//' @param edgelist an object of class \code{"\link[base]{data.frame}"} or 
+//' \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
+//' time with columns 'time', 'actor1', 'actor2' and optionally 'type' and 
+//' 'weight'.  
+//' @param actors vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be drawn from the input edgelist.
+//' @param types vector of event types that may occur in the network. If \code{NULL}, type names will be drawn from the input edgelist.
+//' @param directed logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).
+//' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
+//' @param origin time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
+//' @param omit_dyad list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.
+//'
+//' @return list of objects with processed raw data.
 //'
 //' @export
 // [[Rcpp::export]]

@@ -5,7 +5,7 @@
 \alias{randomREH}
 \title{Random Relational Event History}
 \format{
-\code{data(randomREH)} will load the following objects into the global environment:
+\code{data(randomREH)} will load a list containing following objects:
 \describe{
    \item{\code{edgelist}}{a \code{data.frame} that contains the random sequence of events. Columns of the edgelist are:
            \itemize{
@@ -32,27 +32,27 @@ A randomly generated sequence of relational events with 20 actors and 9,915 even
 data(randomREH)
 
 # actors names
-actors
+randomREH$actors
 
 # types names
-types
+randomREH$types
 
 # looking into the first modification of the riskset: omit_dyad[[1]]
 ## the data.frame `dyad` specifies which dyads will be omitted from the riskset 
 ## (all the dyads that expressed a `conflict` between actor won't be part of the riskset):
-omit_dyad[[1]]$dyad 
+randomREH$omit_dyad[[1]]$dyad 
 
 ## the vector `time` specifies the time points when this exclusion takes place 
-head(omit_dyad[[1]]$time) # (printing out only the first 10 time points)
+head(randomREH$omit_dyad[[1]]$time) # (printing out only the first 10 time points)
 
 # run the preprocessing function reh() by supplying the loaded objects.
-edgelist_reh <- reh(edgelist = edgelist,
-                    actors = actors,
-                    types = types, 
+edgelist_reh <- reh(edgelist = randomREH$edgelist,
+                    actors = randomREH$actors,
+                    types = randomREH$types, 
                     directed = TRUE,
                     ordinal = FALSE,
-                    origin = origin,
-                    omit_dyad = omit_dyad)
+                    origin = randomREH$origin,
+                    omit_dyad = randomREH$omit_dyad)
 
 # `edgelist_reh` is an object of class `reh`
 class(edgelist_reh)

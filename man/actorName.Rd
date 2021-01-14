@@ -2,19 +2,15 @@
 % Please edit documentation in R/remify.R
 \name{actorName}
 \alias{actorName}
-\title{actorName
-
-A function that given a vector of actor ID's returns the corresponding vector of actor (input) names}
+\title{actorName}
 \usage{
 actorName(reh, actorID = NULL)
 }
 \arguments{
-\item{reh}{an \code{reh} object}
+\item{reh}{an \code{reh} object.}
 
-\item{actorID}{a vector of actor ID's}
+\item{actorID}{a vector of actor ID's.}
 }
 \description{
-actorName
-
-A function that given a vector of actor ID's returns the corresponding vector of actor (input) names
+A function that given a vector of actor ID's returns the corresponding vector of actor (input) names.
 }

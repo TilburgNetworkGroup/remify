@@ -1,7 +1,7 @@
 Package: remify
 Type: Package
 Title: Processing and transforming REH to formats suitable for the remverse packages and more
-Version: 1.0
+Version: 1.1.0
 Date: 2020-09-21
 Authors@R: 
     c(
@@ -52,8 +52,8 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown, MASS, utils
-Depends: R (>= 2.10)
+Suggests: knitr, rmarkdown
+Depends: R (>= 3.5.0), base, utils
 Imports: Rcpp
 LinkingTo: Rcpp, RcppArmadillo
 SystemRequirements: GNU make
