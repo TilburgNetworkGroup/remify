@@ -61,6 +61,3 @@ class(edgelist_reh)
 names(edgelist_reh)
 
 }
-\seealso{
-
-}

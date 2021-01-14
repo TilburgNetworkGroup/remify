@@ -58,6 +58,4 @@
 #' # names of objects inside `edgelist_reh`
 #' names(edgelist_reh)
 #'
-#' @seealso
-#'
 NULL
