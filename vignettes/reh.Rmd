@@ -333,7 +333,7 @@ The available <b>methods</b> for an `reh` object are: `summary`, `dim`, `print`,
 `summary(reh)` prints out a brief summary of the relational network data.
 
 ```{r}
-summary(edgelist_reh) # code to be changed
+summary(edgelist_reh)
 ```
 
 ------
@@ -441,7 +441,7 @@ dyad.count(reh = edgelist_reh, actor1 = "Michaela", actor2 = "Richard")
 # whole network and event type 'conflict'
 dyad.count(reh = edgelist_reh, actor1 = "Michaela", actor2 = "Richard", type = "conflict") 
 
-# first time window (from the 1 time point to the 3999th)
+# first time window (from the 1st time point to the 3999th)
 dyad.count(reh = edgelist_reh, actor1 = "Michaela", actor2 = "Richard", begin = 1, end = 3999) 
 
 # second time window (from the 4000th time point to the last one)

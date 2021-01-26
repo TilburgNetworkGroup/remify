@@ -121,7 +121,9 @@ summary.reh <- function(object,...){
   weighted <- paste("\t> weighted = ",attr(object,"weighted"),sep="")
   time_length <- NULL
   if(!attr(object,"ordinal")){
-    time_length_loc <- object$edgelist$time[object$M]-attr(object,"time")$origin
+    time_length_loc <- object$edgelist$time[object$M]
+    if(is.null(attr(object,"time")$origin)){time_length_loc <- time_length_loc - (object$edgelist$time[1]-1)}
+    else{time_length_loc <- time_length_loc - attr(object,"time")$origin}
     time_length <- paste("\t> time length ~ ",round(time_length_loc)," ",attr(time_length_loc, "units"),sep="")
   }
 
