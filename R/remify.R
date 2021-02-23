@@ -400,8 +400,8 @@ dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin
   if(is.null(actor1)){ #[NULL,?,?]
     if(is.null(actor2) & !is.null(type)){ #[NULL,NULL,type]
       indices_loc <- reh$risksetCube[,,typeID]
-      indices <- c(indices_loc[upper.tri(indices_loc,diag=FALSE)],indices_loc[lower.tri(indices_loc,diag=FALSE)])
-      events_loc <- (reh$rehBinary[begin:end,]>=1)*1
+      indices <- c(indices_loc[upper.tri(indices_loc,diag=FALSE)],indices_loc[lower.tri(indices_loc,diag=FALSE)])+1
+      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
       frequencies <- apply(events_loc,2,sum)
       summary_out <- matrix(0,nrow=reh$N,ncol=reh$N)
       summary_out[upper.tri(summary_out,diag=FALSE)] <- frequencies[indices_loc[upper.tri(indices_loc,diag=FALSE)]]
@@ -411,7 +411,7 @@ dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin
       return(summary_out)
     }
     if(!is.null(actor2) & is.null(type)){ # [NULL,actor2,NULL]
-      indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,])
+      indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,])+1
       events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
       events_loc <- apply(events_loc,2,sum)
       frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
@@ -420,7 +420,7 @@ dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin
       return(frequencies)
     }
     if(!is.null(actor2) & !is.null(type)){ # [NULL,actor2,type]
-      indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,typeID])
+      indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,typeID])+1
       events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
       events_loc <- apply(events_loc,2,sum)
       frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
@@ -431,7 +431,7 @@ dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin
   }
   else{ #[actor1,?,?]
     if(is.null(actor2) & is.null(type)){ #[actor1,NULL,NULL]
-      indices <- as.vector(reh$risksetCube[-actor1ID,actor1ID,])
+      indices <- as.vector(reh$risksetCube[actor1ID,-actor1ID,])+1
       events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
       events_loc <- apply(events_loc,2,sum)
       frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
@@ -440,7 +440,7 @@ dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin
       return(frequencies)             
     }
     if(is.null(actor2) & !is.null(type)){ #[actor1,NULL,type]
-      indices <- as.vector(reh$risksetCube[-actor1ID,actor1ID,typeID])
+      indices <- as.vector(reh$risksetCube[actor1ID,-actor1ID,typeID])+1
       events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
       events_loc <- apply(events_loc,2,sum)
       frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
@@ -449,8 +449,8 @@ dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin
       return(frequencies)            
     }
     if(!is.null(actor2) & is.null(type)){ # [actor1,actor2,NULL]
-      indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,])
-      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+      indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,])+1
+      events_loc <- cbind((reh$rehBinary[begin:end,indices]>=1)*1)
       events_loc <- apply(events_loc,2,sum)
       frequencies <- matrix(events_loc,nrow=reh$C,ncol=1,byrow=FALSE) 
       rownames(frequencies) <- attr(reh, "dictionary")$types$typeName
@@ -458,7 +458,7 @@ dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin
       return(frequencies)            
     }
     if(!is.null(actor2) & !is.null(type)){ # [actor1,actor2,type]
-      indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,typeID])
+      indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,typeID])+1
       events_loc  <- (reh$rehBinary[begin:end,indices]>=1)*1
       frequencies <- sum(events_loc)
       return(frequencies)  
