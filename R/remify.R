@@ -1,4 +1,4 @@
-#' @title reh  
+#' @title reh
 #'
 #' @description A function that processes raw data and returns a 'reh' S3 object which is used as input in other functions in \code{remverse}.
 #'
@@ -63,16 +63,15 @@ reh <- function(edgelist,
     if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
     }
 
-    # Pre-processing relational event history (rehCpp.cpp)
-    out <- rehCpp(edgelist = edgelist,
+    # Pre-processing relational event history (rehCpp_new.cpp)
+    out <- rehCpp_new(edgelist = edgelist,
                     actors = actors, 
                     types = types, 
                     directed = directed,
                     ordinal = ordinal,
                     origin = origin,
                     omit_dyad = omit_dyad)
-
-    
+  
     str_out <- structure(list(
       M = out$M,
       N = out$N,
@@ -80,9 +79,7 @@ reh <- function(edgelist,
       D = out$D,
       intereventTime = out$intereventTime,
       edgelist = out$edgelist,
-      risksetMatrix = out$risksetMatrix,
-      risksetCube = out$risksetCube,
-      rehBinary = out$rehBinary
+      omit_dyad = out$omit_dyad
     ), class="reh")
 
    
@@ -220,7 +217,7 @@ getRiskset <- function(reh){
 
 #' @export
 getRiskset.reh <- function(reh) {
-  return(reh$rehBinary>=0) # only show dyads at risk. In other terms, those dyads that have value 0 (didn't occur but could) or 1 (occurred).
+  return(reh$omit_dyad$riskset) # only show dyads at risk. In other terms, those dyads that have value 0 (didn't occur but could) or 1 (occurred).
 }
 
 #######################################################################################
@@ -361,7 +358,7 @@ dyad.count <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin = N
 #' @export
 dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin = NULL, end = NULL){ #add start and stop
   # Checking input arguments :
-
+  
   # ... [actor1,actor2,type]
   if(is.null(actor1) & is.null(actor2) & is.null(type)) stop("User must supply at least one of the three components of a dyad: `actor1`, `actor2`, `type`.")
   if(any(c(length(actor1)>1,length(actor2)>1,length(type)>1))) stop("`actor1`, `actor2` and `type`, if specified, must have length = 1.")
@@ -399,71 +396,73 @@ dyad.count.reh <- function(reh, actor1 = NULL, actor2 = NULL, type = NULL, begin
   # selecting indices
   if(is.null(actor1)){ #[NULL,?,?]
     if(is.null(actor2) & !is.null(type)){ #[NULL,NULL,type]
-      indices_loc <- reh$risksetCube[,,typeID]
-      indices <- c(indices_loc[upper.tri(indices_loc,diag=FALSE)],indices_loc[lower.tri(indices_loc,diag=FALSE)])+1
-      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-      frequencies <- apply(events_loc,2,sum)
-      summary_out <- matrix(0,nrow=reh$N,ncol=reh$N)
-      summary_out[upper.tri(summary_out,diag=FALSE)] <- frequencies[indices_loc[upper.tri(indices_loc,diag=FALSE)]]
-      summary_out[lower.tri(summary_out,diag=FALSE)] <- frequencies[indices_loc[lower.tri(indices_loc,diag=FALSE)]]
-      rownames(summary_out) <- attr(reh, "dictionary")$actors$actorName
-      colnames(summary_out) <- attr(reh, "dictionary")$actors$actorName
-      return(summary_out)
+#      indices_loc <- reh$risksetCube[,,typeID]
+#      indices <- c(indices_loc[upper.tri(indices_loc,diag=FALSE)],indices_loc[lower.tri(indices_loc,diag=FALSE)])+1
+#      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+#      frequencies <- apply(events_loc,2,sum)
+#      summary_out <- matrix(0,nrow=reh$N,ncol=reh$N)
+#      summary_out[upper.tri(summary_out,diag=FALSE)] <- frequencies[indices_loc[upper.tri(indices_loc,diag=FALSE)]]
+#      summary_out[lower.tri(summary_out,diag=FALSE)] <- frequencies[indices_loc[lower.tri(indices_loc,diag=FALSE)]]
+#      rownames(summary_out) <- attr(reh, "dictionary")$actors$actorName
+#      colnames(summary_out) <- attr(reh, "dictionary")$actors$actorName
+#      return(summary_out)
     }
     if(!is.null(actor2) & is.null(type)){ # [NULL,actor2,NULL]
-      indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,])+1
-      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-      events_loc <- apply(events_loc,2,sum)
-      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
-      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
-      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
-      return(frequencies)
+#      indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,])+1
+#      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+#      events_loc <- apply(events_loc,2,sum)
+#      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
+#      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
+#      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
+#      return(frequencies)
     }
     if(!is.null(actor2) & !is.null(type)){ # [NULL,actor2,type]
-      indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,typeID])+1
-      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-      events_loc <- apply(events_loc,2,sum)
-      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
-      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
-      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
-      return(frequencies) 
+#      indices <- as.vector(reh$risksetCube[-actor2ID,actor2ID,typeID])+1
+#      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+#      events_loc <- apply(events_loc,2,sum)
+#      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
+#      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor2ID]
+#      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
+#      return(frequencies) 
     }    
   }
   else{ #[actor1,?,?]
     if(is.null(actor2) & is.null(type)){ #[actor1,NULL,NULL]
-      indices <- as.vector(reh$risksetCube[actor1ID,-actor1ID,])+1
-      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-      events_loc <- apply(events_loc,2,sum)
-      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
-      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
-      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
-      return(frequencies)             
+#      indices <- as.vector(reh$risksetCube[actor1ID,-actor1ID,])+1
+#      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+#      events_loc <- apply(events_loc,2,sum)
+#      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=reh$C,byrow=FALSE) 
+#      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
+#      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName
+#      return(frequencies)             
     }
     if(is.null(actor2) & !is.null(type)){ #[actor1,NULL,type]
-      indices <- as.vector(reh$risksetCube[actor1ID,-actor1ID,typeID])+1
-      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
-      events_loc <- apply(events_loc,2,sum)
-      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
-      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
-      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
-      return(frequencies)            
+#      indices <- as.vector(reh$risksetCube[actor1ID,-actor1ID,typeID])+1
+#      events_loc <- (reh$rehBinary[begin:end,indices]>=1)*1
+#      events_loc <- apply(events_loc,2,sum)
+#      frequencies <- matrix(events_loc,nrow=(reh$N-1),ncol=1,byrow=FALSE) 
+#      rownames(frequencies) <- attr(reh, "dictionary")$actors$actorName[-actor1ID]
+#      colnames(frequencies) <- attr(reh, "dictionary")$types$typeName[typeID]
+#      return(frequencies)            
     }
     if(!is.null(actor2) & is.null(type)){ # [actor1,actor2,NULL]
-      indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,])+1
-      events_loc <- cbind((reh$rehBinary[begin:end,indices]>=1)*1)
-      events_loc <- apply(events_loc,2,sum)
-      frequencies <- matrix(events_loc,nrow=reh$C,ncol=1,byrow=FALSE) 
-      rownames(frequencies) <- attr(reh, "dictionary")$types$typeName
-      colnames(frequencies) <- c(paste(actor1,actor2,sep="->"))
-      return(frequencies)            
+#      indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,])+1
+#      events_loc <- cbind((reh$rehBinary[begin:end,indices]>=1)*1)
+#      events_loc <- apply(events_loc,2,sum)
+#      frequencies <- matrix(events_loc,nrow=reh$C,ncol=1,byrow=FALSE) 
+#      rownames(frequencies) <- attr(reh, "dictionary")$types$typeName
+#      colnames(frequencies) <- c(paste(actor1,actor2,sep="->"))
+#      return(frequencies)            
     }
     if(!is.null(actor2) & !is.null(type)){ # [actor1,actor2,type]
-      indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,typeID])+1
-      events_loc  <- (reh$rehBinary[begin:end,indices]>=1)*1
-      frequencies <- sum(events_loc)
-      return(frequencies)  
+#      indices <- as.vector(reh$risksetCube[actor1ID,actor2ID,typeID])+1
+#      events_loc  <- (reh$rehBinary[begin:end,indices]>=1)*1
+#      frequencies <- sum(events_loc)
+#      return(frequencies)  
     }
   }
+  
+  return(NULL)
 }
 
 #######################################################################################
