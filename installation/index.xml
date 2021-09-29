@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Installation on remify (v1.1.0)</title>
+    <link>https://tilburgnetworkgroup.github.io/remify/installation/</link>
+    <description>Recent content in Installation on remify (v1.1.0)</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://tilburgnetworkgroup.github.io/remify/installation/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Installation</title>
+      <link>https://tilburgnetworkgroup.github.io/remify/installation/installation/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://tilburgnetworkgroup.github.io/remify/installation/installation/</guid>
+      <description>How to install remify </description>
+    </item>
+    
+  </channel>
+</rss>
