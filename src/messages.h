@@ -17,7 +17,7 @@ int askYesNoQuestion(std::string message) {
         Rcpp::Function readline = base["readline"];
         Rcpp::Function as_numeric = base["as.numeric"];
         int cond = 10;
-        while((cond != 0) & (cond != 1)){
+        while((cond != 0) && (cond != 1)){
         Rcpp::Rcout << message;
         cond = Rcpp::as<int>(as_numeric(readline("> ")));
         }

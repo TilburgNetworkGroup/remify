@@ -255,7 +255,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad, int C, int D, int N, bool 
         for(d = 0; d < D_z; d++){
             // (1) find case:
             if(type_na(d)){ // when [?,?,NA] (type is NA)
-                if(!actor1_na(d) & !actor2_na(d)){ // when [X,Y,NA]
+                if(!actor1_na(d) && !actor2_na(d)){ // when [X,Y,NA]
                     int dyad_z_d;
                     for(c = 0; c < C; c++){  // for all the event types
                         if(actor1_z(d) != actor2_z(d)){
@@ -290,7 +290,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad, int C, int D, int N, bool 
                 }
             }
             else{ // when [?,?,C] (type is defined)
-                if(actor1_na(d) & actor2_na(d)){ // when [NA,NA,C]
+                if(actor1_na(d) && actor2_na(d)){ // when [NA,NA,C]
                     int dyad_z_d;
                     for(i = 0; i < N; i++){
                         for(j = 0; j < N; j++){ // for all the actors excluding the self-edges
@@ -302,7 +302,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad, int C, int D, int N, bool 
                     }
                 }
                 else{    
-                    if(!actor1_na(d) & !actor2_na(d)){ // when [X,Y,C]
+                    if(!actor1_na(d) && !actor2_na(d)){ // when [X,Y,C]
                         int dyad_z_d = getDyadIndex(actor1_z(d),actor2_z(d),type_z(d),N,directed);
                         riskset(z,dyad_z_d) = 0;
                     }
@@ -398,7 +398,7 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
         Rcpp::IntegerVector which_r_loc;
         for(r = 0; r < timeID_mat.nrow(); r++){
             // old (input) bounds
-            if((lb[z] >= timeID_mat(r,0)) & (ub[z] <= timeID_mat(r,1))){
+            if((lb[z] >= timeID_mat(r,0)) && (ub[z] <= timeID_mat(r,1))){
                 which_r_loc.push_back(r);
             }
         }
@@ -619,7 +619,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
                 }
 
                 // checking for iterators:
-                if(((actor1_r[d] != "NA") & (iteratorActor1 == actorName.end())) || ((actor2_r[d] != "NA") & (iteratorActor2 == actorName.end())) ||((type_r[d] != "NA") & (iteratorType == typeName.end()))){
+                if(((actor1_r[d] != "NA") && (iteratorActor1 == actorName.end())) || ((actor2_r[d] != "NA") && (iteratorActor2 == actorName.end())) ||((type_r[d] != "NA") && (iteratorType == typeName.end()))){
                     undefined_dyad++;
                     // old code
                     //continue; // `continue` forces the for loop to continue with the next iteration
@@ -653,7 +653,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
             if(!directed){
                 D_rr = convertedActor1.length();   
                 for(d = 0; d < D_rr; d++){
-                    if((convertedActor1[d]!=(-1)) & (convertedActor2[d]!=(-1))){ // both id actor1 and id actor2 are not NaN
+                    if((convertedActor1[d]!=(-1)) && (convertedActor2[d]!=(-1))){ // both id actor1 and id actor2 are not NaN
                         if(convertedActor1[d] > convertedActor2[d]){
                             int actor1_loc = convertedActor1[d];
                             int actor2_loc = convertedActor2[d];
@@ -662,12 +662,12 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
                         }
                     }
                     else{
-                        if((convertedActor1[d]==(-1)) & (convertedActor2[d]==0)){
+                        if((convertedActor1[d]==(-1)) && (convertedActor2[d]==0)){
                                 convertedActor1[d] = 0;
                                 convertedActor2[d]= -1;
                         }
                         else{
-                            if((convertedActor1[d]==(N-1)) & (convertedActor2[d]==(-1))){     // or make sure that ID = 0 is in actor1 or ID = N-1 is in actor2
+                            if((convertedActor1[d]==(N-1)) && (convertedActor2[d]==(-1))){     // or make sure that ID = 0 is in actor1 or ID = N-1 is in actor2
                                     convertedActor1[d] = -1;
                                     convertedActor2[d] = N-1;
                             }
