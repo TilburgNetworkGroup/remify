@@ -64,7 +64,7 @@ reh <- function(edgelist,
     }
 
     # Pre-processing relational event history (rehCpp_new.cpp)
-    out <- rehCpp_new(edgelist = edgelist,
+    out <- rehCpp(edgelist = edgelist,
                     actors = actors, 
                     types = types, 
                     directed = directed,
