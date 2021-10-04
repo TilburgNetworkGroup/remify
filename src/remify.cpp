@@ -293,6 +293,8 @@ Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
             }
         }
     }
+    auto is_gtzero = [](int &k) {k = (k > 0);}; // we set k>0 (instead of == 0) because there can be negative integers due to the multiple definition of the same dyad (this should not happen when the user defines dyads to omit in a clean way)
+    std::for_each(riskset.begin(),riskset.end(),is_gtzero); 
     return riskset;
 }
 
