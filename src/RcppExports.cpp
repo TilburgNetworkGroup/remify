@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // rehCpp
-Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List omit_dyad);
-RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP omit_dyadSEXP) {
+Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List omit_dyad, std::string model);
+RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP omit_dyadSEXP, SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -24,13 +24,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type ordinal(ordinalSEXP);
     Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type omit_dyad(omit_dyadSEXP);
-    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, actors, types, directed, ordinal, origin, omit_dyad));
+    Rcpp::traits::input_parameter< std::string >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, actors, types, directed, ordinal, origin, omit_dyad, model));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 7},
+    {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 8},
     {NULL, NULL, 0}
 };
 

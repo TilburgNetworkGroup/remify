@@ -4,7 +4,7 @@
 \alias{rehCpp}
 \title{rehCpp (the Rcpp alias of \code{reh()})}
 \usage{
-rehCpp(edgelist, actors, types, directed, ordinal, origin, omit_dyad)
+rehCpp(edgelist, actors, types, directed, ordinal, origin, omit_dyad, model)
 }
 \arguments{
 \item{edgelist}{an object of class \code{"\link[base]{data.frame}"} or 
@@ -23,6 +23,8 @@ time with columns 'time', 'actor1', 'actor2' and optionally 'type' and
 \item{origin}{time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.}
 
 \item{omit_dyad}{list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.}
+
+\item{model}{"tie" or "actor" oriented model}
 }
 \value{
 list of objects with processed raw data.

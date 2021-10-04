@@ -11,7 +11,8 @@ reh(
   directed = TRUE,
   ordinal = FALSE,
   origin = NULL,
-  omit_dyad = NULL
+  omit_dyad = NULL,
+  model = c("actor", "tie")
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ time with columns 'time', 'actor1', 'actor2' and optionally 'type' and
 \item{origin}{time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.}
 
 \item{omit_dyad}{list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.}
+
+\item{model}{"tie" or "actor" oriented this is useful only if omit_dyad is defined. When actor-oriented, dynamic riskset will consist of two risksets (sender, and receiver riskset), in the tie-oriented only dynamic risksets will be dyad-defined.}
 }
 \value{
 'reh' S3 object

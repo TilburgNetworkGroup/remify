@@ -15,11 +15,12 @@
 #' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
 #' @param origin time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
 #' @param omit_dyad list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.
+#' @param model "tie" or "actor" oriented model
 #'
 #' @return list of objects with processed raw data.
 #'
 #' @export
-rehCpp <- function(edgelist, actors, types, directed, ordinal, origin, omit_dyad) {
-    .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, actors, types, directed, ordinal, origin, omit_dyad)
+rehCpp <- function(edgelist, actors, types, directed, ordinal, origin, omit_dyad, model) {
+    .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, actors, types, directed, ordinal, origin, omit_dyad, model)
 }
 

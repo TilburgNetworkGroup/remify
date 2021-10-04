@@ -12,6 +12,7 @@
 #' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
 #' @param origin time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
 #' @param omit_dyad list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.
+#' @param model "tie" or "actor" oriented this is useful only if omit_dyad is defined. When actor-oriented, dynamic riskset will consist of two risksets (sender, and receiver riskset), in the tie-oriented only dynamic risksets will be dyad-defined.
 #'
 #' @return  'reh' S3 object 
 #'
@@ -24,7 +25,8 @@ reh <- function(edgelist,
                 directed = TRUE,
                 ordinal = FALSE,
                 origin = NULL,
-                omit_dyad = NULL){
+                omit_dyad = NULL,
+                model = c("actor","tie")){
 
     # Make sure edgelist is a dataframe
     edgelist <- as.data.frame(edgelist)
@@ -43,6 +45,15 @@ reh <- function(edgelist,
     if(!("actor2" %in% names(edgelist))) {
       stop("Edgelist should contain a column named 'actor2' with the second actors/receivers of the events.")
     }
+
+    # checking input argument "model" :
+    if(is.null(model)) {
+        model <- "tie"
+        warning("argument 'model' set to 'tie' by default")
+    }
+    if(!is.null(model) & !(model %in% c("tie","actor"))) stop("argument 'model' must be set to either 'tie' or 'actor'")
+    if(!is.null(model) & all(model==c("tie","actor"))) model <- "tie"
+    
 
     
 
@@ -70,7 +81,8 @@ reh <- function(edgelist,
                     directed = directed,
                     ordinal = ordinal,
                     origin = origin,
-                    omit_dyad = omit_dyad)
+                    omit_dyad = omit_dyad,
+                    model = model)
   
     str_out <- structure(list(
       M = out$M,

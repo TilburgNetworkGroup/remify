@@ -223,6 +223,81 @@ int getDyadIndex(double actor1, double actor2, double type, int N, bool directed
     return dyad;
 }
 
+// @title getRisksetSender
+//
+// @param which_dyad is list of matrices where each matrix defines by row [actor1,actor2,type] to be removed from the riskset. Each matrix as a whole will finally produce a vector (length = D) of 1/0 with 0's for dyads that have to be excluded from the riskset
+// @param C number of event types
+// @param D number of dyads
+// @param N number of actors
+// @param directed bool if the netwrok is directed, then directed ==  TRUE, FALSE otherwise
+//
+// @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
+Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
+                                        int C,
+                                        int D, 
+                                        int N, 
+                                        bool directed) {
+    arma::uword z,d,D_z;
+    int j,c;
+    arma::uword Z = which_dyad.size();
+    Rcpp::IntegerMatrix riskset(Z,N);
+    riskset.fill((N-1)*C);
+    auto is_na = [](int &k) {k = (k == -1);}; 
+    for(z = 0; z < Z; z++){
+        Rcpp::IntegerMatrix which_dyad_z = which_dyad[z];
+        D_z = which_dyad_z.nrow();
+        Rcpp::IntegerVector actor1_z = which_dyad_z(Rcpp::_,0);
+        Rcpp::IntegerVector actor2_z =  which_dyad_z(Rcpp::_,1);
+        Rcpp::IntegerVector type_z =  which_dyad_z(Rcpp::_,2);
+        Rcpp::IntegerVector actor1_na = Rcpp::clone(actor1_z);
+        Rcpp::IntegerVector actor2_na = Rcpp::clone(actor2_z);
+        Rcpp::IntegerVector type_na = Rcpp::clone(type_z); 
+        std::for_each(actor1_na.begin(),actor1_na.end(),is_na);
+        std::for_each(actor2_na.begin(),actor2_na.end(),is_na);
+        std::for_each(type_na.begin(),type_na.end(),is_na);
+        for(d = 0; d < D_z; d++){
+            // (1) find case:
+            if(type_na(d)){ // when [?,?,NA] (type is NA)
+                if(!actor1_na(d) && !actor2_na(d)){ // when [X,Y,NA]
+                    for(c = 0; c < C; c++){  // for all the event types
+                        if(actor1_z(d) != actor2_z(d)){
+                            riskset(z,actor1_z(d)) -= 1; 
+                        }
+                    }   
+                }
+                else{
+                    if(!actor1_na(d)){ // when [X,NA,NA] 
+                        for(c = 0; c < C; c++){  // for all the event types
+                            for(j = 0; j < N; j++){ // for all the receivers excluding the self-edge
+                                if(j != actor1_z(d)){
+                                    riskset(z,actor1_z(d)) -= 1; 
+                                }
+                            }  
+                        }
+                    }
+                }
+            }
+            else{ // when [?,?,C] (type is defined)       
+                if(!actor1_na(d) && !actor2_na(d)){ // when [X,Y,C]
+                    riskset(z,actor1_z(d)) -= 1; 
+                }
+                else{
+                    if(!actor1_na(d)){ // when [X,NA,C]          
+                        for(j = 0; j < N; j++){ // for all the receivers excluding the self-edges
+                            if(j != actor1_z(d)){
+                                riskset(z,actor1_z(d)) -= 1; 
+                            }  
+                        }
+                    }
+                }                   
+            }
+        }
+    }
+    return riskset;
+}
+
+
+
 // @title getRiskset (a function that returns an utility matrix used in optimization algorithms)
 //
 // @param which_dyad is list of matrices where each matrix defines by row [actor1,actor2,type] to be removed from the riskset. Each matrix as a whole will finally produce a vector (length = D) of 1/0 with 0's for dyads that have to be excluded from the riskset
@@ -232,7 +307,11 @@ int getDyadIndex(double actor1, double actor2, double type, int N, bool directed
 // @param directed bool if the netwrok is directed, then directed ==  TRUE, FALSE otherwise
 //
 // @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
-Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad, int C, int D, int N, bool directed) {
+Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad, 
+                                int C, 
+                                int D, 
+                                int N, 
+                                bool directed) {
     arma::uword z,d,D_z;
     int i,j,c;
     arma::uword Z = which_dyad.size();
@@ -345,9 +424,10 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad, int C, int D, int N, bool 
 // @param D number of dyads
 // @param N number of actors
 // @param directed bool if the netwrok is directed, then directed ==  TRUE, FALSE otherwise
+// @param model "tie" or "actor" oriented
 //
 // @return a list of two objects: a vector ("time") that indicates whether the riskset at the specific time point changed or not; a matrix ("riskset") with all the possible changes in the riskset (defined by row).
-Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmitDyad_time, arma::uword M, int C, int D, int N, bool directed) {
+Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmitDyad_time, arma::uword M, int C, int D, int N, bool directed, std::string model) {
 
     arma::uword z,d;
     int m,r;
@@ -454,6 +534,10 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
     Rcpp::IntegerMatrix riskset = getRiskset(which_dyad,C,D,N,directed);
     // arranging output in a list
     Rcpp::List out = Rcpp::List::create(Rcpp::Named("time") = which_time, Rcpp::Named("riskset") = riskset);
+    if(model == "actor"){
+        Rcpp::IntegerMatrix riskset_sender = getRisksetSender(which_dyad,C,D,N,directed);
+        out["risksetSender"] = riskset_sender;
+    }
 
     return out;
 }
@@ -467,9 +551,10 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
 // @param D number of possible dyads
 // @param direcred boolean value: are events directed (1) or undirected (0)?
 // @param omit_dyad list. The same input in rehCpp.
+// @param model, "tie" or "actor" oriented
 //
 // @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
-Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, arma::uword D, bool directed, Rcpp::List omit_dyad) {
+Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, arma::uword D, bool directed, Rcpp::List omit_dyad, std::string model) {
     // for loop iterators
     arma::uword m,r,z,d,R,Z_r,D_r,D_rr;
     // counters for warningMessages
@@ -694,7 +779,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
         }
 
         //(4) processing (converted to id's and to -1 when NA) omit_dyad
-        Rcpp::List outOmitDyad = processOmitDyad(convertedOmitDyad,convertedOmitDyad_time,M,C,D,N,directed);
+        Rcpp::List outOmitDyad = processOmitDyad(convertedOmitDyad,convertedOmitDyad_time,M,C,D,N,directed,model);
 
         // (??) Storing the converted `omit_dyad`
         out["omit_dyad"] = outOmitDyad;
@@ -723,6 +808,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
 //' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
 //' @param origin time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
 //' @param omit_dyad list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.
+//' @param model "tie" or "actor" oriented model
 //'
 //' @return list of objects with processed raw data.
 //'
@@ -734,7 +820,8 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
                   bool directed,
                   bool ordinal,
                   Rcpp::RObject origin,
-                  Rcpp::List omit_dyad) {
+                  Rcpp::List omit_dyad,
+                  std::string model) {
 
     // Allocating memory for some variables and the output list
     arma::uword D; // number of dyads which depends on the directed input value 
@@ -847,7 +934,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     out["typesDictionary"] = typesDictionary;
 
     // Converting input edgelist and omit_dyad list according to the new id's for both actors and event types
-    Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],out["D"],directed,omit_dyad);
+    Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],out["D"],directed,omit_dyad,model);
     out["edgelist"] = convertedInput["edgelist"];
     out["omit_dyad"] = convertedInput["omit_dyad"];
                                   
