@@ -26,7 +26,7 @@ reh <- function(edgelist,
                 ordinal = FALSE,
                 origin = NULL,
                 omit_dyad = NULL,
-                model = c("actor","tie")){
+                model = c("tie","actor")){
 
     # Make sure edgelist is a dataframe
     edgelist <- as.data.frame(edgelist)
@@ -47,12 +47,12 @@ reh <- function(edgelist,
     }
 
     # checking input argument "model" :
-    if(is.null(model)) {
+    if(is.null(model) || all(model==c("tie","actor"))) {
         model <- "tie"
         warning("argument 'model' set to 'tie' by default")
     }
     if(!is.null(model) & !(model %in% c("tie","actor"))) stop("argument 'model' must be set to either 'tie' or 'actor'")
-    if(!is.null(model) & all(model==c("tie","actor"))) model <- "tie"
+
     
 
     
@@ -90,7 +90,7 @@ reh <- function(edgelist,
       C = out$C,
       D = out$D,
       intereventTime = out$intereventTime,
-      edgelist = out$edgelist,
+      edgelist = data.matrix(out$edgelist),
       omit_dyad = out$omit_dyad
     ), class="reh")
 

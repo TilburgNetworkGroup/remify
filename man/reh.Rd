@@ -12,7 +12,7 @@ reh(
   ordinal = FALSE,
   origin = NULL,
   omit_dyad = NULL,
-  model = c("actor", "tie")
+  model = c("tie", "actor")
 )
 }
 \arguments{
