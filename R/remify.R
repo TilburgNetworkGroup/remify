@@ -100,6 +100,7 @@ reh <- function(edgelist,
     attr(str_out, "weighted") <- out$weighted
     attr(str_out, "directed") <- directed
     attr(str_out, "ordinal") <- ordinal
+    attr(str_out, "model") <- model # useful because tie and actor models have two different ways for handling changing risksets
     attr(str_out, "riskset") <- ifelse(length(omit_dyad)>0,"dynamic","static")
     attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary) 
     attr(str_out, "time") <- list(class = class(edgelist$time), value = data.frame(time = edgelist$time, intereventTime = out$intereventTime), origin = origin)
