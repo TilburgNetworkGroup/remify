@@ -196,14 +196,14 @@ int getDyadIndex(double actor1, double actor2, double type, int N, bool directed
     if(actor1 != actor2){
         if(!directed){ // when directed == FALSE we sort actor1 and actor2
             if(actor1 < actor2){
-                int dyad_loc = (N*(N-1)/2)*type+(N-1)*actor1+actor2-actor1-1-(actor1*actor1)/2;
+                double dyad_loc = (N*(N-1)/2)*type+(N-1)*actor1+actor2-actor1-1-(actor1*actor1)/2;
                 if(actor1>0){
                     dyad_loc += actor1/2;
                 }
                 dyad = dyad_loc;
             }
             else{
-                int dyad_loc = (N*(N-1)/2)*type+(N-1)*actor2+actor1-actor2-1-(actor2*actor2)/2;
+                double dyad_loc = (N*(N-1)/2)*type+(N-1)*actor2+actor1-actor2-1-(actor2*actor2)/2;
                 if(actor2>0){
                     dyad_loc += actor2/2;
                 }
@@ -212,7 +212,7 @@ int getDyadIndex(double actor1, double actor2, double type, int N, bool directed
         }
         else{ 
             // when directed == TRUE (we do not sort) (actor1 = sender, actor2 = receiver)
-            int dyad_loc = N*(N-1)*type+(N-1)*actor1+actor2;
+            double dyad_loc = N*(N-1)*type+(N-1)*actor1+actor2;
             if(actor2>actor1){
                 dyad_loc -= 1;
             }
