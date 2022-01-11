@@ -1,8 +1,8 @@
 Package: remify
 Type: Package
 Title: Processing and transforming REH to formats suitable for the remverse packages and more
-Version: 1.1.0
-Date: 2020-09-21
+Version: 2.0.0
+Date: 2022-01-11
 Authors@R: 
     c(
         person(
