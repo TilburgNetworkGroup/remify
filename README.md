@@ -1,4 +1,4 @@
-# remify (Version: 1.1.0)
+# remify (Version: 2.0.0)
 
 ### Table of contents
 * [About the package](#about-the-package)
