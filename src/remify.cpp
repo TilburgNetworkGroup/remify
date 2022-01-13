@@ -1,7 +1,6 @@
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
 #include <iostream>
-#include <omp.h>
 #include <typeinfo>
 #include <map>
 #include <iterator>
