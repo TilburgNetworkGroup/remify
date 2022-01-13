@@ -332,7 +332,7 @@ str(attr(edgelist_reh, "time")) # printing out only the str() of the attribute s
 
 ## Methods
 
-The available <b>methods</b> for an `reh` object are: `summary`, `dim`, `print`, `View`, `head`, `tail`, `getRiskset`, `actorName`, `typeName`, `actorID`, `typeID`, `dyad.info`.
+The available <b>methods</b> for an `reh` object are: `summary`, `dim`, `getDynamicRiskset`, `actorName`, `typeName`, `actorID`, and `typeID`.
 
 ------
 
