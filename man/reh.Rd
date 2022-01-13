@@ -18,22 +18,22 @@ reh(
 \arguments{
 \item{edgelist}{an object of class \code{"\link[base]{data.frame}"} or 
 \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
-time with columns 'time', 'actor1', 'actor2' and optionally 'type' and 
-'weight'.}
+time with columns `time`, `actor1`, `actor2` and optionally `type` and 
+`weight`.}
 
-\item{actors}{vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be drawn from the input edgelist.}
+\item{actors}{vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be taken from the input edgelist.}
 
-\item{types}{vector of event types that may occur in the network. If \code{NULL}, type names will be drawn from the input edgelist.}
+\item{types}{vector of event types that may occur in the network. If \code{NULL}, type names will be taken from the input edgelist.}
 
 \item{directed}{logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).}
 
 \item{ordinal}{logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).}
 
-\item{origin}{time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.}
+\item{origin}{time point since when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.}
 
-\item{omit_dyad}{list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.}
+\item{omit_dyad}{list of lists. Each list must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row).}
 
-\item{model}{"tie" or "actor" oriented this is useful only if omit_dyad is defined. When actor-oriented, dynamic riskset will consist of two risksets (sender, and receiver riskset), in the tie-oriented only dynamic risksets will be dyad-defined.}
+\item{model}{can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.}
 }
 \value{
 'reh' S3 object

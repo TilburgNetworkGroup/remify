@@ -2,9 +2,12 @@
 % Please edit documentation in R/remify.R
 \name{typeID}
 \alias{typeID}
+\alias{typeID.reh}
 \title{typeID}
 \usage{
 typeID(reh, typeName = NULL)
+
+\method{typeID}{reh}(reh, typeName = NULL)
 }
 \arguments{
 \item{reh}{an \code{reh} object.}
@@ -14,3 +17,8 @@ typeID(reh, typeName = NULL)
 \description{
 A function that given a vector of type names returns the corresponding vector of ID's.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{reh}: type's ID from type's name
+}}
+

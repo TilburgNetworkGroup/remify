@@ -229,14 +229,12 @@ int getDyadIndex(double actor1, double actor2, double type, int N, bool directed
 // @param C number of event types
 // @param D number of dyads
 // @param N number of actors
-// @param directed bool if the netwrok is directed, then directed ==  TRUE, FALSE otherwise
 //
 // @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
 Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
                                         int C,
                                         int D, 
-                                        int N, 
-                                        bool directed) {
+                                        int N) {
     arma::uword z,d,D_z;
     int j,c;
     arma::uword Z = which_dyad.size();
@@ -536,9 +534,12 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
     Rcpp::IntegerMatrix riskset = getRiskset(which_dyad,C,D,N,directed);
     // arranging output in a list
     Rcpp::List out = Rcpp::List::create(Rcpp::Named("time") = which_time, Rcpp::Named("riskset") = riskset);
-    if(model == "actor"){
-        Rcpp::IntegerMatrix riskset_sender = getRisksetSender(which_dyad,C,D,N,directed);
+    if((model == "actor") && (directed == true)){
+        Rcpp::IntegerMatrix riskset_sender = getRisksetSender(which_dyad,C,D,N);
         out["risksetSender"] = riskset_sender;
+    }
+    else if((model == "actor") && (directed == false)){
+        Rcpp::stop(errorMessage(4));
     }
 
     return out;
@@ -796,25 +797,24 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
 
 
 
-//' @title rehCpp (the Rcpp alias of \code{reh()})
-//'
-//' @details more details can be found at the following documentation: \link[remify]{reh}.
-//' 
-//' @param edgelist an object of class \code{"\link[base]{data.frame}"} or 
-//' \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
-//' time with columns 'time', 'actor1', 'actor2' and optionally 'type' and 
-//' 'weight'.  
-//' @param actors vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be drawn from the input edgelist.
-//' @param types vector of event types that may occur in the network. If \code{NULL}, type names will be drawn from the input edgelist.
-//' @param directed logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).
-//' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
-//' @param origin time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
-//' @param omit_dyad list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.
-//' @param model "tie" or "actor" oriented model
-//'
-//' @return list of objects with processed raw data.
-//'
-//' @export
+// @title rehCpp (the Rcpp alias of \code{reh()})
+//
+// @details more details can be found at the following documentation: \link[remify]{reh}.
+// 
+// @param edgelist an object of class \code{"\link[base]{data.frame}"} or 
+// \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
+// time with columns 'time', 'actor1', 'actor2' and optionally 'type' and 
+// 'weight'.  
+// @param actors vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be drawn from the input edgelist.
+// @param types vector of event types that may occur in the network. If \code{NULL}, type names will be drawn from the input edgelist.
+// @param directed logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).
+// @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
+// @param origin time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
+// @param omit_dyad list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.
+// @param model "tie" or "actor" oriented model
+//
+// @return list of objects with processed raw data.
+//
 // [[Rcpp::export]]
 Rcpp::List rehCpp(Rcpp::DataFrame edgelist, 
                   Rcpp::RObject actors, 

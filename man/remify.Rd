@@ -14,9 +14,9 @@ remify(input)
 otuput of \code{remify()}.
 }
 \description{
-A function that transforms a \code{reh} object into one of the possible formats that suits external packages.
+A function that transforms a \code{reh} object into one of the possible formats that suit external packages, or vice versa.
 
-The remify package provides a set of algorithms for the optimization of the relational even model likelihood
+The remify package provides two main functions: \code{reh()} for pre-processing relational event sequences and creating a new data structure (\code{reh}) used by other packages, and \code{remify()} for transforming REH from other formats or other sources to an \code{reh} structure.
 }
 \section{\code{remify} functions}{
 

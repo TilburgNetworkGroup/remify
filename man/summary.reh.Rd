@@ -12,5 +12,5 @@
 \item{...}{further arguments to be passed.}
 }
 \description{
-A function that returns a summary of the temporal network.
+A function that returns a summary of the event history.
 }

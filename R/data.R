@@ -6,7 +6,6 @@
 #' @name randomREH
 #' @docType data
 #'
-#' @usage data(randomREH)
 #'
 #' @format \code{data(randomREH)} will load a list containing following objects:
 #'\describe{
@@ -27,7 +26,7 @@
 #'
 #'
 #' @examples
-#' data(randomREH)
+#' data("randomREH")
 #' 
 #' # actors names
 #' randomREH$actors
@@ -50,7 +49,8 @@
 #'                     directed = TRUE,
 #'                     ordinal = FALSE,
 #'                     origin = randomREH$origin,
-#'                     omit_dyad = randomREH$omit_dyad)
+#'                     omit_dyad = randomREH$omit_dyad,
+#'                     model = "tie")
 #'
 #' # `edgelist_reh` is an object of class `reh`
 #' class(edgelist_reh)
@@ -58,4 +58,4 @@
 #' # names of objects inside `edgelist_reh`
 #' names(edgelist_reh)
 #'
-NULL
+"randomREH"

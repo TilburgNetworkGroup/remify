@@ -47,14 +47,25 @@ Authors@R:
             email = "j.mulder3@tilburguniversity.edu")
     )
 Maintainer: Giuseppe Arena <g.arena@tilburguniversity.edu>
-Description: This package aims to process, transform a relational event history to other formats suitable for the remverse packages as well as other libraries.
+Description: This package aims to process, transform a relational event history to other formats suitable for the remverse and other packages.
+URL: https://github.com/TilburgNetworkGroup/remify
+BugReports: https://github.com/TilburgNetworkGroup/remify/issues
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown
-Depends: R (>= 3.5.0), base, utils
-Imports: Rcpp
-LinkingTo: Rcpp, RcppArmadillo
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat
+Depends:
+    R (>= 3.5.0)
+Imports: 
+    Rcpp (>= 1.0.2),
+    stats,
+    utils
+LinkingTo:
+    Rcpp,
+    RcppArmadillo
 SystemRequirements: GNU make
 License: MIT + file LICENSE

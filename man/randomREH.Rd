@@ -23,13 +23,13 @@
 }
 }
 \usage{
-data(randomREH)
+randomREH
 }
 \description{
 A randomly generated sequence of relational events with 20 actors and 9,915 events. Each event type is associated to one of the three following sentiments: \emph{conflict}, \emph{competition} and \emph{cooperation}.
 }
 \examples{
-data(randomREH)
+data("randomREH")
 
 # actors names
 randomREH$actors
@@ -52,7 +52,8 @@ edgelist_reh <- reh(edgelist = randomREH$edgelist,
                     directed = TRUE,
                     ordinal = FALSE,
                     origin = randomREH$origin,
-                    omit_dyad = randomREH$omit_dyad)
+                    omit_dyad = randomREH$omit_dyad,
+                    model = "tie")
 
 # `edgelist_reh` is an object of class `reh`
 class(edgelist_reh)
@@ -61,3 +62,4 @@ class(edgelist_reh)
 names(edgelist_reh)
 
 }
+\keyword{datasets}

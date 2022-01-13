@@ -2,9 +2,12 @@
 % Please edit documentation in R/remify.R
 \name{actorID}
 \alias{actorID}
+\alias{actorID.reh}
 \title{actorID}
 \usage{
 actorID(reh, actorName = NULL)
+
+\method{actorID}{reh}(reh, actorName = NULL)
 }
 \arguments{
 \item{reh}{an \code{reh} object.}
@@ -14,3 +17,8 @@ actorID(reh, actorName = NULL)
 \description{
 A function that given a vector of actor names returns the corresponding vector of ID's.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{reh}: actor's ID from actor's name
+}}
+
