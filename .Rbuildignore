@@ -5,3 +5,4 @@
 ^\.vscode$
 ^\.git$
 ^\.gitignore$
+^LICENSE\.md$
