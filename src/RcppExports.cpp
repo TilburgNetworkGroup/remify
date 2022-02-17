@@ -3,6 +3,8 @@
 
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
+#include <string>
+#include <set>
 
 using namespace Rcpp;
 
@@ -30,8 +32,23 @@ BEGIN_RCPP
 END_RCPP
 }
 
+// validate (ensure exported C++ functions exist before calling them)
+static int _remify_RcppExport_validate(const char* sig) { 
+    static std::set<std::string> signatures;
+    if (signatures.empty()) {
+    }
+    return signatures.find(sig) != signatures.end();
+}
+
+// registerCCallable (register entry points for exported C++ functions)
+RcppExport SEXP _remify_RcppExport_registerCCallable() { 
+    R_RegisterCCallable("remify", "_remify_RcppExport_validate", (DL_FUNC)_remify_RcppExport_validate);
+    return R_NilValue;
+}
+
 static const R_CallMethodDef CallEntries[] = {
     {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 8},
+    {"_remify_RcppExport_registerCCallable", (DL_FUNC) &_remify_RcppExport_registerCCallable, 0},
     {NULL, NULL, 0}
 };
 

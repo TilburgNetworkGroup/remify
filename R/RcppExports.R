@@ -5,3 +5,7 @@ rehCpp <- function(edgelist, actors, types, directed, ordinal, origin, omit_dyad
     .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, actors, types, directed, ordinal, origin, omit_dyad, model)
 }
 
+# Register entry points for exported C++ functions
+methods::setLoadAction(function(ns) {
+    .Call('_remify_RcppExport_registerCCallable', PACKAGE = 'remify')
+})

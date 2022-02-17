@@ -2,7 +2,6 @@
 #include <Rcpp.h>
 #include <iostream>
 #include <typeinfo>
-#include <map>
 #include <iterator>
 #include <string>
 
@@ -20,6 +19,7 @@
 //' @param directed bool FALSE/TRUE if the networks is directed (TRUE) or not (FALSE)
 //'
 //' @return dyad index according to the combination of id's of actor1/actor2/type
+// [[Rcpp::interfaces(r,cpp)]]
 int getDyadIndex(double actor1, double actor2, double type, int N, bool directed) {
 
     int dyad = -999; // returning impossible index if the dyad is a self-edge (i.e., sender and receiver are the same actor)
