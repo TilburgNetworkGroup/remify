@@ -25,6 +25,27 @@ namespace remify {
         }
     }
 
+    inline int getDyadIndex(double actor1, double actor2, double type, int N, bool directed) {
+        typedef SEXP(*Ptr_getDyadIndex)(SEXP,SEXP,SEXP,SEXP,SEXP);
+        static Ptr_getDyadIndex p_getDyadIndex = NULL;
+        if (p_getDyadIndex == NULL) {
+            validateSignature("int(*getDyadIndex)(double,double,double,int,bool)");
+            p_getDyadIndex = (Ptr_getDyadIndex)R_GetCCallable("remify", "_remify_getDyadIndex");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_getDyadIndex(Shield<SEXP>(Rcpp::wrap(actor1)), Shield<SEXP>(Rcpp::wrap(actor2)), Shield<SEXP>(Rcpp::wrap(type)), Shield<SEXP>(Rcpp::wrap(N)), Shield<SEXP>(Rcpp::wrap(directed)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<int >(rcpp_result_gen);
+    }
+
 }
 
 #endif // RCPP_remify_RCPPEXPORTS_H_GEN_

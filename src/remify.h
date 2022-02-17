@@ -1,3 +1,5 @@
+// [[Rcpp::interfaces(r,cpp)]]
+
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
 #include <iostream>
@@ -5,21 +7,20 @@
 #include <iterator>
 #include <string>
 
-
 #ifndef REMIFY_H
 #define REMIFY_H
 
 
-//' @title getDyadIndex
-//'
-//' @param actor1 id of actor1 from 0 to N-1
-//' @param actor2 id of actor2 from 0 to N-1
-//' @param type id of event type from 0 to C-1
-//' @param N number of actors
-//' @param directed bool FALSE/TRUE if the networks is directed (TRUE) or not (FALSE)
-//'
-//' @return dyad index according to the combination of id's of actor1/actor2/type
-// [[Rcpp::interfaces(r,cpp)]]
+// title getDyadIndex
+//
+// param actor1 id of actor1 from 0 to N-1
+// param actor2 id of actor2 from 0 to N-1
+// param type id of event type from 0 to C-1
+// param N number of actors
+// param directed bool FALSE/TRUE if the networks is directed (TRUE) or not (FALSE)
+//
+// return dyad index according to the combination of id's of actor1/actor2/type
+// [[Rcpp::export]]
 int getDyadIndex(double actor1, double actor2, double type, int N, bool directed) {
 
     int dyad = -999; // returning impossible index if the dyad is a self-edge (i.e., sender and receiver are the same actor)
@@ -53,4 +54,6 @@ int getDyadIndex(double actor1, double actor2, double type, int N, bool directed
     return dyad;
 }
 
-#endif
+
+
+#endif 

@@ -31,23 +31,64 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getDyadIndex
+int getDyadIndex(double actor1, double actor2, double type, int N, bool directed);
+static SEXP _remify_getDyadIndex_try(SEXP actor1SEXP, SEXP actor2SEXP, SEXP typeSEXP, SEXP NSEXP, SEXP directedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< double >::type actor1(actor1SEXP);
+    Rcpp::traits::input_parameter< double >::type actor2(actor2SEXP);
+    Rcpp::traits::input_parameter< double >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
+    rcpp_result_gen = Rcpp::wrap(getDyadIndex(actor1, actor2, type, N, directed));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _remify_getDyadIndex(SEXP actor1SEXP, SEXP actor2SEXP, SEXP typeSEXP, SEXP NSEXP, SEXP directedSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_remify_getDyadIndex_try(actor1SEXP, actor2SEXP, typeSEXP, NSEXP, directedSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
 
 // validate (ensure exported C++ functions exist before calling them)
 static int _remify_RcppExport_validate(const char* sig) { 
     static std::set<std::string> signatures;
     if (signatures.empty()) {
+        signatures.insert("int(*getDyadIndex)(double,double,double,int,bool)");
     }
     return signatures.find(sig) != signatures.end();
 }
 
 // registerCCallable (register entry points for exported C++ functions)
 RcppExport SEXP _remify_RcppExport_registerCCallable() { 
+    R_RegisterCCallable("remify", "_remify_getDyadIndex", (DL_FUNC)_remify_getDyadIndex_try);
     R_RegisterCCallable("remify", "_remify_RcppExport_validate", (DL_FUNC)_remify_RcppExport_validate);
     return R_NilValue;
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 8},
+    {"_remify_getDyadIndex", (DL_FUNC) &_remify_getDyadIndex, 5},
     {"_remify_RcppExport_registerCCallable", (DL_FUNC) &_remify_RcppExport_registerCCallable, 0},
     {NULL, NULL, 0}
 };

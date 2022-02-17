@@ -5,6 +5,10 @@ rehCpp <- function(edgelist, actors, types, directed, ordinal, origin, omit_dyad
     .Call('_remify_rehCpp', PACKAGE = 'remify', edgelist, actors, types, directed, ordinal, origin, omit_dyad, model)
 }
 
+getDyadIndex <- function(actor1, actor2, type, N, directed) {
+    .Call('_remify_getDyadIndex', PACKAGE = 'remify', actor1, actor2, type, N, directed)
+}
+
 # Register entry points for exported C++ functions
 methods::setLoadAction(function(ns) {
     .Call('_remify_RcppExport_registerCCallable', PACKAGE = 'remify')
