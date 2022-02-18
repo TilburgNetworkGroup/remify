@@ -105,13 +105,15 @@ Rcpp::List getIntereventTime(Rcpp::RObject time,
                 m++;
             }
             else{
-                force_sorting = askYesNoQuestion(warningMessage(0));
-                if(force_sorting == 1) {m = intereventTime.n_elem;}
-                else{Rcpp::stop("");}
+                force_sorting = 1; //askYesNoQuestion(warningMessage(0));
+                //if(force_sorting == 1) {m = intereventTime.n_elem;}
+                m = intereventTime.n_elem;
+                //else{Rcpp::stop("");}
             }
         }
         // (2.1) Force the sorting of `time` if force_sorting = 1
         if(force_sorting == 1){
+            Rcpp::Rcout << warningMessage(0); // warning message about the sorting operation
             out["order"] = arma::sort_index(time_vector);
             time_vector = sort(time_vector);
             intereventTime = arma::diff(time_vector);
@@ -122,14 +124,17 @@ Rcpp::List getIntereventTime(Rcpp::RObject time,
         while(m < intereventTime.n_elem){
             if(intereventTime(m) != 0.0) m++;
             else{
-                force_even_spacing = askYesNoQuestion(warningMessage(1));
-                if(force_even_spacing == 1) {m = intereventTime.n_elem;}
-                else{Rcpp::stop("");}
+                force_even_spacing = 1; //askYesNoQuestion(warningMessage(1));
+                m = intereventTime.n_elem;
+                //if(force_even_spacing == 1) {m = intereventTime.n_elem;}
+                //else{Rcpp::stop("");
+                //}
             }
         }
 
         // (3.1) Force even spacing of events if force_even_spacing = 1
         if(force_even_spacing == 1){
+            Rcpp::Rcout << warningMessage(1); // warning message about co-occurrence of events
             arma::uword position_first_zero = intereventTime.n_elem + 1;
             arma::uword counter = 0; // number of events to which evenly span the time
             for(m = 0; m < intereventTime.n_elem; m++){ // seeking for intereven times values equal to zero
