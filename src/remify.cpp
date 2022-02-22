@@ -105,10 +105,8 @@ Rcpp::List getIntereventTime(Rcpp::RObject time,
                 m++;
             }
             else{
-                force_sorting = 1; //askYesNoQuestion(warningMessage(0));
-                //if(force_sorting == 1) {m = intereventTime.n_elem;}
+                force_sorting = 1; 
                 m = intereventTime.n_elem;
-                //else{Rcpp::stop("");}
             }
         }
         // (2.1) Force the sorting of `time` if force_sorting = 1
@@ -124,11 +122,8 @@ Rcpp::List getIntereventTime(Rcpp::RObject time,
         while(m < intereventTime.n_elem){
             if(intereventTime(m) != 0.0) m++;
             else{
-                force_even_spacing = 1; //askYesNoQuestion(warningMessage(1));
+                force_even_spacing = 1;
                 m = intereventTime.n_elem;
-                //if(force_even_spacing == 1) {m = intereventTime.n_elem;}
-                //else{Rcpp::stop("");
-                //}
             }
         }
 

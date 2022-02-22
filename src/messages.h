@@ -10,29 +10,15 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
-
-//' askYesNoQuestion
-int askYesNoQuestion(std::string message) {
-        Rcpp::Environment base = Rcpp::Environment("package:base");
-        Rcpp::Function readline = base["readline"];
-        Rcpp::Function as_numeric = base["as.numeric"];
-        int cond = 10;
-        while((cond != 0) && (cond != 1)){
-        Rcpp::Rcout << message;
-        cond = Rcpp::as<int>(as_numeric(readline("> ")));
-        }
-      return cond;
-}
-
 //' warningMessage
 std::string warningMessage(int cond){
       std::string message = "undefined";
       switch(cond){
             case 0:
-                  message = "\033[1;33m Warning: the `time` variable is not sorted. Sorting will be forced. \033[0m\n"; //"\033[1;33m Warning: the `time` variable is not sorted. Sorting will be forced, continue? \n\n 1 --> Yes \n 0 --> No \033[0m\n";
+                  message = "\033[1;33m Warning: the `time` variable is not sorted. Sorting will be forced. \033[0m\n";
                   break;
             case 1:
-                  message = "\033[1;33m Warning: at least two events (or more) occurred at the same time point. The interevent time of such events will be evenly spaced. \033[0m\n"; //"\033[1;33m Warning: at least two events (or more) occurred at the same time point. The interevent time of such events will be evenly spaced, continue? \n\n 1 --> Yes \n 0 --> No \033[0m\n";
+                  message = "\033[1;33m Warning: at least two events (or more) occurred at the same time point. The interevent time of such events will be evenly spaced. \033[0m\n";
                   break;
             case 2:
                   message = "\033[1;33m Warning: both `origin` and first time point have the same value. `origin` is then automatically set either to one day/second before the first time point or to 0. \033[0m\n";
