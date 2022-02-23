@@ -17,7 +17,7 @@ The two main functions `reh()` and `remify()` perform respectively the processin
 The package contains code written in:
 * R (>= 4.0.0)
 * Rcpp (>= 1.0.4.6) and RcppArmadillo (>= 0.9.860.2.0)
-* C++11 (Compiler Version: GCC-8.1.0)
+* C++14
 	
 ### Installing the package
 To install the package in R using `devtools`:
