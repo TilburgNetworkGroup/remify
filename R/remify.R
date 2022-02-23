@@ -27,9 +27,15 @@ reh <- function(edgelist,
                 origin = NULL,
                 omit_dyad = NULL,
                 model = c("tie","actor")){
+    
+    # (1) Checking for 'edgelist' input object
 
     # Make sure edgelist is a data.frame
-    edgelist <- as.data.frame(edgelist)
+    if(!is.data.frame(edgelist)){
+      edgelist <- as.data.frame(edgelist)
+    }
+
+    # (2) Checking for `edgelist` columns (names and class of time variable)
      
     # Checking `edgelist$time` column
     if(!("time" %in% names(edgelist))){
@@ -53,8 +59,6 @@ reh <- function(edgelist,
     }
     if(!is.null(model) & !(model %in% c("tie","actor"))) stop("argument `model` must be set to either `tie` or `actor`")
 
-    # (2) Checking for `edgelist` columns (names and class of time variable)
-
     # (3) Checking for `origin` and `time` variable class (they must be the same)
 
     # (4) Checking for `riskset` object names 
@@ -62,12 +66,11 @@ reh <- function(edgelist,
     # (1) Checking for NA's 
 
     ## (1.1) NA's in `edgelist` :
-    if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
 	  if(anyNA(edgelist)) {
-		warning("The `edgelist` object contains missing data: incomplete events (rows) are dropped.")
-		to_remove <- which(is.na(edgelist), arr.ind = T)[,1]
+		warning("`edgelist` contains missing data: incomplete events are dropped.") # `edgelist` contains missing data: incomplete events (rows) are dropped.
+		to_remove <- unique(which(is.na(edgelist), arr.ind = T)[,1])
 		edgelist <- edgelist[-to_remove,]
-    if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
+    #if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
     }
 
     # Pre-processing relational event history (rehCpp_new.cpp)

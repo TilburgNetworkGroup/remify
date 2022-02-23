@@ -52,7 +52,8 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    testthat
+    testthat (>= 3.0.0),
+    usethis
 LinkingTo:
     Rcpp,
     RcppArmadillo
@@ -62,3 +63,4 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.2
 SystemRequirements: GNU make
+Config/testthat/edition: 3
