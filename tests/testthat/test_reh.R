@@ -16,7 +16,6 @@ test_that("reh", {
   # expectations on objects inside the 'reh' object
   expect_identical(names(out),c("M","N","C","D","intereventTime","edgelist","omit_dyad"))
   expect_equal(out$M, dim(randomREH$edgelist)[1])
-  expect_equal(out$edgelist[,1],as.numeric(randomREH$edgelist[,1]))
 
   # expectations on attributes of the 'reh' object 
   expect_identical(names(attributes(out)),c("names","class","with_type","weighted","directed","ordinal","model","riskset","dictionary","time"))
