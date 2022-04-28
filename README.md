@@ -1,4 +1,4 @@
-# remify (Version: 2.0.0)
+# remify (Version: 2.0.1)
 
 ### Table of contents
 * [About the package](#about-the-package)
@@ -16,7 +16,7 @@ The two main functions `reh()` and `remify()` perform respectively the processin
 ### Programming Languages
 The package contains code written in:
 * R (>= 4.0.0)
-* Rcpp (>= 1.0.4.6) and RcppArmadillo (>= 0.9.860.2.0)
+* Rcpp (>= 1.0.8.3) and RcppArmadillo (>= 0.11)
 * C++14
 	
 ### Installing the package
