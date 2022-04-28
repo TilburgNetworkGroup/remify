@@ -44,9 +44,9 @@ License: MIT + file LICENSE
 URL: https://github.com/TilburgNetworkGroup/remify
 BugReports: https://github.com/TilburgNetworkGroup/remify/issues
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.0.0)
 Imports:
-    Rcpp (>= 1.0.2)
+    Rcpp (>= 1.0.8.3)
 Suggests: 
     knitr,
     rmarkdown,

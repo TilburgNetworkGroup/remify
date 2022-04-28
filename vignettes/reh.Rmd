@@ -198,6 +198,7 @@ head(edgelist_reh$intereventTime)
 ```{r}
 head(edgelist_reh$edgelist)
 ```
+The column `time` corresponds to the cumulative sum of the elapsed time. The vector with the original `time` can be accessed via the attribute `attr(edgelist_reh,"time")$value`
 
 ------
 
