@@ -1,10 +1,12 @@
-# remify (Version: 2.0.1)
+# remify (Version: 2.0.0)
 
 ### Table of contents
-* [About the package](#about-the-package)
-* [Programming Languages](#programming-languages)
-* [Installing the package](#installing-the-package)
-* [Vignettes](#Vignettes)
+- [remify (Version: 2.0.0)](#remify-version-200)
+    - [Table of contents](#table-of-contents)
+    - [About the package](#about-the-package)
+    - [Programming Languages](#programming-languages)
+    - [Installing the package](#installing-the-package)
+    - [Vignettes](#vignettes)
 
 ### About the package
 The aim of the `remify` package is twofold:
