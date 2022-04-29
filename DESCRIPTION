@@ -2,7 +2,7 @@ Type: Package
 Package: remify
 Title: Processing and transforming REH to formats suitable for the
     remverse packages and more
-Version: 2.0.1
+Version: 2.0.0
 Date: 2022-01-11
 Authors@R: 
     c(person(given = "Giuseppe",

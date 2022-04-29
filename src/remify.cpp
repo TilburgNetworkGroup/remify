@@ -508,7 +508,6 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
 // @title convertInputREH
 //
 // @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
-// @param intereventTime vector of interevent times (vector of one's if ordinal is TRUE)
 // @param actorsDictionary dictionary of actor names 
 // @param typesDicitonary dictionary of event types 
 // @param M number of observed relational events
@@ -518,7 +517,7 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
 // @param model, "tie" or "actor" oriented
 //
 // @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
-Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, arma::vec intereventTime, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, arma::uword D, bool directed, Rcpp::List omit_dyad, std::string model) {
+Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, arma::uword D, bool directed, Rcpp::List omit_dyad, std::string model) {
     // for loop iterators
     arma::uword m,r,z,d,R,Z_r,D_r,D_rr;
     // counters for warningMessages
@@ -561,7 +560,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, arma::vec intereventTime, R
         dyad[m] = getDyadIndex(convertedActor1_m,convertedActor2_m,convertedType_m,N,directed);     
     }
 
-    Rcpp::DataFrame convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = arma::cumsum(intereventTime), // edgelist["time"], 
+    Rcpp::DataFrame convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"], 
     Rcpp::Named("dyad") = dyad, 
     Rcpp::Named("weight") = edgelist["weight"]);
 
@@ -897,7 +896,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     out["typesDictionary"] = typesDictionary;
 
     // Converting input edgelist and omit_dyad list according to the new id's for both actors and event types
-    Rcpp::List convertedInput = convertInputREH(edgelist,intereventTime["value"],actorsDictionary,typesDictionary,out["M"],out["D"],directed,omit_dyad,model);
+    Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],out["D"],directed,omit_dyad,model);
     out["edgelist"] = convertedInput["edgelist"];
     out["omit_dyad"] = convertedInput["omit_dyad"];
                                   
