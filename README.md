@@ -1,6 +1,6 @@
 # remify (Version: 2.0.0)
 
-A package for pre-processing the structure of REH data
+### A package for pre-processing the structure of REH data
 
 
 ### Table of contents
@@ -51,5 +51,4 @@ vignette(topic = "reh", package = "remify") # or simply vignette("reh") opens th
 The funder of this work is the ERC and the ERC project number is 758791.
 
 ### Author
-
-Giuseppe Arena, Tilburg University (Tilburg, The Netherlands). `g.arena@tilburguniversity.edu`
+Giuseppe Arena, Tilburg University (Tilburg, The Netherlands). (g.arena@tilburguniversity.edu)
