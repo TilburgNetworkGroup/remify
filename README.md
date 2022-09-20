@@ -1,12 +1,16 @@
 # remify (Version: 2.0.0)
 
+A package for pre-processing the structure of REH data
+
+
 ### Table of contents
-- [remify (Version: 2.0.0)](#remify-version-200)
-    - [Table of contents](#table-of-contents)
-    - [About the package](#about-the-package)
-    - [Programming Languages](#programming-languages)
-    - [Installing the package](#installing-the-package)
-    - [Vignettes](#vignettes)
+- [About the package](#about-the-package)
+- [Programming Languages](#programming-languages)
+- [Installing the package](#installing-the-package)
+- [Vignettes](#vignettes)
+- [Funding](#funding)
+- [Author](#author)
+
 
 ### About the package
 The aim of the `remify` package is twofold:
@@ -43,3 +47,9 @@ vignette(package = "remify") # returns all the vignettes available with the curr
 vignette(topic = "reh", package = "remify") # or simply vignette("reh") opens the vignette for the processing function reh()
 ```
 
+### Funding
+The funder of this work is the ERC and the ERC project number is 758791.
+
+### Author
+
+Giuseppe Arena, Tilburg University (Tilburg, The Netherlands). `g.arena@tilburguniversity.edu`

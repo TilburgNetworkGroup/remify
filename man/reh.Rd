@@ -21,9 +21,9 @@ reh(
 time with columns `time`, `actor1`, `actor2` and optionally `type` and 
 `weight`.}
 
-\item{actors}{vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be taken from the input edgelist.}
+\item{actors}{character vector of actors' names that may be observed interacting in the network. If \code{NULL}, actor names will be taken from the input edgelist.}
 
-\item{types}{vector of event types that may occur in the network. If \code{NULL}, type names will be taken from the input edgelist.}
+\item{types}{character vector of event types that may occur in the network. If \code{NULL}, type names will be taken from the input edgelist.}
 
 \item{directed}{logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).}
 

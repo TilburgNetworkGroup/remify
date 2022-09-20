@@ -17,6 +17,6 @@ This function returns a matrix describing the possible risk set changes specifie
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{reh}: dynamic riskset object
-}}
+\item \code{getDynamicRiskset(reh)}: dynamic riskset object
 
+}}

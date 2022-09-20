@@ -6,8 +6,8 @@
 #' \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
 #' time with columns `time`, `actor1`, `actor2` and optionally `type` and 
 #' `weight`.  
-#' @param actors vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be taken from the input edgelist.
-#' @param types vector of event types that may occur in the network. If \code{NULL}, type names will be taken from the input edgelist.
+#' @param actors character vector of actors' names that may be observed interacting in the network. If \code{NULL}, actor names will be taken from the input edgelist.
+#' @param types character vector of event types that may occur in the network. If \code{NULL}, type names will be taken from the input edgelist.
 #' @param directed logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).
 #' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
 #' @param origin time point since when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.

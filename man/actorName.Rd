@@ -19,6 +19,6 @@ A function that given a vector of actor ID's returns the corresponding vector of
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{reh}: actor's name from actor's ID
-}}
+\item \code{actorName(reh)}: actor's name from actor's ID
 
+}}

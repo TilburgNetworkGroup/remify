@@ -560,7 +560,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
         dyad[m] = getDyadIndex(convertedActor1_m,convertedActor2_m,convertedType_m,N,directed);     
     }
 
-    Rcpp::DataFrame convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"], 
+    Rcpp::DataFrame convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
     Rcpp::Named("dyad") = dyad, 
     Rcpp::Named("weight") = edgelist["weight"]);
 
@@ -804,7 +804,6 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
         Rcpp::DataFrame edgelist_loc = Rcpp::clone(edgelist);
         Rcpp::StringVector one_type_vector(edgelist.nrows(),"0");
         edgelist_loc.push_back(one_type_vector,"type");
-
         edgelist = Rcpp::as<Rcpp::DataFrame>(edgelist_loc);
     }
     else{
@@ -817,7 +816,6 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
         Rcpp::DataFrame edgelist_loc = Rcpp::clone(edgelist);
         Rcpp::NumericVector one_weight_vector(edgelist.nrows(),1.0);
         edgelist_loc.push_back(one_weight_vector,"weight");
-
         edgelist = Rcpp::as<Rcpp::DataFrame>(edgelist_loc);
     }
     else{

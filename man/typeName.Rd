@@ -19,6 +19,6 @@ A function that given a vector of type ID's returns the corresponding vector of 
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{reh}: type's name from type's ID
-}}
+\item \code{typeName(reh)}: type's name from type's ID
 
+}}
