@@ -21,7 +21,8 @@ The two main functions `reh()` and `remify()` perform respectively the processin
 
 ### Programming Languages
 The package contains code written in:
-* R (>= 4.0.0)
+* R (>= 4.2.0)
+* RTools (for R >= 4.2.0)
 * Rcpp (>= 1.0.8.3) and RcppArmadillo (>= 0.11)
 * C++14
 	
