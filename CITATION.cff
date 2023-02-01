@@ -1,0 +1,28 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: remify
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Giuseppe
+    family-names: Arena
+    email: g.arena@tilburguniversity.edu
+    affiliation: Tilburg University
+    orcid: 'https://orcid.org/0000-0001-5204-3326'
+identifiers:
+  - type: url
+    value: 'https://github.com/TilburgNetworkGroup/remify'
+    description: Github repository
+abstract: A package for pre-processing the structure of REH data
+keywords:
+  - relational events
+  - social network analysis
+  - longitudinal network data
+  - relational event history data
+license: MIT
+version: 2.0.0
+date-released: '2022-09-20'
