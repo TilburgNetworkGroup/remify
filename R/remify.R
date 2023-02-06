@@ -330,14 +330,59 @@ typeID.reh <- function(reh, typeName = NULL) {
 #######################################################################################
 
 
-#' @title remify 
+#' @title rehshape
 #'
-#' @description A function that transforms a \code{reh} object into one of the possible formats that suit external packages, or vice versa.
+#' @description A function that transforms a \code{reh} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from (to) an object of class \code{reh} to (from) a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2003).
 #'
-#' @param input an input argument for the function \code{remify()}.
+#' @param data an object of either class 'reh' (see function \code{remify::reh()}) or class 'relevent'. The class 'relevent' is an dummy class object that contains a list of objects named after the argument names of the function \code{relvent::rem()} that need to be converted. For instance, if one wants to convert an object of structure 'relevent' we need it to contain: 'eventlist' (mandatory), 'supplist' (optional), 'timing'(mandatory). If the object 'timing' is \code{NULL}, the output object will assume an \code{"interval"} timing. The 'supplist' object can be left uspecified (\code{NULL}).
+#' @param format a character indicating the output format which the input data has to be converted to. It can assume two values: "reh" , "relevent"
 #'
-#' @return  otuput of \code{remify()}.
+#' @return  an object of class specified by the \code{format} argument and containing the converted objects according to the required format
 #' @export
-remify <- function(input){
-                  # [...] 
-                }                   
+rehshape <- function(data, format = c("reh","relevent")){
+
+    format <- match.arg(format)
+    #format_data <- get_format_data(data)       
+    #if(format == control1){
+    #  warning("the origin format is the same as the destination format. The input data is returned")
+    #  return(data)
+    #}
+    format_data <- class(data) 
+
+
+    if(format_data ==  "reh"){
+      out <- NULL
+      if(format == "relevent"){
+        eventlist <- data$edgelist[,c(2,1)] # [dyad,time]
+        eventlist[,1] <- eventlist[,1]+1
+        eventlist[,2] <- attr(data,"time")$value[,1]
+        supplist <- NULL
+        if(!is.null(data$omit_dyad)){
+          #need to convert here the omit_dyad to the structure of the 'supplist' argument in relevent::rem
+          supplist <- matrix(TRUE,nrow=data$M,ncol=data$D)
+          for(m in 1:data$M){
+            if(data$omit_dyad$time[m]!=(-1)){
+              change_m <- data$omit_dyad$riskset[data$omit_dyad$time[m]+1,]
+              supplist[m,] <- change_m
+              rm(change_m)
+            }
+          }
+        }
+        timing <- ifelse(attr(data,"ordinal"),"ordinal","interval")
+        out <- structure(list(eventlist = eventlist,
+                              supplist = supplist,
+                              timing = timing),
+                        class = "relevent")
+      }
+      return(out)
+    }
+
+
+    if(format_data == "relevent"){
+      out <- NULL
+
+      return(out)
+    }
+         
+}                   
+
