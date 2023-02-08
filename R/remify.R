@@ -342,6 +342,8 @@ typeID.reh <- function(reh, typeName = NULL) {
 rehshape <- function(data, format = c("reh","relevent")){
 
     format <- match.arg(format)
+
+    # check and get format 'data'
     #format_data <- get_format_data(data)       
     #if(format == control1){
     #  warning("the origin format is the same as the destination format. The input data is returned")
@@ -353,21 +355,23 @@ rehshape <- function(data, format = c("reh","relevent")){
     if(format_data ==  "reh"){
       out <- NULL
       if(format == "relevent"){
+        # (1) processing the edgelist
         eventlist <- data$edgelist[,c(2,1)] # [dyad,time]
         eventlist[,1] <- eventlist[,1]+1
-        eventlist[,2] <- attr(data,"time")$value[,1]
+        eventlist[,2] <- attr(data,"time")$value[,1] # if the input argument 'origin' is provided, this lines should be coded differently
         supplist <- NULL
         if(!is.null(data$omit_dyad)){
-          #need to convert here the omit_dyad to the structure of the 'supplist' argument in relevent::rem
+          # (2) converting the omit_dyad output object to the 'supplist' argument in relevent::rem()
           supplist <- matrix(TRUE,nrow=data$M,ncol=data$D)
           for(m in 1:data$M){
             if(data$omit_dyad$time[m]!=(-1)){
               change_m <- data$omit_dyad$riskset[data$omit_dyad$time[m]+1,]
-              supplist[m,] <- change_m
+              supplist[m,] <- as.logical(change_m)
               rm(change_m)
             }
           }
         }
+        # (3) processing information about likelihood
         timing <- ifelse(attr(data,"ordinal"),"ordinal","interval")
         out <- structure(list(eventlist = eventlist,
                               supplist = supplist,
@@ -380,9 +384,67 @@ rehshape <- function(data, format = c("reh","relevent")){
 
     if(format_data == "relevent"){
       out <- NULL
+      
+      #convert from 'relevent' structure to 'reh'
 
+      # full riskset (this will have different actors' names than the original data)
+      dyads_l <- expand.grid(1:data$N,1:data$N) # number of actors 
+      dyads_l <- dyads_l[-which(dyads_l[,1]==dyads_l[,2]),]
+      dyads_l <- dyads_l[,c(2,1)] 
+      dyads_l <- data.frame(actor1=rep(dyads_l[,1],data$C),actor2=rep(dyads_l[,2],data$C),type=rep(1:data$C,each=data$N*(data$N-1))) # number of event types
+
+      # edgelist converted to [actor1,actor2,type]
+      data$M <- dim(data$eventlist)[1]
+      edgelist_orig <- data.frame(time = data$eventlist[,2], actor1 = rep(NA,data$M), actor2 = rep(NA,data$M), type = rep(NA,data$M))
+      for(m in 1:data$M){
+        edgelist_orig[m,2:4] <- dyads_l[data$eventlist[m,1],]
+      }
+
+      # convert supplist to omit_dyad (it remains NULL if supplist is NULL or has full riskset over all the time points)
+      converted_omit_dyad <- NULL
+      if(!is.null(data$supplist)){
+        check_changing_riskset <- sum(data$supplist)
+        if(check_changing_riskset < (data$M*data$N*(data$N-1)*data$C)){
+          converted_omit_dyad <- list()
+          converted_omit_dyad$riskset <- (rbind(unique(data$supplist)[-1,]))*1 # this operation can be faster at rcpp level
+          converted_omit_dyad$time <- rep(-1,data$M)
+          for(m in 1:data$M){
+            if(sum(data$supplist[m,]) < (data$N*(data$N-1)*data$C)){ #if there is a change in the riskset, we need to assign which row (in c++ notation it is in the riskset object matrix)
+            temp_mat <-  matrix(rep(data$supplist[m,],dim(converted_omit_dyad$riskset)[1]),nrow=dim(converted_omit_dyad$riskset)[1],byrow=TRUE)
+            find_loc <- apply(converted_omit_dyad$riskset - temp_mat,1,sum)
+            converted_omit_dyad$time[m] <- (which(find_loc==0)-1)
+            }
+          }
+        }
+      }
+
+      # create 'reh' class object
+      out <- remify::reh(edgelist = edgelist_orig,
+                          actors = as.character(1:data$N),
+                          types = as.character(1:data$C), 
+                          directed = TRUE, 
+                          ordinal = FALSE, 
+                          origin = NULL,
+                          omit_dyad = NULL, # set to NULL but added later
+                          model = "tie")
+      # we have to reorder the columns of converted_omit_dyad
+      dict_loc <- attr(out,"dictionary")
+      position_rearranged <- NULL
+        for(d in 1:dim(dyads_l)[1]){
+            sender_old <- dyads_l$actor1[d]-1
+            receiver_old <- dyads_l$actor2[d]-1 
+            type_old <- dyads_l$type[d]-1
+            
+            sender_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == sender_old)])-1
+            receiver_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == receiver_old)])-1
+            type_new <- as.numeric(dict_loc$types$typeName[which(dict_loc$types$typeID == type_old)])-1
+
+            position_new <- getDyadIndex(actor1=sender_new,actor2=receiver_new,type=type_new,N=out$N,directed=attr(out,"directed"))+1 
+            position_rearranged <- c(position_rearranged,position_new)
+          }
+        converted_omit_dyad$riskset <- converted_omit_dyad$riskset[,position_rearranged]
+        out$omit_dyad <- converted_omit_dyad
       return(out)
     }
          
 }                   
-
