@@ -344,15 +344,15 @@ rehshape <- function(data, output_format = c("reh","relevent")){
     output_format <- match.arg(output_format)
     data_format <- class(data)
     if(length(data_format)>1){
-      stop('class of input data must be of length 1')
+      stop("class of input data must be of length 1.")
     }
     # data has to be either of class 'reh' or 'relevent'
-    if(!all(data_format == c("reh","relevent"))){
-      stop('class of input data must be either `reh` or `relevent`. see help(rehshape) for more information about the input structure of the argument `data`') 
+    if(!any(data_format == c("reh","relevent"))){
+      stop("class of input data must be either `reh` or `relevent`.") 
     }
     # check data and output format
     if(data_format == output_format){
-      warning("the format of the input data is the same as the required output format. The input data is returned")
+      warning("the format of the input data is the same as the required output format. The input data is returned.")
       return(data)
     }
     
@@ -362,7 +362,7 @@ rehshape <- function(data, output_format = c("reh","relevent")){
       # check reh object here
       ## ##
       ## ## ##
-      # stop('')
+      # stop('') + add tests
       ## ##
 
       out <- NULL
@@ -370,7 +370,14 @@ rehshape <- function(data, output_format = c("reh","relevent")){
         # (1) processing the edgelist
         eventlist <- data$edgelist[,c(2,1)] # [dyad,time]
         eventlist[,1] <- eventlist[,1]+1
-        eventlist[,2] <- attr(data,"time")$value[,1] # if the input argument 'origin' is provided, this lines should be coded differently
+        if(is.null(attr(data,"time")$origin)){
+          eventlist[,2] <- attr(data,"time")$value[,1] # if 'origin' is NULL the we use the time column,
+        }
+        else{
+          eventlist[,2] <-cumsum(data$intereventTime) # if 'origin' is provided inside object 'reh', then the time variable is reconstructed via cumulative sum of intervent time variable 
+        }
+    
+        colnames(eventlist) <- c("dyad","time")
         supplist <- NULL
         if(!is.null(data$omit_dyad)){
           # (2) converting the omit_dyad output object to the 'supplist' argument in relevent::rem()
@@ -399,7 +406,7 @@ rehshape <- function(data, output_format = c("reh","relevent")){
       # check relevent object here
       ## ##
       ## ## ##
-      # stop('')
+      # stop('') + add tests
       ## ##
 
       out <- NULL
@@ -442,7 +449,7 @@ rehshape <- function(data, output_format = c("reh","relevent")){
                           types = as.character(1:data$C), 
                           directed = TRUE, 
                           ordinal = FALSE, 
-                          origin = NULL,
+                          origin = 0,
                           omit_dyad = NULL, # set to NULL but added later
                           model = "tie")
       # we have to reorder the columns of converted_omit_dyad

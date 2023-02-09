@@ -114,5 +114,4 @@ test_that("reh", {
                     model = "tie"),
     "`edgelist` contains missing data: incomplete events are dropped."
   )
-
 })
