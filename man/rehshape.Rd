@@ -4,16 +4,16 @@
 \alias{rehshape}
 \title{rehshape}
 \usage{
-rehshape(data, format = c("reh", "relevent"))
+rehshape(data, output_format = c("reh", "relevent"))
 }
 \arguments{
 \item{data}{an object of either class 'reh' (see function \code{remify::reh()}) or class 'relevent'. The class 'relevent' is an dummy class object that contains a list of objects named after the argument names of the function \code{relvent::rem()} that need to be converted. For instance, if one wants to convert an object of structure 'relevent' we need it to contain: 'eventlist' (mandatory), 'supplist' (optional), 'timing'(mandatory). If the object 'timing' is \code{NULL}, the output object will assume an \code{"interval"} timing. The 'supplist' object can be left uspecified (\code{NULL}).}
 
-\item{format}{a character indicating the output format which the input data has to be converted to. It can assume two values: "reh" , "relevent"}
+\item{output_format}{a character indicating the output format which the input data has to be converted to. It can assume two values: "reh" , "relevent"}
 }
 \value{
 an object of class specified by the \code{format} argument and containing the converted objects according to the required format
 }
 \description{
-A function that transforms a \code{reh} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from (to) an object of class \code{reh} to (from) a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2003).
+A function that transforms a \code{reh} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from (to) an object of class \code{reh} to (from) a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2023).
 }

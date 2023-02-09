@@ -332,29 +332,41 @@ typeID.reh <- function(reh, typeName = NULL) {
 
 #' @title rehshape
 #'
-#' @description A function that transforms a \code{reh} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from (to) an object of class \code{reh} to (from) a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2003).
+#' @description A function that transforms a \code{reh} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from (to) an object of class \code{reh} to (from) a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2023).
 #'
 #' @param data an object of either class 'reh' (see function \code{remify::reh()}) or class 'relevent'. The class 'relevent' is an dummy class object that contains a list of objects named after the argument names of the function \code{relvent::rem()} that need to be converted. For instance, if one wants to convert an object of structure 'relevent' we need it to contain: 'eventlist' (mandatory), 'supplist' (optional), 'timing'(mandatory). If the object 'timing' is \code{NULL}, the output object will assume an \code{"interval"} timing. The 'supplist' object can be left uspecified (\code{NULL}).
-#' @param format a character indicating the output format which the input data has to be converted to. It can assume two values: "reh" , "relevent"
+#' @param output_format a character indicating the output format which the input data has to be converted to. It can assume two values: "reh" , "relevent"
 #'
 #' @return  an object of class specified by the \code{format} argument and containing the converted objects according to the required format
 #' @export
-rehshape <- function(data, format = c("reh","relevent")){
+rehshape <- function(data, output_format = c("reh","relevent")){
 
-    format <- match.arg(format)
+    output_format <- match.arg(output_format)
+    data_format <- class(data)
+    if(length(data_format)>1){
+      stop('class of input data must be of length 1')
+    }
+    # data has to be either of class 'reh' or 'relevent'
+    if(!all(data_format == c("reh","relevent"))){
+      stop('class of input data must be either `reh` or `relevent`. see help(rehshape) for more information about the input structure of the argument `data`') 
+    }
+    # check data and output format
+    if(data_format == output_format){
+      warning("the format of the input data is the same as the required output format. The input data is returned")
+      return(data)
+    }
+    
+    # if data structure is 'reh'
+    if(data_format ==  "reh"){
 
-    # check and get format 'data'
-    #format_data <- get_format_data(data)       
-    #if(format == control1){
-    #  warning("the origin format is the same as the destination format. The input data is returned")
-    #  return(data)
-    #}
-    format_data <- class(data) 
+      # check reh object here
+      ## ##
+      ## ## ##
+      # stop('')
+      ## ##
 
-
-    if(format_data ==  "reh"){
       out <- NULL
-      if(format == "relevent"){
+      if(output_format == "relevent"){
         # (1) processing the edgelist
         eventlist <- data$edgelist[,c(2,1)] # [dyad,time]
         eventlist[,1] <- eventlist[,1]+1
@@ -382,9 +394,15 @@ rehshape <- function(data, format = c("reh","relevent")){
     }
 
 
-    if(format_data == "relevent"){
+    if(data_format == "relevent"){
+
+      # check relevent object here
+      ## ##
+      ## ## ##
+      # stop('')
+      ## ##
+
       out <- NULL
-      
       #convert from 'relevent' structure to 'reh'
 
       # full riskset (this will have different actors' names than the original data)
@@ -430,21 +448,29 @@ rehshape <- function(data, format = c("reh","relevent")){
       # we have to reorder the columns of converted_omit_dyad
       dict_loc <- attr(out,"dictionary")
       position_rearranged <- NULL
-        for(d in 1:dim(dyads_l)[1]){
-            sender_old <- dyads_l$actor1[d]-1
-            receiver_old <- dyads_l$actor2[d]-1 
-            type_old <- dyads_l$type[d]-1
-            
-            sender_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == sender_old)])-1
-            receiver_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == receiver_old)])-1
-            type_new <- as.numeric(dict_loc$types$typeName[which(dict_loc$types$typeID == type_old)])-1
+      for(d in 1:dim(dyads_l)[1]){
+        sender_old <- dyads_l$actor1[d]-1
+        receiver_old <- dyads_l$actor2[d]-1 
+        type_old <- dyads_l$type[d]-1
+        
+        sender_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == sender_old)])-1
+        receiver_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == receiver_old)])-1
+        type_new <- as.numeric(dict_loc$types$typeName[which(dict_loc$types$typeID == type_old)])-1
 
-            position_new <- getDyadIndex(actor1=sender_new,actor2=receiver_new,type=type_new,N=out$N,directed=attr(out,"directed"))+1 
-            position_rearranged <- c(position_rearranged,position_new)
-          }
-        converted_omit_dyad$riskset <- converted_omit_dyad$riskset[,position_rearranged]
-        out$omit_dyad <- converted_omit_dyad
+        position_new <- getDyadIndex(actor1=sender_new,actor2=receiver_new,type=type_new,N=out$N,directed=attr(out,"directed"))+1 
+        position_rearranged <- c(position_rearranged,position_new)
+      }
+      converted_omit_dyad$riskset <- converted_omit_dyad$riskset[,position_rearranged]
+      out$omit_dyad <- converted_omit_dyad
       return(out)
     }
          
 }                   
+
+
+
+
+
+
+
+
