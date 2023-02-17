@@ -1,6 +1,7 @@
 # remify (Version: 2.0.0)
 
 [![R-CMD-check](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml)
+[![test-coverage](https://github.com/TilburgNetworkGroup/remify/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/TilburgNetworkGroup/remify/actions/workflows/test-coverage.yaml)
 
 ### A package for pre-processing the structure of REH data
 
