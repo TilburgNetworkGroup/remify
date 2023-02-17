@@ -1,5 +1,7 @@
 # remify (Version: 2.0.0)
 
+[![R-CMD-check](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml)
+
 ### A package for pre-processing the structure of REH data
 
 
