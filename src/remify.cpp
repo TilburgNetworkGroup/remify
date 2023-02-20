@@ -520,8 +520,7 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
 Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, arma::uword D, bool directed, Rcpp::List omit_dyad, std::string model) {
     // for loop iterators
     arma::uword m,r,z,d,R,Z_r,D_r,D_rr;
-    // counters for warningMessages
-    int time_not_observed = 0;
+    // counter for warningMessages
     int undefined_dyad = 0;
     // Creating output list object
     std::vector<int> dyad(M);
@@ -605,15 +604,12 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
                     if(iterator_z !=  time.end()){
                         timeID_r.push_back(iterator_z - time.begin());
                     }
-                    else{
-                        time_not_observed++;
-                    }
                 }
             }
             if(timeID_r.size() == 2){
                 if(timeID_r[1]<timeID_r[0]){
                     // [[Rcpp::stop]] if converted time indices are not sorted, stop the function
-                    Rcpp::stop(errorMessage(2));
+                    Rcpp::stop(errorMessage(0));
                 }
             }
             else{
@@ -734,11 +730,8 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
         }
 
         // Warning messages
-        if(time_not_observed > 0){
-            Rcpp::Rcout << warningMessage(3); // when at least one time point supplied in omit_dyad was not found in the edgelist
-        }
         if(undefined_dyad > 0){
-            Rcpp::Rcout << warningMessage(4); // when at least one actor supplied in omit_dyad was not found in the edgelist
+            Rcpp::Rcout << warningMessage(3); // when at least one actor supplied in omit_dyad was not found in the edgelist
         }
 
         //(4) processing (converted to id's and to -1 when NA) omit_dyad

@@ -172,6 +172,71 @@ test_that("reh", {
     fixed = TRUE
   )
 
+  # errors from Rcpp functions, handled via expect_output(print(tryCatch(expr,error=function(e) e)),"error message",fixed=TRUE)
+  
+  # time points defined in omit_dyad are removed
+  reh_loc <- randomREH
+  reh_loc$omit_dyad[[1]]$time[2] <- reh_loc$edgelist$time[9000]+60
+  tryCatch_error_loc <- tryCatch(reh(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = reh_loc$types, 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = reh_loc$origin, # origin time is defiend
+                  omit_dyad = reh_loc$omit_dyad, 
+                  model = "tie"),error=function(e) e)
+  expect_output(print(tryCatch_error_loc),
+  "<Rcpp::exception: either start or stop in one of the elements in the list 'omit_dyad' are not found in the edgelist. Please, provide observed time points as start and stop values>",
+  fixed = TRUE
+  )
+  
+  # when more than two time points are supplied in any of the object inside `omit_dyad`
+  reh_loc <- randomREH
+  reh_loc$omit_dyad[[1]]$time <- c(reh_loc$omit_dyad[[1]]$time,reh_loc$edgelist$time[9000]+60)
+  tryCatch_error_loc <- tryCatch(reh(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = reh_loc$types, 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = reh_loc$origin, # origin time is defiend
+                  omit_dyad = reh_loc$omit_dyad, 
+                  model = "tie"),error=function(e) e)
+  expect_output(print(tryCatch_error_loc),
+  "<Rcpp::exception: Error: time vector in each element of the list 'omit_dyad' must be of length 2: start and stop time when the riskset changed>",
+  fixed = TRUE
+  )
+
+  # when more than two time points are supplied in any of the object inside `omit_dyad`
+  reh_loc <- randomREH
+  reh_loc$omit_dyad[[1]]$time <- c(reh_loc$omit_dyad[[1]]$time[2],reh_loc$omit_dyad[[1]]$time[1])
+  tryCatch_error_loc <- tryCatch(reh(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = reh_loc$types, 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = reh_loc$origin, # origin time is defiend
+                  omit_dyad = reh_loc$omit_dyad, 
+                  model = "tie"),error=function(e) e)
+  expect_output(print(tryCatch_error_loc),
+  "<Rcpp::exception: time vector in each element of the list 'omit_dyad' must be sorted so that elements indicate respectively start and stop time when the riskset changed>",
+  fixed = TRUE
+  )
+
+  # warning when directed = FALSE and model = "actor"
+  reh_loc <- randomREH
+  tryCatch_error_loc <- tryCatch(reh(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = reh_loc$types, 
+                  directed = FALSE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = reh_loc$origin, # origin time is defiend
+                  omit_dyad = reh_loc$omit_dyad, 
+                  model = "actor"),error=function(e) e)
+  expect_output(print(tryCatch_error_loc),
+  "<Rcpp::exception: Error: actor-oriented model can only work with directed networks>",
+  fixed = TRUE
+  )
+
   ## tests on warning messages ##
 
   # agument 'model' set to default
@@ -216,6 +281,36 @@ test_that("reh", {
                   omit_dyad = reh_loc$omit_dyad, 
                   model = "tie"),
   "Warning: the `time` variable is not sorted. Sorting will be forced.",
+  fixed = TRUE
+  )
+
+  # first `time` value and `origin` are the same
+  reh_loc <- randomREH
+  reh_loc$origin <- reh_loc$edgelist$time[1]
+  expect_output(reh(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = reh_loc$types, 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = reh_loc$origin, # origin time is defiend
+                  omit_dyad = reh_loc$omit_dyad, 
+                  model = "tie"),
+  "Warning: both `origin` and first time point have the same value. `origin` is then automatically set either to one day/second before the first time point or to 0.",
+  fixed = TRUE
+  )
+
+  # `time` column is not sorted
+  reh_loc <- randomREH
+  reh_loc$omit_dyad[[2]]$dyad$actor2[4] <-  as.character(rpois(1,lambda = 30)) 
+  expect_output(reh(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = reh_loc$types, 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = reh_loc$origin, # origin time is defiend
+                  omit_dyad = reh_loc$omit_dyad, 
+                  model = "tie"),
+  "Warning: one or more actors/types supplied in `omit_dyad` were not found in the edgelist. Therefore the corresponding rows defined in the data.frame `dyad` were removed.",
   fixed = TRUE
   )
 
