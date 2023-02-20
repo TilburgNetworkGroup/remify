@@ -14,7 +14,7 @@
       	> directed = TRUE
       	> ordinal = FALSE
       	> weighted = FALSE
-      	> time length ~ 1970-03-21 21:13:48 
+      	> time length ~ 80 days
       	> interevent time 
       		 >> minimum ~ 0.0011 seconds
       		 >> maximum ~ 5811.4011 seconds
@@ -35,7 +35,7 @@
       	> directed = TRUE
       	> ordinal = FALSE
       	> weighted = FALSE
-      	> time length ~ 1970-03-21 20:59:34 
+      	> time length ~ 80 days
       	> interevent time 
       		 >> minimum ~ 0.0011 seconds
       		 >> maximum ~ 5811.4011 seconds
@@ -56,7 +56,7 @@
       	> directed = TRUE
       	> ordinal = FALSE
       	> weighted = FALSE
-      	> time length ~ 1970-03-22 
+      	> time length ~ 80 days
       	> interevent time 
       		 >> minimum ~ 0.0069 days
       		 >> maximum ~ 1 days

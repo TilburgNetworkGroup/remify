@@ -156,8 +156,12 @@ summary.reh <- function(object,...){
   weighted <- paste("\t> weighted = ",attr(object,"weighted"),sep="")
   time_length <- NULL
   if(!attr(object,"ordinal")){
-    time_length_loc <- attr(object,"time")$value$time[object$M] - ifelse(is.null(attr(object,"time")$origin),(attr(object,"time")$value$time[1]-1),attr(object,"time")$origin)
-    time_length <- paste("\t> time length ~ ",round(time_length_loc)," ",attr(time_length_loc, "units"),sep="")
+    time_length <- attr(object,"time")$value$time[object$M]  
+    if(is.null(attr(object,"time")$origin))
+      time_length <- time_length - (attr(object,"time")$value$time[1]-1)
+    else
+      time_length <- time_length - attr(object,"time")$origin
+    time_length <- paste("\t> time length ~ ",round(time_length)," ",attr(time_length, "units"),sep="")
   }
 
   interevent_time <- NULL
