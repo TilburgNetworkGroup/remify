@@ -137,38 +137,38 @@ reh <- function(edgelist,
 #######################################################################################
 #######################################################################################
 
-#' @title print.reh
-#' @rdname print.reh
+#' @title summary.reh
+#' @rdname summary.reh
 #' @description A function that returns a summary of the event history.
-#' @param x is an \code{reh} object 
+#' @param object is an \code{reh} object 
 #' @param ... further arguments to be passed.
-#' @method print reh
+#' @method summary reh
 #' @export
-print.reh <- function(x,...){
+summary.reh <- function(object,...){
   title <- "Relational Event Network"
-  model <- paste("(processed for ",attr(x,"model"),"-oriented modeling):",sep="")
-  events <- paste("\t> events = ",x$M,sep="")
-  actors <- paste("\t> actors = ",x$N,sep="")
-  types <- paste("\t> (event) types = ",x$C,sep="")
-  riskset <- paste("\t> riskset = ",attr(x,"riskset"),sep="")
-  directed <- paste("\t> directed = ",attr(x,"directed"),sep="")
-  ordinal <- paste("\t> ordinal = ",attr(x,"ordinal"),sep="")
-  weighted <- paste("\t> weighted = ",attr(x,"weighted"),sep="")
+  model <- paste("(processed for ",attr(object,"model"),"-oriented modeling):",sep="")
+  events <- paste("\t> events = ",object$M,sep="")
+  actors <- paste("\t> actors = ",object$N,sep="")
+  types <- paste("\t> (event) types = ",object$C,sep="")
+  riskset <- paste("\t> riskset = ",attr(object,"riskset"),sep="")
+  directed <- paste("\t> directed = ",attr(object,"directed"),sep="")
+  ordinal <- paste("\t> ordinal = ",attr(object,"ordinal"),sep="")
+  weighted <- paste("\t> weighted = ",attr(object,"weighted"),sep="")
   time_length <- NULL
-  if(!attr(x,"ordinal")){
-    time_length_loc <- attr(x,"time")$value$time[x$M] - ifelse(is.null(attr(x,"time")$origin),(attr(x,"time")$value$time[1]-1),attr(x,"time")$origin)
+  if(!attr(object,"ordinal")){
+    time_length_loc <- attr(object,"time")$value$time[object$M] - ifelse(is.null(attr(object,"time")$origin),(attr(object,"time")$value$time[1]-1),attr(object,"time")$origin)
     time_length <- paste("\t> time length ~ ",round(time_length_loc)," ",attr(time_length_loc, "units"),sep="")
   }
 
   interevent_time <- NULL
-  if(!attr(x,"ordinal")){
-    min_interevent_time <- min(x$intereventTime) 
-    max_interevent_time <- max(x$intereventTime)
+  if(!attr(object,"ordinal")){
+    min_interevent_time <- min(object$intereventTime) 
+    max_interevent_time <- max(object$intereventTime)
     units_minmax <- NULL # in case it is either numeric or integer
-    if((length(attr(x,"time")$class)==1) & (attr(x,"time")$class[1] == "Date")){ # is a Date (until days)
+    if((length(attr(object,"time")$class)==1) & (attr(object,"time")$class[1] == "Date")){ # is a Date (until days)
       units_minmax <- "days"   
     }
-    else if(!is.numeric(attr(x,"time")$value$time) & !is.integer(attr(x,"time")$value$time)){ # is a timestamp (until seconds)
+    else if(!is.numeric(attr(object,"time")$value$time) & !is.integer(attr(object,"time")$value$time)){ # is a timestamp (until seconds)
       units_minmax <- "seconds"
     }
     interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ",round(min_interevent_time,4)," ",units_minmax,"\n\t\t >> maximum ~ ",round(max_interevent_time,4)," ",units_minmax,"\n",sep="")

@@ -349,10 +349,42 @@ test_that("reh", {
 })
 
 
-test_that("test (1) on method print()",{
+test_that("test (1) on method summary()",{
   reh_loc <- randomREH
   expect_snapshot(
-    reh(edgelist = reh_loc$edgelist,
+    summary(reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = reh_loc$origin,
+                    omit_dyad = reh_loc$omit_dyad,
+                    model = "tie")))
+})
+
+test_that("test (2) on method summary()",{
+  ## without input 'origin'
+  reh_loc <- randomREH
+  expect_snapshot(
+    summary(reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = NULL,
+                    omit_dyad = reh_loc$omit_dyad,
+                    model = "tie"))
+  )
+})
+
+test_that("test (3) on method summary()",{
+  ## time input set to Date
+  reh_loc <- randomREH
+  reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
+  reh_loc$origin <- as.Date(reh_loc$origin)-1
+  reh_loc$omit_dyad <- NULL
+  expect_snapshot(
+    summary(reh(edgelist = reh_loc$edgelist,
                     actors = reh_loc$actors,
                     types = reh_loc$types, 
                     directed = TRUE, # events are directed
@@ -360,37 +392,5 @@ test_that("test (1) on method print()",{
                     origin = reh_loc$origin,
                     omit_dyad = reh_loc$omit_dyad,
                     model = "tie"))
-})
-
-test_that("test (2) on method print()",{
-  ## without input 'origin'
-  reh_loc <- randomREH
-  expect_snapshot(
-    reh(edgelist = reh_loc$edgelist,
-                    actors = reh_loc$actors,
-                    types = reh_loc$types, 
-                    directed = TRUE, # events are directed
-                    ordinal = FALSE, # REM with waiting times
-                    origin = NULL,
-                    omit_dyad = reh_loc$omit_dyad,
-                    model = "tie")
-  )
-})
-
-test_that("test (3) on method print()",{
-  ## time input set to Date
-  reh_loc <- randomREH
-  reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
-  reh_loc$origin <- as.Date(reh_loc$origin)-1
-  reh_loc$omit_dyad <- NULL
-  expect_snapshot(
-    reh(edgelist = reh_loc$edgelist,
-                    actors = reh_loc$actors,
-                    types = reh_loc$types, 
-                    directed = TRUE, # events are directed
-                    ordinal = FALSE, # REM with waiting times
-                    origin = reh_loc$origin,
-                    omit_dyad = reh_loc$omit_dyad,
-                    model = "tie")
   )
 })
