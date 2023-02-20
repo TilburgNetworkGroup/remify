@@ -140,7 +140,7 @@ test_that("reh", {
     fixed = TRUE
   )
 
-    # class of `time` in 'omit_dyad' and class of 'time' column in 'edgelist' are different (at least for one object inside omit_dyad)
+  # class of `time` in 'omit_dyad' and class of 'time' column in 'edgelist' are different (at least for one object inside omit_dyad)
   reh_loc <- randomREH
   reh_loc$omit_dyad[[1]]$time <- as.Date(reh_loc$omit_dyad[[1]]$time)
   expect_error(
@@ -202,6 +202,21 @@ test_that("reh", {
                     model = "tie"),
     "`edgelist` contains missing data: incomplete events are dropped.",
     fixed = TRUE
+  )
+
+  # `time` column is not sorted
+  reh_loc <- randomREH
+  reh_loc$edgelist$time[1:100] <- reh_loc$edgelist$time[c(100:1)]
+  expect_output(reh(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = reh_loc$types, 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = reh_loc$origin, # origin time is defiend
+                  omit_dyad = reh_loc$omit_dyad, 
+                  model = "tie"),
+  "Warning: the `time` variable is not sorted. Sorting will be forced.",
+  fixed = TRUE
   )
 
   # method dim()
