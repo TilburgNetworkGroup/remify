@@ -47,7 +47,7 @@
       directed = TRUE, ordinal = FALSE, origin = reh_loc$origin, omit_dyad = reh_loc$
         omit_dyad, model = "tie")
     Output
-      [1;33m Warning: at least two events (or more) occurred at the same time point. The interevent time of such events will be evenly spaced. [0m
+      Warning: at least two events (or more) occurred at the same time point. The interevent time of such events will be evenly spaced.
       Relational Event Network
       (processed for tie-oriented modeling):
       	> events = 9915

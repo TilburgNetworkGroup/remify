@@ -15,19 +15,19 @@ std::string warningMessage(int cond){
       std::string message = "undefined";
       switch(cond){
             case 0:
-                  message = "\033[1;33m Warning: the `time` variable is not sorted. Sorting will be forced. \033[0m\n";
+                  message = "Warning: the `time` variable is not sorted. Sorting will be forced.";
                   break;
             case 1:
-                  message = "\033[1;33m Warning: at least two events (or more) occurred at the same time point. The interevent time of such events will be evenly spaced. \033[0m\n";
+                  message = "Warning: at least two events (or more) occurred at the same time point. The interevent time of such events will be evenly spaced.";
                   break;
             case 2:
-                  message = "\033[1;33m Warning: both `origin` and first time point have the same value. `origin` is then automatically set either to one day/second before the first time point or to 0. \033[0m\n";
+                  message = "Warning: both `origin` and first time point have the same value. `origin` is then automatically set either to one day/second before the first time point or to 0.";
                   break;
             case 3:
-                  message = "\033[1;33m Warning: one or more time points supplied in `omit_dyad` were not found in the edgelist. Therefore they were removed. \033[0m\n";
+                  message = "Warning: one or more time points supplied in `omit_dyad` were not found in the edgelist. Therefore they were removed.";
                   break;
             case 4:
-                  message = "\033[1;33m Warning: one or more actors/types supplied in `omit_dyad` were not found in the edgelist. Therefore the corresponding rows defined in the data.frame `dyad` were removed. \033[0m\n";
+                  message = "Warning: one or more actors/types supplied in `omit_dyad` were not found in the edgelist. Therefore the corresponding rows defined in the data.frame `dyad` were removed.";
                   break;            
       }
       return message;
