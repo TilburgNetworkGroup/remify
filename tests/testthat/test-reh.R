@@ -24,8 +24,100 @@ test_that("reh", {
   expect_true(attr(out,"directed"))
   expect_identical(attr(out,"model"),"tie")
 
+  ## if the input `edgelist`` does not have a type column
+  reh_loc <- randomREH
+  reh_loc$edgelist$type <- NULL
+  out <- reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = NULL, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = reh_loc$origin,
+                    omit_dyad = reh_loc$omit_dyad,
+                    model = "tie")
+  expect_equal(out$C,1)
+
+  ## if the input `edgelist`` has a weight column
+  reh_loc <- randomREH
+  reh_loc$edgelist$weight <- rep(0.5,dim(reh_loc$edgelist)[1])
+  out <- reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = reh_loc$origin,
+                    omit_dyad = reh_loc$omit_dyad,
+                    model = "tie")
+  expect_equal(reh_loc$edgelist$weight,out$edgelist[,3])
+
+  ## processing the input `omit_dyad` when the network is undirected
+  reh_loc <- randomREH
+  reh_loc$omit_dyad[[2]]$dyad <- rbind(reh_loc$omit_dyad[[2]]$dyad,c("Megan","Zackary",NA))
+  out <- reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = FALSE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = reh_loc$origin,
+                    omit_dyad = reh_loc$omit_dyad,
+                    model = "tie")
+  expect_true(!is.null(out$omit_dyad))
+
+  ## if the input `omit_dyad` contains other possible definitions of time intervals
+  reh_loc <- randomREH
+  reh_loc$omit_dyad[[1]]$time[1] <- NA
+  reh_loc$omit_dyad[[2]]$time[2] <- NA
+  out <- reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = reh_loc$origin,
+                    omit_dyad = reh_loc$omit_dyad,
+                    model = "tie")
+  expect_true(!is.null(out$omit_dyad))
+
+  ## creating a new omit_dyad object to test more complex overlapping of time intervals
+  # [ ... code here ... ]
 
 
+  ## creating a new omit_dyad object to test different dyads specifications
+  reh_loc <- randomREH
+  reh_loc$omit_dyad[[2]]$dyad <- data.frame(actor1=c("Megan","Richard",NA,"Derek"),actor2=c("Zackary",NA,"Crystal","Lexy"),type=c("conflict","conflict","conflict",NA))
+  # tested for the tie-oriented framework
+  out <- reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = reh_loc$origin,
+                    omit_dyad = reh_loc$omit_dyad,
+                    model = "tie")
+  expect_true(!is.null(out$omit_dyad))
+  # tested for the actor-oriented framework
+  out <- reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = reh_loc$origin,
+                    omit_dyad = reh_loc$omit_dyad,
+                    model = "actor")
+  expect_true(!is.null(out$omit_dyad))
+  
+
+  # test on integer time variable (Rcpp level)
+  reh_loc <- randomREH
+  reh_loc$edgelist$time <- 1:dim(reh_loc$edgelist)[1]
+  out <- reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = NULL,
+                    omit_dyad = NULL,
+                    model = "tie")
+  expect_equal(reh_loc$edgelist$time,out$edgelist[,1])
   ## tests on error messages ##
 
   # 'edgelist' is not a data.frame
@@ -172,62 +264,6 @@ test_that("reh", {
     fixed = TRUE
   )
 
-  ## if the input `edgelist`` does not have a type column
-  reh_loc <- randomREH
-  reh_loc$edgelist$type <- NULL
-  out <- reh(edgelist = reh_loc$edgelist,
-                    actors = reh_loc$actors,
-                    types = NULL, 
-                    directed = TRUE, # events are directed
-                    ordinal = FALSE, # REM with waiting times
-                    origin = reh_loc$origin,
-                    omit_dyad = reh_loc$omit_dyad,
-                    model = "tie")
-  expect_equal(out$C,1)
-
-  ## if the input `edgelist`` has a weight column
-  reh_loc <- randomREH
-  reh_loc$edgelist$weight <- rep(0.5,dim(reh_loc$edgelist)[1])
-  out <- reh(edgelist = reh_loc$edgelist,
-                    actors = reh_loc$actors,
-                    types = reh_loc$types, 
-                    directed = TRUE, # events are directed
-                    ordinal = FALSE, # REM with waiting times
-                    origin = reh_loc$origin,
-                    omit_dyad = reh_loc$omit_dyad,
-                    model = "tie")
-  expect_equal(reh_loc$edgelist$weight,out$edgelist[,3])
-
-  ## processing the input `omit_dyad` when the network is undirected
-  reh_loc <- randomREH
-  reh_loc$omit_dyad[[2]]$dyad <- rbind(reh_loc$omit_dyad[[2]]$dyad,c("Megan","Zackary",NA))
-  out <- reh(edgelist = reh_loc$edgelist,
-                    actors = reh_loc$actors,
-                    types = reh_loc$types, 
-                    directed = FALSE, # events are directed
-                    ordinal = FALSE, # REM with waiting times
-                    origin = reh_loc$origin,
-                    omit_dyad = reh_loc$omit_dyad,
-                    model = "tie")
-  expect_true(!is.null(out$omit_dyad))
-
-  ## if the input `omit_dyad` contains other possible definitions of time intervals
-  reh_loc <- randomREH
-  reh_loc$omit_dyad[[1]]$time[1] <- NA
-  reh_loc$omit_dyad[[2]]$time[2] <- NA
-  out <- reh(edgelist = reh_loc$edgelist,
-                    actors = reh_loc$actors,
-                    types = reh_loc$types, 
-                    directed = TRUE, # events are directed
-                    ordinal = FALSE, # REM with waiting times
-                    origin = reh_loc$origin,
-                    omit_dyad = reh_loc$omit_dyad,
-                    model = "tie")
-  expect_true(!is.null(out$omit_dyad))
-
-  ## creating a new omit_dyad object to test more complex overlapping of time intervals
-  # [ ... code here ... ]
-
   # errors from Rcpp functions, handled via expect_output(print(tryCatch(expr,error=function(e) e)),"error message",fixed=TRUE)
   
   # time points defined in omit_dyad are removed
@@ -368,6 +404,21 @@ test_that("reh", {
                   model = "tie"),
   "Warning: one or more actors/types supplied in `omit_dyad` were not found in the edgelist. Therefore the corresponding rows defined in the data.frame `dyad` were removed.",
   fixed = TRUE
+  )
+
+  # Events occurring at the same time point (this also tests a line on the Rcpp about the last two events occurring at the same time point)
+  reh_loc <- randomREH
+  reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
+  expect_output(reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = NULL,
+                    omit_dyad = NULL,
+                    model = "tie"),
+  "Warning: at least two events (or more) occurred at the same time point. The interevent time of such events will be evenly spaced.",
+  fixed = TRUE                 
   )
 
   # method dim()
