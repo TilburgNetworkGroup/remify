@@ -41,6 +41,9 @@ jobs:
           ## --------------------------------------------------------------------
           find ${{ runner.temp }}/package -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
+      
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
 
       - name: Upload test results
         if: failure()
