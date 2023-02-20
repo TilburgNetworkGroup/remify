@@ -9,7 +9,7 @@ test_that("rehshape", {
                     model = "tie")
 
     ## tests on converted relevent object ##
-    
+    expect_no_error(rehshape(data = out, output_format = "relevent"))
     to_relevent_obj <- rehshape(data = out, output_format = "relevent") 
 
     # expectations on output object features
@@ -47,5 +47,16 @@ test_that("rehshape", {
     class(to_relevent_obj) <- c("relevent")
     expect_warning(rehshape(data = to_relevent_obj, output_format = "relevent"),
     "the format of the input data is the same as the required output format. The input data is returned.")
+
+    ## expecting no errors if origin = NULL
+    out <- reh(edgelist = randomREH$edgelist,
+                actors = randomREH$actors,
+                types = randomREH$types, 
+                directed = TRUE, # events are directed
+                ordinal = FALSE, # REM with waiting times
+                origin = NULL, # origin time is defiend
+                omit_dyad = randomREH$omit_dyad, 
+                model = "tie")
+    expect_no_error(rehshape(data = out, output_format = "relevent"))     
 
 })

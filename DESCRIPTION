@@ -47,10 +47,12 @@ Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
-    usethis
+    usethis,
+    xml2
 LinkingTo:
     Rcpp,
-    RcppArmadillo
+    RcppArmadillo,
+    testthat
 VignetteBuilder: 
     knitr
 Encoding: UTF-8

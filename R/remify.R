@@ -32,7 +32,7 @@ reh <- function(edgelist,
 
     # Make sure edgelist is a data.frame
     if(!is.data.frame(edgelist)){
-      edgelist <- as.data.frame(edgelist)
+      stop("input `edgelist` must be of class `data.frame`.")
     }
 
     # (2) Checking for `edgelist` columns (names and class of time variable)
@@ -57,11 +57,34 @@ reh <- function(edgelist,
         model <- "tie"
         warning("argument `model` set to `tie` by default")
     }
-    if(!is.null(model) & !(model %in% c("tie","actor"))) stop("argument `model` must be set to either `tie` or `actor`")
+    if(!is.null(model) & !(model %in% c("tie","actor"))) stop("argument `model` must be set to either `tie` or `actor`.")
 
-    # (3) Checking for `origin` and `time` variable class (they must be the same)
+    # (3) Checking for time variable classes (they must be the same)
 
-    # (4) Checking for `riskset` object names 
+    # input `origin` and `time` column in `edgelist`
+    if(!is.null(origin)){
+      if(any(class(origin) != class(edgelist$time)))
+        stop("the class of input `origin` and the class of `edgelist$time` must be the same.")
+    }
+
+    # input `omit_dyad` and `time` column in `edgelist`
+    if(!is.null(omit_dyad)){
+      if(!is.list(omit_dyad)){
+        stop("the input `omit_dyad` must be a list. Check vignette(topic = 'reh', package= 'remify') for more information.")
+      }
+      else{
+        obj_names_check <- unlist(lapply(omit_dyad,function(x) sort(names(x))==c("dyad","time")))
+        if(all(obj_names_check)){
+          class_time_check <- unlist(lapply(omit_dyad, function(x) all(class(x$time) == class(edgelist$time))))
+          if(!all(class_time_check)){
+            stop("the class of the time specified in `omit_dyad` and the class of `edgelist$time` must be the same.")
+          }
+        }
+        else{
+          stop("the input `omit_dyad` must be a collection of lists with two named objects: `dyad` and `time`. Check vignette(topic = 'reh', package= 'remify') for more information.")
+        }
+      }
+    }
 
     # (1) Checking for NA's 
 
@@ -114,43 +137,41 @@ reh <- function(edgelist,
 #######################################################################################
 #######################################################################################
 
-#' @title summary.reh
-#' @rdname summary.reh
+#' @title print.reh
+#' @rdname print.reh
 #' @description A function that returns a summary of the event history.
-#' @param object is an \code{reh} object 
+#' @param x is an \code{reh} object 
 #' @param ... further arguments to be passed.
-#' @method summary reh
+#' @method print reh
 #' @export
-summary.reh <- function(object,...){
+print.reh <- function(x,...){
   title <- "Relational Event Network"
-  model <- paste("(processed for ",attr(object,"model"),"-oriented modeling):",sep="")
-  events <- paste("\t> events = ",object$M,sep="")
-  actors <- paste("\t> actors = ",object$N,sep="")
-  types <- paste("\t> (event) types = ",object$C,sep="")
-  riskset <- paste("\t> riskset = ",attr(object,"riskset"),sep="")
-  directed <- paste("\t> directed = ",attr(object,"directed"),sep="")
-  ordinal <- paste("\t> ordinal = ",attr(object,"ordinal"),sep="")
-  weighted <- paste("\t> weighted = ",attr(object,"weighted"),sep="")
+  model <- paste("(processed for ",attr(x,"model"),"-oriented modeling):",sep="")
+  events <- paste("\t> events = ",x$M,sep="")
+  actors <- paste("\t> actors = ",x$N,sep="")
+  types <- paste("\t> (event) types = ",x$C,sep="")
+  riskset <- paste("\t> riskset = ",attr(x,"riskset"),sep="")
+  directed <- paste("\t> directed = ",attr(x,"directed"),sep="")
+  ordinal <- paste("\t> ordinal = ",attr(x,"ordinal"),sep="")
+  weighted <- paste("\t> weighted = ",attr(x,"weighted"),sep="")
   time_length <- NULL
-  if(!attr(object,"ordinal")){
-    time_length_loc <- attr(object,"time")$value$time[object$M] 
-    if(is.null(attr(object,"time")$origin)){time_length_loc <- time_length_loc - (attr(object,"time")$value$time[1]-1)}
-    else{time_length_loc <- time_length_loc - attr(object,"time")$origin}
+  if(!attr(x,"ordinal")){
+    time_length_loc <- attr(x,"time")$value$time[x$M] - ifelse(is.null(attr(x,"time")$origin),(attr(x,"time")$value$time[1]-1),attr(x,"time")$origin)
     time_length <- paste("\t> time length ~ ",round(time_length_loc)," ",attr(time_length_loc, "units"),sep="")
   }
 
   interevent_time <- NULL
-  if(!attr(object,"ordinal")){
-    min_interevent_time <- min(object$intereventTime) 
-    max_interevent_time <- max(object$intereventTime)
+  if(!attr(x,"ordinal")){
+    min_interevent_time <- min(x$intereventTime) 
+    max_interevent_time <- max(x$intereventTime)
     units_minmax <- NULL # in case it is either numeric or integer
-    if((length(attr(object,"time")$class)==1) & (attr(object,"time")$class[1] == "Date")){ # is a Date (until days)
+    if((length(attr(x,"time")$class)==1) & (attr(x,"time")$class[1] == "Date")){ # is a Date (until days)
       units_minmax <- "days"   
     }
-    else if(!is.numeric(attr(object,"time")$value$time) & !is.integer(attr(object,"time")$value$time)){ # is a timestamp (until seconds)
+    else if(!is.numeric(attr(x,"time")$value$time) & !is.integer(attr(x,"time")$value$time)){ # is a timestamp (until seconds)
       units_minmax <- "seconds"
     }
-    interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ",round(min_interevent_time,4)," ",units_minmax,"\n\t\t >> maximum ~ ",round(max_interevent_time,4)," ",units_minmax,sep="")
+    interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ",round(min_interevent_time,4)," ",units_minmax,"\n\t\t >> maximum ~ ",round(max_interevent_time,4)," ",units_minmax,"\n",sep="")
   }
 
   cat(paste(title,model,events,actors,types,riskset,directed,ordinal,weighted,time_length,interevent_time,sep="\n"))
@@ -216,15 +237,15 @@ actorName <- function(reh, actorID = NULL){
 #' @export
 actorName.reh <- function(reh, actorID = NULL) {
   names <- NULL
-  if(is.null(actorID)) stop("Provide at least one actorID.")
+  if(is.null(actorID)) stop("provide at least one actorID.")
   else{ 
     if(!is.null(actorID)){
       actors <- attr(reh, "dictionary")$actors
       which_actor <- sapply(actorID, function(x) which(actors$actorID == x))
       which_actor <- unlist(which_actor)
       names <- actors$actorName[which_actor]
-      if(length(names) == 0) stop("No actorID was found in the dictionary.")
-      else if(length(names) < length(actorID)) warning("Some actorID was not found in the dictionary.") 
+      if(length(names) == 0) stop("no actorID was found in the dictionary.")
+      else if(length(names) < length(actorID)) warning("some actorID was not found in the dictionary.") 
     }
   }
   return(names)
@@ -247,15 +268,15 @@ typeName <- function(reh, typeID = NULL){
 #' @export
 typeName.reh <- function(reh, typeID = NULL) {
   names <- NULL
-  if(is.null(typeID)) stop("Provide at least one typeID.")
+  if(is.null(typeID)) stop("provide at least one typeID.")
   else{ 
     if(!is.null(typeID)){
       types <- attr(reh, "dictionary")$types
       which_type <- sapply(typeID, function(x) which(types$typeID == x))
       which_type <- unlist(which_type)
       names <- types$typeName[which_type]
-      if(length(names) == 0) stop("No typeID was found in the dictionary.")
-      else if(length(names) < length(typeID)) warning("Some typeID was not found in the dictionary.")       
+      if(length(names) == 0) stop("no typeID was found in the dictionary.")
+      else if(length(names) < length(typeID)) warning("some typeID was not found in the dictionary.")       
     }
   }
   return(names)
@@ -278,15 +299,15 @@ actorID <- function(reh, actorName = NULL){
 #' @export
 actorID.reh <- function(reh, actorName = NULL) {
   IDs <- NULL
-  if(is.null(actorName)) stop("Provide at least one actorName.")
+  if(is.null(actorName)) stop("provide at least one actorName.")
   else{ 
     if(!is.null(actorName)){
       actors <- attr(reh, "dictionary")$actors
       which_actor <- sapply(actorName, function(x) which(actors$actorName == x))
       which_actor <- unlist(which_actor)
       IDs <- actors$actorID[which_actor]
-      if(length(IDs) == 0) stop("No actorName was found in the dictionary.")
-      else if(length(IDs) < length(actorName)) warning("Some actorName was not found in the dictionary.") 
+      if(length(IDs) == 0) stop("no actorName was found in the dictionary.")
+      else if(length(IDs) < length(actorName)) warning("some actorName was not found in the dictionary.") 
     }
   }
   return(IDs)
@@ -309,15 +330,15 @@ typeID <- function(reh, typeName = NULL){
 #' @export
 typeID.reh <- function(reh, typeName = NULL) {
   IDs <- NULL
-  if(is.null(typeName)) stop("Provide at least one typeName.")
+  if(is.null(typeName)) stop("provide at least one typeName.")
   else{ 
     if(!is.null(typeName)){
       types <- attr(reh, "dictionary")$types
       which_type <- sapply(typeName, function(x) which(types$typeName == x))
       which_type <- unlist(which_type)
       IDs <- types$typeID[which_type]
-      if(length(IDs) == 0) stop("No typeName was found in the dictionary.")
-      else if(length(IDs) < length(typeName)) warning("Some typeName was not found in the dictionary.")       
+      if(length(IDs) == 0) stop("no typeName was found in the dictionary.")
+      else if(length(IDs) < length(typeName)) warning("some typeName was not found in the dictionary.")       
     }
   }
   return(IDs)
