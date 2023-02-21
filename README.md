@@ -1,5 +1,4 @@
-# remify 
-
+# remify <img align="right" width="135" src='man/figures/remify-logo.png'>
 
 [![github-repo-status](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![R-package-version](https://img.shields.io/github/r-package/v/TilburgNetworkGroup/remify)](https://www.github.com/TilburgNetworkGroup/remify)
