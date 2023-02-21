@@ -24,7 +24,7 @@ test_that("reh", {
   expect_true(attr(out,"directed"))
   expect_identical(attr(out,"model"),"tie")
 
-  ## if the input `edgelist`` does not have a type column
+  # if the input `edgelist`` does not have a type column
   reh_loc <- randomREH
   reh_loc$edgelist$type <- NULL
   out <- reh(edgelist = reh_loc$edgelist,
@@ -37,7 +37,7 @@ test_that("reh", {
                     model = "tie")
   expect_equal(out$C,1)
 
-  ## if the input `edgelist`` has a weight column
+  # if the input `edgelist`` has a weight column
   reh_loc <- randomREH
   reh_loc$edgelist$weight <- rep(0.5,dim(reh_loc$edgelist)[1])
   out <- reh(edgelist = reh_loc$edgelist,
@@ -50,7 +50,7 @@ test_that("reh", {
                     model = "tie")
   expect_equal(reh_loc$edgelist$weight,out$edgelist[,3])
 
-  ## processing the input `omit_dyad` when the network is undirected
+  # processing the input `omit_dyad` when the network is undirected
   reh_loc <- randomREH
   reh_loc$omit_dyad[[2]]$dyad <- rbind(reh_loc$omit_dyad[[2]]$dyad,c("Megan","Zackary",NA))
   out <- reh(edgelist = reh_loc$edgelist,
@@ -63,7 +63,7 @@ test_that("reh", {
                     model = "tie")
   expect_true(!is.null(out$omit_dyad))
 
-  ## if the input `omit_dyad` contains other possible definitions of time intervals
+  # if the input `omit_dyad` contains time intervals of the type [start = NA, stop = x] or [start = x, stop = NA]
   reh_loc <- randomREH
   reh_loc$omit_dyad[[1]]$time[1] <- NA
   reh_loc$omit_dyad[[2]]$time[2] <- NA
@@ -81,10 +81,11 @@ test_that("reh", {
   # [ ... code here ... ]
 
 
-  ## creating a new omit_dyad object to test different dyads specifications
+  # if the input `omit_dyad`` object contains dyads specified in other ways that the default inside randomREH object
   reh_loc <- randomREH
   reh_loc$omit_dyad[[2]]$dyad <- data.frame(actor1=c("Megan","Richard",NA,"Derek"),actor2=c("Zackary",NA,"Crystal","Lexy"),type=c("conflict","conflict","conflict",NA))
-  # tested for the tie-oriented framework
+
+  ## tested for the tie-oriented framework
   out <- reh(edgelist = reh_loc$edgelist,
                     actors = reh_loc$actors,
                     types = reh_loc$types, 
@@ -94,7 +95,7 @@ test_that("reh", {
                     omit_dyad = reh_loc$omit_dyad,
                     model = "tie")
   expect_true(!is.null(out$omit_dyad))
-  # tested for the actor-oriented framework
+  ## tested for the actor-oriented framework
   out <- reh(edgelist = reh_loc$edgelist,
                     actors = reh_loc$actors,
                     types = reh_loc$types, 
@@ -106,9 +107,9 @@ test_that("reh", {
   expect_true(!is.null(out$omit_dyad))
   
 
-  # test on integer time variable (Rcpp level)
+  # test on integer and unsorted time variable (Rcpp level) 
   reh_loc <- randomREH
-  reh_loc$edgelist$time <- 1:dim(reh_loc$edgelist)[1]
+  reh_loc$edgelist$time <- dim(reh_loc$edgelist)[1]:1
   out <- reh(edgelist = reh_loc$edgelist,
                     actors = reh_loc$actors,
                     types = reh_loc$types, 
@@ -117,7 +118,8 @@ test_that("reh", {
                     origin = NULL,
                     omit_dyad = NULL,
                     model = "tie")
-  expect_equal(reh_loc$edgelist$time,out$edgelist[,1])
+  expect_equal(sort(reh_loc$edgelist$time),out$edgelist[,1])
+
   ## tests on error messages ##
 
   # 'edgelist' is not a data.frame
@@ -329,6 +331,54 @@ test_that("reh", {
   fixed = TRUE
   )
 
+  # when time variable is a character vector
+  reh_loc <- randomREH
+  reh_loc$edgelist$time <- as.character(reh_loc$edgelist$time)
+  tryCatch_error_loc<- tryCatch(reh(edgelist = reh_loc$edgelist,
+                      actors = reh_loc$actors,
+                      types = reh_loc$types, 
+                      directed = TRUE, # events are directed
+                      ordinal = FALSE, # REM with waiting times
+                      origin = NULL,
+                      omit_dyad = NULL,
+                      model = "tie"),error=function(e) e)
+  expect_output(print(tryCatch_error_loc),
+  "<Rcpp::not_compatible: Not compatible with requested type: [type=character; target=double].>",
+  fixed = TRUE
+  )
+
+  # when there is at least one self-event in the event sequence
+  reh_loc <- randomREH
+  reh_loc$edgelist$actor1[10] <- reh_loc$edgelist$actor2[10]
+  tryCatch_error_loc<- tryCatch(reh(edgelist = reh_loc$edgelist,
+                      actors = reh_loc$actors,
+                      types = reh_loc$types, 
+                      directed = TRUE, # events are directed
+                      ordinal = FALSE, # REM with waiting times
+                      origin = NULL,
+                      omit_dyad = NULL,
+                      model = "tie"),error=function(e) e)
+  expect_output(print(tryCatch_error_loc),
+  "<Rcpp::exception: self-events are not yet supported>",
+  fixed = TRUE
+  )
+
+  # when time variable as at least one negative value
+  reh_loc <- randomREH
+  reh_loc$edgelist$time <- c(-5:9909)
+  tryCatch_error_loc<- tryCatch(reh(edgelist = reh_loc$edgelist,
+                      actors = reh_loc$actors,
+                      types = reh_loc$types, 
+                      directed = TRUE, # events are directed
+                      ordinal = FALSE, # REM with waiting times
+                      origin = NULL,
+                      omit_dyad = NULL,
+                      model = "tie"),error=function(e) e)
+  expect_output(print(tryCatch_error_loc),
+  "<Rcpp::exception: Error: time variable can't be negative>",
+  fixed = TRUE
+  )
+
   ## tests on warning messages ##
 
   # agument 'model' set to default
@@ -387,11 +437,11 @@ test_that("reh", {
                   origin = reh_loc$origin, # origin time is defiend
                   omit_dyad = reh_loc$omit_dyad, 
                   model = "tie"),
-  "Warning: both `origin` and first time point have the same value. `origin` is then automatically set either to one day/second before the first time point or to 0.",
+  "Warning: value supplied as `origin` is greater or equal than the first time point. `origin` is then automatically set either to one day/second before the first time point or to 0.",
   fixed = TRUE
   )
 
-  # `time` column is not sorted
+  # one or more actors in `omit_dyad` are not found in `edgelist`
   reh_loc <- randomREH
   reh_loc$omit_dyad[[2]]$dyad$actor2[4] <-  as.character(rpois(1,lambda = 30)) 
   expect_output(reh(edgelist = reh_loc$edgelist,

@@ -39,7 +39,7 @@ names(randomREH) # objects inside the list 'randomREH'
 
 ### <b><tt>edgelist</tt></b>
 
-The edgelist must be a `data.frame` or a `matrix` with column names `[time,actor1,actor2,type,weight]` (<i>Note</i>: it is not necessary to supply a column for `type` or `weight` but if they are included in the input edgelist, columns must be named `type` and `weight`, whereas it is compulsory to supply `[time,actor1,actor2]` and use such names for the columns).
+The edgelist must be a `data.frame` with column names `[time,actor1,actor2,type,weight]` (<i>Note</i>: it is not necessary to supply a column for `type` or `weight` but if they are included in the input edgelist, columns must be named `type` and `weight`, whereas it is compulsory to supply `[time,actor1,actor2]` and use such names for the columns).
 
 ```{r}
 head(randomREH$edgelist)

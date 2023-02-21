@@ -2,9 +2,8 @@
 #'
 #' @description A function that processes raw data and returns a 'reh' S3 object which is used as input in other functions in \code{remverse}.
 #'
-#' @param edgelist an object of class \code{"\link[base]{data.frame}"} or 
-#' \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
-#' time with columns `time`, `actor1`, `actor2` and optionally `type` and 
+#' @param edgelist an object of class \code{"\link[base]{data.frame}"} characterizing the relational event history sorted by 
+#' time with columns named `time`, `actor1`, `actor2` and optionally `type` and 
 #' `weight`.  
 #' @param actors character vector of actors' names that may be observed interacting in the network. If \code{NULL}, actor names will be taken from the input edgelist.
 #' @param types character vector of event types that may occur in the network. If \code{NULL}, type names will be taken from the input edgelist.

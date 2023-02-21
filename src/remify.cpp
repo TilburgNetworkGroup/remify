@@ -49,7 +49,8 @@ Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index) {
                 column_j[m] = column_j_loc[m_new];
             }
             break;}
-        default: {break;} //neither an INTSXP nor a REALSXP nor a STRSXP. The same input data.frame is returned           
+        //default: {
+        //    break;} //neither an INTSXP nor a REALSXP nor a STRSXP. 
         }
     }
     return x;
@@ -79,24 +80,31 @@ Rcpp::List getIntereventTime(Rcpp::RObject time,
         int force_even_spacing = 0; // 0 = No, 1 = Yes
         arma::uword m = 0;
 
-        // (1) Checking whether the origin is NULL or it is defined by the user
+        // (1) Checking whether the origin is NULL or it is defined by the user (time variable is not yet sorted if needed, therefore we work with time_input.min() value)
         arma::vec origin_input(1, arma::fill::zeros);
-        if(Rf_isNull(origin)){ // if origin input is NULL
-            origin_input(0) = time_input(0) - 1; // if in seconds event_0 will occur one second earlier than event_1, if in days it will be one day earlier
-            if(origin_input(0) < 0) origin_input(0) = 0; // if the supplied `time` is a vector of either integers or doubles, this case might be true and then t_0 = 0
-        }
-        else{ // otherwise store check the input value and store it
-            arma::vec origin_loc = Rcpp::as<arma::vec>(origin);
-            if(origin_loc(0) == time_input(0)){ // check if the supplied origin has the same value of the first time point (throw a warning and change the value in the same way when origin is NULL)
-                Rcpp::Rcout << warningMessage(2);
-                origin_input(0) = time_input(0) - 1; // setting the origin to a second/day earlier
-                if(origin_input(0) < 0) origin_input(0) = 0; // setting the origin to zero (if the previous value generated a negative time)
+        arma::vec time_vector(time_input.n_elem+1,arma::fill::zeros);
+        if(time_input.min() >= 0){
+            if(Rf_isNull(origin)){ // if origin input is NULL
+                origin_input(0) = time_input.min() - 1; // if in seconds event_0 will occur one second earlier than event_1, if in days it will be one day earlier
+                if(origin_input(0) < 0) origin_input(0) = 0; // if the supplied `time` is a vector of either integers or doubles, this case might be true and then t_0 = 0
             }
-            else{
-                origin_input(0) = origin_loc(0);
+            else{ // otherwise store check the input value and store it
+                arma::vec origin_loc = Rcpp::as<arma::vec>(origin);
+                if(origin_loc(0) >= time_input.min()){ // check if the supplied origin has the same value of the first time point (throw a warning and change the value in the same way when origin is NULL)
+                    Rcpp::Rcout << warningMessage(2);
+                    origin_input(0) = time_input.min() - 1; // setting the origin to a second/day earlier
+                    if(origin_input(0) < 0) origin_input(0) = 0; // setting the origin to zero (if the previous value generated a negative time)
+                }
+                else{
+                    origin_input(0) = origin_loc(0);
+                }
             }
+            time_vector = arma::join_cols(origin_input,time_input);
         }
-        arma::vec time_vector = join_cols(origin_input,time_input);
+        else{
+            Rcpp::stop(errorMessage(5)); // time variable can't be negative
+        }
+        
 
         // (2) Check if the `time` variable is sorted
         while(m < intereventTime.n_elem){
@@ -106,19 +114,19 @@ Rcpp::List getIntereventTime(Rcpp::RObject time,
             }
             else{
                 force_sorting = 1; 
-                m = intereventTime.n_elem;
+                m = intereventTime.n_elem;     
             }
         }
         // (2.1) Force the sorting of `time` if force_sorting = 1
         if(force_sorting == 1){
             Rcpp::Rcout << warningMessage(0); // warning message about the sorting operation
-            out["order"] = arma::sort_index(time_vector);
-            time_vector = sort(time_vector);
+            out["order"] = arma::sort_index(time_vector(arma::span(1,time_vector.n_elem-1))); // excluding the origin in the ordering because it is used only for the computation of the intereventTime
+            time_vector = arma::sort(time_vector); 
             intereventTime = arma::diff(time_vector);
         }
 
         // (3) Check if there are events occurred at the same time point
-        m = 0;
+        m = 1;     // we skip m=0 which is the origin because there can be cases in which origin value is 0 and time_input(0) is 0 as well so the intereventTime results zero
         while(m < intereventTime.n_elem){
             if(intereventTime(m) != 0.0) m++;
             else{
@@ -542,7 +550,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
     // (1) Converting `edgelist`
     for(m = 0; m < M; m++){
         // m-th event in the edgelist input:
-
+        if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
         // find actor1
         std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
         int convertedActor1_m = actorID.at(std::distance(actorName.begin(), i));
@@ -556,7 +564,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
         int convertedType_m = typeID.at(std::distance(typeName.begin(), c));
 
         // getting dyad index
-        dyad[m] = getDyadIndex(convertedActor1_m,convertedActor2_m,convertedType_m,N,directed);     
+        dyad[m] = getDyadIndex(convertedActor1_m,convertedActor2_m,convertedType_m,N,directed);    
+        }
+        else{
+            Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
+        } 
     }
 
     Rcpp::DataFrame convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
@@ -788,10 +800,11 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
 
     // actor1
     edgelist["actor1"] = Rcpp::as<Rcpp::StringVector>(edgelist["actor1"]);
+
     // actor2 
     edgelist["actor2"] = Rcpp::as<Rcpp::StringVector>(edgelist["actor2"]);
-    // type
 
+    // type
     out["with_type"] = false;
     if(!edgelist.containsElementNamed("type")){ // if type is not defined, one event type `0` is created for
         Rcpp::DataFrame edgelist_loc = Rcpp::clone(edgelist);
@@ -805,7 +818,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
 
     // weight
     out["weighted"] = false;
-    if(!edgelist.containsElementNamed("weight")){ // if type is not 
+    if(!edgelist.containsElementNamed("weight")){ // if weight is not defined
         Rcpp::DataFrame edgelist_loc = Rcpp::clone(edgelist);
         Rcpp::NumericVector one_weight_vector(edgelist.nrows(),1.0);
         edgelist_loc.push_back(one_weight_vector,"weight");

@@ -16,9 +16,8 @@ reh(
 )
 }
 \arguments{
-\item{edgelist}{an object of class \code{"\link[base]{data.frame}"} or 
-\code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
-time with columns `time`, `actor1`, `actor2` and optionally `type` and 
+\item{edgelist}{an object of class \code{"\link[base]{data.frame}"} characterizing the relational event history sorted by 
+time with columns named `time`, `actor1`, `actor2` and optionally `type` and 
 `weight`.}
 
 \item{actors}{character vector of actors' names that may be observed interacting in the network. If \code{NULL}, actor names will be taken from the input edgelist.}
