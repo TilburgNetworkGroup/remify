@@ -56,7 +56,7 @@ test_that("reh", {
   out <- reh(edgelist = reh_loc$edgelist,
                     actors = reh_loc$actors,
                     types = reh_loc$types, 
-                    directed = FALSE, # events are directed
+                    directed = FALSE, # events are not directed
                     ordinal = FALSE, # REM with waiting times
                     origin = reh_loc$origin,
                     omit_dyad = reh_loc$omit_dyad,
@@ -105,7 +105,6 @@ test_that("reh", {
                     omit_dyad = reh_loc$omit_dyad,
                     model = "actor")
   expect_true(!is.null(out$omit_dyad))
-  
 
   # test on integer and unsorted time variable (Rcpp level) 
   reh_loc <- randomREH
@@ -119,6 +118,19 @@ test_that("reh", {
                     omit_dyad = NULL,
                     model = "tie")
   expect_equal(sort(reh_loc$edgelist$time),out$edgelist[,1])
+
+  # when the last two events occurred at the same time
+  reh_loc <- randomREH
+  reh_loc$edgelist$time[9915] <- reh_loc$edgelist$time[9914]
+  out <- reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = NULL,
+                    omit_dyad = NULL,
+                    model = "tie")
+  expect_s3_class(out,"reh")
 
   ## tests on error messages ##
 
@@ -321,7 +333,7 @@ test_that("reh", {
   tryCatch_error_loc <- tryCatch(reh(edgelist = reh_loc$edgelist,
                   actors = reh_loc$actors,
                   types = reh_loc$types, 
-                  directed = FALSE, # events are directed
+                  directed = FALSE, # events are not directed
                   ordinal = FALSE, # REM with waiting times
                   origin = reh_loc$origin, # origin time is defiend
                   omit_dyad = reh_loc$omit_dyad, 
