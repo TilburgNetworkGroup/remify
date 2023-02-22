@@ -26,10 +26,10 @@
 randomREH
 }
 \description{
-A randomly generated sequence of relational events with 20 actors and 9,915 events. Each event type is associated to one of the three following sentiments: \emph{conflict}, \emph{competition} and \emph{cooperation}.
+A randomly generated sequence of relational events with 20 actors and 9915 events. Each event type is associated to one of the three following sentiments: \emph{conflict}, \emph{competition} and \emph{cooperation}.
 }
 \examples{
-data("randomREH")
+data(randomREH)
 
 # actors names
 randomREH$actors

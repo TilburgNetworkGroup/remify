@@ -1,4 +1,4 @@
-#' @title reh
+#' @title Process a Relational Event History
 #'
 #' @description A function that processes raw data and returns a 'reh' S3 object which is used as input in other functions in \code{remverse}.
 #'
@@ -354,7 +354,7 @@ typeID.reh <- function(reh, typeName = NULL) {
 #######################################################################################
 
 
-#' @title rehshape
+#' @title Transform processed relational event sequences to different formats
 #'
 #' @description A function that transforms a \code{reh} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from (to) an object of class \code{reh} to (from) a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2023).
 #'

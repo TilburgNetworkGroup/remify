@@ -2,7 +2,7 @@
 % Please edit documentation in R/remify.R
 \name{reh}
 \alias{reh}
-\title{reh}
+\title{Process a Relational Event History}
 \usage{
 reh(
   edgelist,

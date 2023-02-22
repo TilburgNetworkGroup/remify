@@ -2,7 +2,7 @@
 % Please edit documentation in R/remify.R
 \name{rehshape}
 \alias{rehshape}
-\title{rehshape}
+\title{Transform processed relational event sequences to different formats}
 \usage{
 rehshape(data, output_format = c("reh", "relevent"))
 }
