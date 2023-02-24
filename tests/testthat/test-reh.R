@@ -278,6 +278,22 @@ test_that("reh", {
     fixed = TRUE
   )
 
+  # class of 'time' must be one of the followings
+  reh_loc <- randomREH
+  reh_loc$edgelist$time <- as.POSIXlt(reh_loc$edgelist$time)
+  expect_error(
+    reh(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = NULL,
+                    omit_dyad = NULL,
+                    model = "tie"),
+    "the class of column`time` must be one of the following types: numeric, integer, Date or POSIXct",
+    fixed = TRUE
+  )
+
   # errors from Rcpp functions, handled via expect_output(print(tryCatch(expr,error=function(e) e)),"error message",fixed=TRUE)
   
   # time points defined in omit_dyad are removed
@@ -308,7 +324,7 @@ test_that("reh", {
                   omit_dyad = reh_loc$omit_dyad, 
                   model = "tie"),error=function(e) e)
   expect_output(print(tryCatch_error_loc),
-  "<Rcpp::exception: Error: time vector in each element of the list 'omit_dyad' must be of length 2: start and stop time when the riskset changed>",
+  "<Rcpp::exception: time vector in each element of the list 'omit_dyad' must be of length 2: start and stop time when the riskset changed>",
   fixed = TRUE
   )
 
@@ -339,23 +355,7 @@ test_that("reh", {
                   omit_dyad = reh_loc$omit_dyad, 
                   model = "actor"),error=function(e) e)
   expect_output(print(tryCatch_error_loc),
-  "<Rcpp::exception: Error: actor-oriented model can only work with directed networks>",
-  fixed = TRUE
-  )
-
-  # when time variable is a character vector
-  reh_loc <- randomREH
-  reh_loc$edgelist$time <- as.character(reh_loc$edgelist$time)
-  tryCatch_error_loc<- tryCatch(reh(edgelist = reh_loc$edgelist,
-                      actors = reh_loc$actors,
-                      types = reh_loc$types, 
-                      directed = TRUE, # events are directed
-                      ordinal = FALSE, # REM with waiting times
-                      origin = NULL,
-                      omit_dyad = NULL,
-                      model = "tie"),error=function(e) e)
-  expect_output(print(tryCatch_error_loc),
-  "<Rcpp::not_compatible: Not compatible with requested type: [type=character; target=double].>",
+  "<Rcpp::exception: actor-oriented model can only work with directed networks>",
   fixed = TRUE
   )
 
@@ -387,7 +387,7 @@ test_that("reh", {
                       omit_dyad = NULL,
                       model = "tie"),error=function(e) e)
   expect_output(print(tryCatch_error_loc),
-  "<Rcpp::exception: Error: time variable can't be negative>",
+  "<Rcpp::exception: time variable can't be negative>",
   fixed = TRUE
   )
 

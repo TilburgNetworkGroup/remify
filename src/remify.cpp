@@ -837,7 +837,7 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
         // reordering edgelist
         edgelist = rearrangeDataFrame(edgelist,new_order);
     }
-   
+
     // StringVector of actor1
     Rcpp::StringVector actor1 = edgelist["actor1"]; // actor1/sender
 
@@ -896,14 +896,16 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // Creating a dictionary for actors and event types, that is like: 'string_name' = integer (IDentifier)
     Rcpp::DataFrame actorsDictionary = Rcpp::DataFrame::create(Rcpp::Named("actorName") = actorName, Rcpp::Named("actorID") = Rcpp::Range(0,actorName.length()-1)); 
     out["actorsDictionary"] = actorsDictionary;
+    
     Rcpp::DataFrame typesDictionary = Rcpp::DataFrame::create(Rcpp::Named("typeName") = typeName, Rcpp::Named("typeID") = Rcpp::Range(0,typeName.length()-1)); 
     out["typesDictionary"] = typesDictionary;
+  
 
     // Converting input edgelist and omit_dyad list according to the new id's for both actors and event types
     Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],out["D"],directed,omit_dyad,model);
     out["edgelist"] = convertedInput["edgelist"];
-    out["omit_dyad"] = convertedInput["omit_dyad"];
-                                  
+    out["omit_dyad"] = convertedInput["omit_dyad"]; 
+
     // END of the processing and returning output
     return out;
 }

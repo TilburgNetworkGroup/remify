@@ -40,6 +40,9 @@ reh <- function(edgelist,
     if(!("time" %in% names(edgelist))){
       stop("`edgelist` should contain a column named `time` with the timing/order information for the events.")
     }
+    if(!(class(edgelist$time)[1] %in% c("numeric","integer","Date","POSIXct"))){
+      stop("the class of column`time` must be one of the following types: numeric, integer, Date or POSIXct")
+    }
 
     # Checking `edgelist$actor1` column
     if(!("actor1" %in% names(edgelist))){
@@ -95,7 +98,7 @@ reh <- function(edgelist,
     #if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
     }
 
-    # Pre-processing relational event history (rehCpp_new.cpp)
+    # Pre-processing relational event history (rehCpp.cpp)
     out <- rehCpp(edgelist = edgelist,
                     actors = actors, 
                     types = types, 
