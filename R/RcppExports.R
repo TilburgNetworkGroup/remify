@@ -9,6 +9,10 @@ getDyadIndex <- function(actor1, actor2, type, N, directed) {
     .Call('_remify_getDyadIndex', PACKAGE = 'remify', actor1, actor2, type, N, directed)
 }
 
+getDyadComposition <- function(d, C, N, D) {
+    .Call('_remify_getDyadComposition', PACKAGE = 'remify', d, C, N, D)
+}
+
 # Register entry points for exported C++ functions
 methods::setLoadAction(function(ns) {
     .Call('_remify_RcppExport_registerCCallable', PACKAGE = 'remify')

@@ -46,6 +46,27 @@ namespace remify {
         return Rcpp::as<int >(rcpp_result_gen);
     }
 
+    inline Rcpp::IntegerVector getDyadComposition(int d, int C, int N, int D) {
+        typedef SEXP(*Ptr_getDyadComposition)(SEXP,SEXP,SEXP,SEXP);
+        static Ptr_getDyadComposition p_getDyadComposition = NULL;
+        if (p_getDyadComposition == NULL) {
+            validateSignature("Rcpp::IntegerVector(*getDyadComposition)(int,int,int,int)");
+            p_getDyadComposition = (Ptr_getDyadComposition)R_GetCCallable("remify", "_remify_getDyadComposition");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_getDyadComposition(Shield<SEXP>(Rcpp::wrap(d)), Shield<SEXP>(Rcpp::wrap(C)), Shield<SEXP>(Rcpp::wrap(N)), Shield<SEXP>(Rcpp::wrap(D)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<Rcpp::IntegerVector >(rcpp_result_gen);
+    }
+
 }
 
 #endif // RCPP_remify_RCPPEXPORTS_H_GEN_
