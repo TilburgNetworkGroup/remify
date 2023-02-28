@@ -625,6 +625,10 @@ test_that("reh", {
   )
   expect_identical(suppressWarnings(typeID(reh = out,typeName = c("cooperation","conflict",as.character(rnorm(1,mean=1))))),as.integer(c(2,1)))
 
+  # test for  getDyadComposition() function
+  expect_no_error(remify:::getDyadComposition(d=1,C=1,N=5,D=20))
+  expect_equal(remify:::getDyadComposition(d=1,C=1,N=5,D=20),c(0,2,0))
+
 })
 
 
