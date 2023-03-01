@@ -3,8 +3,7 @@
 [![github-repo-status](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![R-package-version](https://img.shields.io/github/r-package/v/TilburgNetworkGroup/remify)](https://www.github.com/TilburgNetworkGroup/remify)
 [![R-CMD-check](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml)
-[![codecov](https://codecov.io/gh/TilburgNetworkGroup/remify/branch/master/graph/badge.svg?token=BDG8F1672B)](https://codecov.io/gh/TilburgNetworkGroup/remify)
-
+[![codecov](https://codecov.io/gh/TilburgNetworkGroup/remify/graph/badge.svg?token=BDG8F1672B)](https://codecov.io/gh/TilburgNetworkGroup/remify)
 
 ## A package for pre-processing the structure of REH data
 
