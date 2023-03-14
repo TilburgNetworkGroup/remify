@@ -16,7 +16,7 @@ reh(
 )
 }
 \arguments{
-\item{edgelist}{an object of class \code{\link[base]{data.frame}} characterizing the relational event history sorted by 
+\item{edgelist}{an object of class \code{"\link[base]{data.frame}"} characterizing the relational event history sorted by 
 time with columns named `time`, `actor1`, `actor2` and optionally `type` and 
 `weight`.}
 
@@ -30,7 +30,7 @@ time with columns named `time`, `actor1`, `actor2` and optionally `type` and
 
 \item{origin}{time point since when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.}
 
-\item{omit_dyad}{list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).}
+\item{omit_dyad}{list of lists. Each list must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row).}
 
 \item{model}{can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.}
 }
@@ -41,7 +41,5 @@ time with columns named `time`, `actor1`, `actor2` and optionally `type` and
 A function that processes raw data and returns a 'reh' S3 object which is used as input in other functions in \code{remverse}.
 }
 \details{
-In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list.
-
-For more details about the \code{omit_dyad} argument, inputs, outputs, attributes and methods of \code{remify::reh()}, see \code{vignette("reh")}.
+for more details about inputs, outputs, attributes and methods of \code{remify::reh()}, see \code{vignette("reh")}.
 }
