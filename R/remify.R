@@ -2,7 +2,7 @@
 #'
 #' @description A function that processes raw data and returns a 'reh' S3 object which is used as input in other functions in \code{remverse}.
 #'
-#' @param edgelist an object of class \code{"\link[base]{data.frame}"} characterizing the relational event history sorted by 
+#' @param edgelist an object of class \code{\link[base]{data.frame}} characterizing the relational event history sorted by 
 #' time with columns named `time`, `actor1`, `actor2` and optionally `type` and 
 #' `weight`.  
 #' @param actors character vector of actors' names that may be observed interacting in the network. If \code{NULL}, actor names will be taken from the input edgelist.
@@ -10,12 +10,14 @@
 #' @param directed logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).
 #' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
 #' @param origin time point since when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
-#' @param omit_dyad list of lists. Each list must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row).
+#' @param omit_dyad list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).
 #' @param model can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.
 #'
 #' @return  'reh' S3 object 
 #'
-#' @details for more details about inputs, outputs, attributes and methods of \code{remify::reh()}, see \code{vignette("reh")}.
+#' @details In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list.
+#' 
+#' For more details about the \code{omit_dyad} argument, inputs, outputs, attributes and methods of \code{remify::reh()}, see \code{vignette("reh")}. 
 #'
 #' @export
 reh <- function(edgelist,
@@ -25,7 +27,9 @@ reh <- function(edgelist,
                 ordinal = FALSE,
                 origin = NULL,
                 omit_dyad = NULL,
-                model = c("tie","actor")){
+                model = c("tie","actor") #,
+                #[[to work on]] time = c("seconds","minutes","hours","days","weeks","months") this input will process the intervent time to different time measures
+                ){
     
     # (1) Checking for 'edgelist' input object
 
@@ -95,7 +99,7 @@ reh <- function(edgelist,
 		warning("`edgelist` contains missing data: incomplete events are dropped.") # `edgelist` contains missing data: incomplete events (rows) are dropped.
 		to_remove <- unique(which(is.na(edgelist), arr.ind = T)[,1])
 		edgelist <- edgelist[-to_remove,]
-    #if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
+    #[[to check]]if(is.null(dim(edgelist)[1])) stop("The `edgelist` object is empty.")
     }
 
     # Pre-processing relational event history (rehCpp.cpp)
@@ -107,14 +111,14 @@ reh <- function(edgelist,
                     origin = origin,
                     omit_dyad = omit_dyad,
                     model = model)
-  
+
     str_out <- structure(list(
       M = out$M,
       N = out$N,
       C = out$C,
       D = out$D,
       intereventTime = out$intereventTime,
-      edgelist = data.matrix(out$edgelist),
+      edgelist = out$edgelist, #[[to remove]] it was a data.matrix()
       omit_dyad = out$omit_dyad
     ), class="reh")
 
@@ -127,7 +131,7 @@ reh <- function(edgelist,
     attr(str_out, "model") <- model # useful because tie and actor models have two different ways for handling changing risksets
     attr(str_out, "riskset") <- ifelse(length(omit_dyad)>0,"dynamic","static")
     attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary) 
-    attr(str_out, "time") <- list(class = class(edgelist$time), value = data.frame(time = edgelist$time, intereventTime = out$intereventTime), origin = origin)
+    attr(str_out, "time") <- list(class= class(out$edgelist$time), value = data.frame(time = out$edgelist$time,intereventTime = out$intereventTime), origin = origin)
 
     return(str_out)
 }
@@ -157,12 +161,18 @@ summary.reh <- function(object,...){
   ordinal <- paste("\t> ordinal = ",attr(object,"ordinal"),sep="")
   weighted <- paste("\t> weighted = ",attr(object,"weighted"),sep="")
   time_length <- NULL
+  time <- object$edgelist$time
+  origin <- attr(object, "time")$origin
   if(!attr(object,"ordinal")){
-    time_length <- attr(object,"time")$value$time[object$M]  
-    if(is.null(attr(object,"time")$origin))
-      time_length <- time_length - (attr(object,"time")$value$time[1]-1)
-    else
-      time_length <- time_length - attr(object,"time")$origin
+    if(is.null(origin)){
+      origin <- min(time) - 1
+      if(origin < 0) origin <- 0
+    }
+    else if( origin >= min(time)){
+      origin <- min(time) - 1
+      if(origin < 0) origin <-0
+    }
+    time_length <- time[object$M] - origin
     time_length <- paste("\t> time length ~ ",round(time_length)," ",attr(time_length, "units"),sep="")
   }
 
@@ -171,16 +181,30 @@ summary.reh <- function(object,...){
     min_interevent_time <- min(object$intereventTime) 
     max_interevent_time <- max(object$intereventTime)
     units_minmax <- NULL # in case it is either numeric or integer
-    if((length(attr(object,"time")$class)==1) & (attr(object,"time")$class[1] == "Date")){ # is a Date (until days)
+    if(inherits(time,"Date")){ # is a Date (until days)
       units_minmax <- "days"   
     }
-    else if(!is.numeric(attr(object,"time")$value$time) & !is.integer(attr(object,"time")$value$time)){ # is a timestamp (until seconds)
+    else if(!is.numeric(time) & !is.integer(time)){ # is a timestamp (until seconds) #[[to check]] it will change based on the new input where the user can define the interevent time to be scaled in seconds, minutes, hours etc..
       units_minmax <- "seconds"
     }
     interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ",round(min_interevent_time,4)," ",units_minmax,"\n\t\t >> maximum ~ ",round(max_interevent_time,4)," ",units_minmax,"\n",sep="")
   }
 
   cat(paste(title,model,events,actors,types,riskset,directed,ordinal,weighted,time_length,interevent_time,sep="\n"))
+}
+
+#######################################################################################
+#######################################################################################
+
+#' @title print.reh
+#' @rdname print.reh
+#' @description print a summary of the event history.
+#' @param x is an \code{reh} object 
+#' @param ... further arguments to be passed.
+#' @method print reh
+#' @export
+print.reh <- function(x,...){
+  summary(object=x,...)
 }
 
 #######################################################################################
@@ -348,6 +372,157 @@ typeID.reh <- function(reh, typeName = NULL) {
     }
   }
   return(IDs)
+}
+
+#######################################################################################
+#######################################################################################
+
+#' @title dyadID
+#' @description A function that given a vector of names as to actor1, actor2 and type returns the corresponding dyad ID. The names to supply are the original input names of the edgelist before the processing via the function \code{remify::reh()}
+#' @param reh an \code{reh} object.
+#' @param actor1 name of actor1 
+#' @param actor2 name of actor2 
+#' @param type name of type
+#' @export
+dyadID <- function(reh, actor1, actor2, type){
+  UseMethod("dyadID")
+}
+
+#' @describeIn dyadID dyadID from dyad composition
+#' @method dyadID reh
+#' @export
+dyadID.reh <- function(reh, actor1, actor2, type) {
+  if(!inherits(reh,"reh")){
+    stop("the input argument 'reh' must be an object of class 'reh'") #[IMPORTANT] add this check in all the other methods and also perform tests on it
+  }
+  if(attr(reh,"with_type")){
+    if(!is.vector(type) | (length(type)>1)){
+      stop("the input argument 'type' must be a character vector of length 1")
+    }
+    type <- as.character(type)
+  }
+  if((!is.vector(actor1) | !is.vector(actor2)) | ((length(actor1)>1) | (length(actor2)>1))){
+    stop("the input arguments 'actor1' and 'actor2' must be character vectors of length 1")
+  }
+  actor1 <- as.character(actor1)
+  actor2 <- as.character(actor2)
+
+  # check on self-event
+  if((actor1==actor2)){ ## add the following condition "!attr(reh,"self-event") & " when remify will support self-events
+    stop("the input 'reh' does not support self-events. 'actor1' and 'actor2' must be different")
+  }
+
+  dict_loc <- attr(reh,"dictionary")
+  # finding actors from the dictionary of names (attribute of the reh object)
+  actor1_which <- which(dict_loc$actors$actorName == actor1)
+  actor2_which <- which(dict_loc$actors$actorName == actor2)
+  check_on_actors <- (c(length(actor1_which),length(actor2_which))==0) 
+  if(any(check_on_actors)){
+    stop(paste("input ",ifelse(sum(check_on_actors)==1,c("'actor1' "," 'actor2' ")[check_on_actors],c("'actor1' and 'actor2' ")),"not found in the processed object 'reh'",sep=""))
+  }
+  actor1_id <- dict_loc$actors$actorID[actor1_which]
+  actor2_id <- dict_loc$actors$actorID[actor2_which]
+  # finding type from the dictionary of names (attribute of the reh object)
+  type_id <- 0
+  if(attr(reh,"with_type")){
+    type_which <- which(dict_loc$types$typeName == type)
+    if(length(type_which)==0){
+      stop("input 'type' not found in the processed object 'reh'")
+    }
+    type_id <- dict_loc$types$typeID[type_which]
+  }
+  # finding dyad ID
+  dyad_id <- remify:::getDyadIndex(actor1 = actor1_id,
+                                    actor2 = actor2_id,
+                                    type = type_id,
+                                    N = reh$N,
+                                    directed = attr(reh,"directed")) # we return the id in the C++ form -- at the moment --
+
+  return(dyad_id)
+}
+
+#######################################################################################
+#######################################################################################
+
+#' @title dyad
+#' @description A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).
+#' @param reh an \code{reh} object.
+#' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size)
+#' @export
+dyad <- function(reh, dyadID){
+  UseMethod("dyad")
+}
+
+#' @describeIn dyad dyad composition in actor1, actor2 and type from dyad ID
+#' @method dyad reh
+#' @export
+dyad.reh <- function(reh, dyadID) {
+  if(!inherits(reh,"reh")){
+    stop("the input argument 'reh' must be an object of class 'reh'") #[IMPORTANT] add this check in all the other methods and also perform tests on it
+  }
+  if(!is.numeric(dyadID) & !is.integer(dyadID)){
+    stop("input argument 'dyadID' must be a numeric (or integer) vector")
+  }
+  out <- NULL
+  dyadID <- as.integer(dyadID) # if the ID supplied is 124.8, the ID considered will be 124
+  if(length(dyadID)==1){
+    # the output will be a character vector
+    if((dyadID < 1) | (dyadID > reh$D)){
+      stop(paste("input argument 'dyadID' must range between 1 and ",reh$D,", given that the size of the largest risk set is ",reh$D,sep="")) 
+    }
+    out <- remify:::getDyadComposition(d = dyadID-1, C = reh$C, N = reh$N, D = reh$D)
+    if(attr(reh,"with_type")){
+      out <- c(dyadID,out)
+      names(out) <- c("dyadID","actor1","actor2","type")
+    }
+    else{
+      out <- c(dyadID,out[-3]) # excluding the base event type (if there is only one event type in the sequence)
+      names(out) <- c("dyadID","actor1","actor2")
+    }
+  }
+  else if(length(dyadID)>1){
+    # the output will be a data.frame
+
+    # check for duplicates in dyadID
+    length_orig <- length(dyadID)
+    dyadID <- unique(dyadID)
+    if(length_orig > length(dyadID)){
+      warning("input argument 'dyadID' contains ID's that are repeated more than once. Such ID's will be processed once")
+    }
+
+    # apply function remify:::getDyadComposition()
+    dict_loc <- attr(reh,"dictionary")
+    if(attr(reh,"with_type")){ # output with 'type' column
+      actor1_name <- actor2_name <- type_name <- rep(NA, length=length(dyadID))
+      for(d in 1:length(dyadID)){
+        if((dyadID[d] < 1) | (dyadID[d] > reh$D)){
+          stop(paste("input argument 'dyadID' must range between 1 and ",reh$D,", given that the size of the largest risk set is ",reh$D,sep=""))
+        }
+        dyad_composition_loc <- remify:::getDyadComposition(d = dyadID[d]-1, C = reh$C, N = reh$N, D = reh$D)
+        actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
+        actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
+        type_name[d] <- dict_loc$types$typeName[dyad_composition_loc[3]+1]
+        rm(dyad_composition_loc)
+      }
+      out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name, type = type_name)  
+      rm(actor1_name,actor2_name,type_name)   
+    }
+    else{ # output without 'type' column (for sequences with one or none event type)
+      actor1_name <- actor2_name <- rep(NA, length=length(dyadID))
+      for(d in 1:length(dyadID)){
+        if((dyadID[d] < 1) | (dyadID[d] > reh$D)){
+          stop(paste("input argument 'dyadID' must range between 1 and ",reh$D,", givent that the size of the largest risk set is ",reh$D,sep=""))
+        }
+        dyad_composition_loc <- remify:::getDyadComposition(d = dyadID[d]-1, C = reh$C, N = reh$N, D = reh$D)
+        actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
+        actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
+        rm(dyad_composition_loc)
+      }
+      out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name)  
+      rm(actor1_name,actor2_name)     
+    }
+  }
+  return(out)
 }
 
 #######################################################################################
