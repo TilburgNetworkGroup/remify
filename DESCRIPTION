@@ -45,6 +45,7 @@ Imports:
     Rcpp (>= 1.0.8.3)
 Suggests: 
     knitr,
+    magick,
     rmarkdown,
     testthat (>= 3.0.0),
     usethis,
@@ -53,7 +54,7 @@ LinkingTo:
     Rcpp,
     RcppArmadillo,
     testthat
-VignetteBuilder: 
+VignetteBuilder:
     knitr
 Encoding: UTF-8
 LazyData: true

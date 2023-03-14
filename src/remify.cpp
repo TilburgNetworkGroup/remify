@@ -535,7 +535,6 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
     Rcpp::List out = Rcpp::List::create();
         
     // edgelist input 
-    std::vector<double> time = Rcpp::as<std::vector<double>>(edgelist["time"]);
     std::vector<std::string> stringActor1 = Rcpp::as<std::vector<std::string>>(edgelist["actor1"]);
     std::vector<std::string> stringActor2 = Rcpp::as<std::vector<std::string>>(edgelist["actor2"]);
     std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]);
@@ -572,15 +571,17 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
     }
 
     Rcpp::DataFrame convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
-    Rcpp::Named("dyad") = dyad, 
-    Rcpp::Named("weight") = edgelist["weight"]);
-
+                                        Rcpp::Named("dyad") = dyad, 
+                                        Rcpp::Named("weight") = edgelist["weight"]);
+                                    
 
     // (2) Storing converted `edgelist`
     out["edgelist"] = convertedEdgelist; 
 
     // (3) Converting `omit_dyad` list
     if(omit_dyad.length()>0){
+        // input time
+        std::vector<double> time = Rcpp::as<std::vector<double>>(edgelist["time"]);
         Rcpp::List convertedOmitDyad = Rcpp::List::create(); // r-th list with matrix inputs converted into IDs
         Rcpp::List convertedOmitDyad_time = Rcpp::List::create(); // r-th list with time inputs converted into IDs
         int N = actorName.size();

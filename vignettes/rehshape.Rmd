@@ -1,0 +1,28 @@
+---
+title: "Transform processed relational event sequences to different formats"
+author: ""
+package: remify
+date: ""
+output: 
+  rmarkdown::html_document:
+    theme: null
+    css: "remify-theme.css"
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Transform processed relational event sequences to different formats}
+  %\VignetteEncoding{UTF-8}
+---
+
+---
+
+This vignette explains:
+
+-  input and output structure of the function <tt>remify::rehshape</tt>
+-  usage of the function with an example on a dataset (_randomREH_)
+-  limitaton of the current remify version and future developments
+
+---
+
+
+
+

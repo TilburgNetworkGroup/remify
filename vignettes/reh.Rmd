@@ -1,18 +1,25 @@
 ---
-title: "The processing function <tt>reh()</tt>"
-author: "Giuseppe Arena (g.arena@tilburguniversity.edu)"
+title: "Process a Relational Event History"
+author: ""
 package: remify
 date: ""
-output: rmarkdown::html_document
+output: 
+  rmarkdown::html_document:
+    theme: bootstrap
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{The processing function}
+  %\VignetteIndexEntry{Process a Relational Event History}
   %\VignetteEncoding{UTF-8}
 ---
 
-<i>This vignette explains aim, inputs, outputs, attributes and methods of the function <tt>remify::reh()</tt>.</i>
 
-## Aim of the function
+<i>This vignette explains aim, input, output, attributes and methods of the function <tt>remify::reh()</tt>.</i>
+
+
+# {.tabset .tabset-fade .tabset-pills}
+
+
+## Aim
 The objective of <tt>remify::reh()</tt> is the processing of raw relational event data provided by the user along with other inputs that characterize them (actors' names, event types' names, starting time point of the event sequence, set of interactions to be excluded from the risk set at specific time points, etc.).
 The internal routines will transform the structure of the input event sequence into a new one where actors and event types will have assigned unique (numerical) IDs. Furthermore, the function will provide other objects that will be required by all of the packages in [<tt>remverse</tt>](https://github.com/TilburgNetworkGroup/remverse).
 
@@ -25,10 +32,8 @@ names(randomREH) # objects inside the list 'randomREH'
 ```
 
 
-<i>(Click on a tab pill below to show its content)</i>
+---
 
-
-# {.tabset .tabset-fade .tabset-pills}
 
 
 ## Input
@@ -86,7 +91,7 @@ randomREH$origin
 
 ### <b><tt>omit_dyad</tt></b>
 This argument is useful when certain dyads must be removed from the risk set in specific time windows (e.g. an actor drops out of the network, specific groups of actors cannot interact anymore starting from some time point). Therefore, the processing of such information makes the risk set suit better to the real data.
-`omit_dyad` consists of a list of lists, and each list must have two objects: a `data.frame` called `dyad`, which specifies the dyads to be removed from the risk set, and `time` which is a vector of two values defining the first and last time point of the time window in which such dyads couldn't occur.
+`omit_dyad` consists of a list of lists. Each list refers to one risk set modification and must have two objects: a `data.frame` called `dyad`, where dyads to be remove are specified by row in the format `actor1, actor2, type`, and `time` which is a vector of two values defining the first and last time point of the time window in which such dyads couldn't occur.
 Consider the example on the `randomREH` data. For instance, we want to modify (shrink) the risk set according to two changes that apply on different time intervals:
 
 1. an event type `conflict` that was no more feasible since a specific time point until the end of the observation period.
@@ -126,10 +131,10 @@ edgelist_reh <- reh(edgelist = randomREH$edgelist,
                     actors = randomREH$actors,
                     types = randomREH$types, 
                     directed = TRUE, # events are directed
-                    ordinal = FALSE, # REM with waiting times
+                    ordinal = FALSE, # model with waiting times
                     origin = randomREH$origin,
                     omit_dyad = randomREH$omit_dyad,
-                    model = "tie")
+                    model = "tie") # tie-oriented modeling
 ```
 ## Output
 
@@ -327,7 +332,6 @@ attr(edgelist_reh, "dictionary")
 ```{r}
 str(attr(edgelist_reh, "time")) # printing out only the str() of the attribute since the data.frame `value` is large
 ```
-
 
 
 ## Methods
