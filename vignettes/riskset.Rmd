@@ -12,168 +12,297 @@ header-includes:
    - \usepackage{pgfplots}
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Define a dynamic riskset}
+  %\VignetteIndexEntry{Define a dynamic risk set}
   %\VignetteEncoding{UTF-8}
+---
+
 ---
 
 <i> This vignette provides a definition of static and dynamic risk set, explains how a dynamic risk set is supplied to the processing function `remify::reh()`, and it shows how the risk set looks like in the processed `reh` object. </i>
 
-For this vignette we are going to consider the random relational event history (`randomREH`) processed with `remify::reh()`.
+---
+
+Consider the processed `reh` object for the network `randomREHsmall`.
+
 ```{r}
 library(remify)
 
-# random REH
-data(randomREH) 
+# randomREHsmall
+data(randomREHsmall) 
 
 # processing the edgelist 
-edgelist_reh <- reh(edgelist = randomREH$edgelist,
-                    actors = randomREH$actors,
-                    types = randomREH$types, 
-                    directed = TRUE, # events are directed
-                    ordinal = FALSE, # model with waiting times
-                    origin = randomREH$origin,
-                    omit_dyad = randomREH$omit_dyad,
-                    model = "tie") # tie-oriented modeling            
+small_edgelist_reh <- reh(edgelist = randomREHsmall$edgelist,
+                          actors = randomREHsmall$actors,
+                          directed = TRUE, # events are directed
+                          ordinal = FALSE, # model with waiting times
+                          origin = randomREHsmall$origin,
+                          omit_dyad = randomREHsmall$omit_dyad,
+                          model = "tie") # tie-oriented modeling            
 ```
 ---
 
 # {.tabset .tabset-fade .tabset-pills .tabcontent} 
 
 
-## What is a risk set?
+## Definition of risk set
 
-In a relational event history, we observe a time-ordered sequence of interactions occurring among actors and, for each relational event, we know its time (or the order) of occurrence along with which actors were involved in the interaction and the type of the interaction (if measured). For instance, the table below shows the first five events of the random relational event history, where `time`, `actor1`, `actor2` and `type` describe each observed event in the sequence
+
+A relational event history consists of a time-ordered sequence of (directed or undirected) interactions, and for each event, we know its time (or the order) of occurrence, the actors that were involved in the interaction and the type of the interaction (if measured). 
+For instance, the first five events of the `randomREHsmall` sequence are reported as follows
+```{r, include = TRUE}
+randomREHsmall$edgelist[1:5,]
+```
+where `time`, `actor1`, `actor2` describe each observed event in the sequence (Note that in this example the `type` of events is not annotated).
+
+When modeling a relational event sequence, we have to define per each time point a risk set. The risk set consists of the ensemble of those relational events (dyads) that at each time point were observed or that they were likely to be observed but they didn't occur. The definition of the risk set is an important building block of the likelihood function for both tie-oriented and actor-oriented modeling.
+
+### The _static_ risk set
+As a common assumption, the compostion of the risk set is assumed to be the same over time (_static_ risk set), which means that for the whole period of study the risk set is made of the same set of dyads. If the network has _N_ actors and it consists of directed events that can assume a number of _C_ possible event types, then the risk set will be characterized by all the possible directed dyads among _N_ actors, that are _D = N(N-1)C_, or _D = N(N-1)C/2_ in the case of undirected dyads. For instance, in the random network (`randomREHsmall`) dyads are directed, actors are _N = 5_ and event types are _C = 1_, therefore we expect the dimension of the risk set to be _D = 5 * 4 * 1 = 20_. The first five dyads in the static risk set will be
 
 ```{r, include = TRUE}
-randomREH$edgelist[1:5,]
+# method dyad.reh(), see more in ?remify::dyad
+dyad(reh = small_edgelist_reh, dyadID = c(1:5)) 
 ```
 
-When modeling a relational event sequence, we need to specify a risk set for each observed time point. A risk set consists of the ensemble of those relational events that are likely to be observed in the network at a specific time point, and it incudes also the event that is observed at that particular time point.
-
-<marquee>[[add image here explaining what the risk set is]]</marquee>
-
-In the following sections, we first discuss a common definition of the risk set that doesn't change composition over time, the _static_ risk set, and explain how the processing function (`remify::reh()`) orders the events in the risk set. Then we discuss the _dynamic_ risk set where some events are excluded from the risk set during specific time windows and we present some examples of scenarios in which this specification of risk set finds application. Finally, we provide a simple visualisation of the dynamic risk set on the timeline of the observed event sequence.
-
-### A time-invariant risk set
-Generally, the compostion of the risk set is assumed to be the same over time (_static_ risk set), which means that for the whole period of study the risk set is made of the same set of dyads. If the network has _N_ actors and it consists of directed events that can assume a number of _C_ possible event types, then the risk set will be characterized by all the possible directed dyads among _N_ actors, that are _D = N(N-1)C_, or _D = N(N-1)C/2_ in the case of undirected dyads. For instance, in the random network (`randomREH`) dyads are directed, actors are _N = 20_ and event types are _C = 3_, therefore we expect the dimension of the risk set to be _D = 20 * 19 * 3 = 1140_. The first five dyads in the static riskset will be
-
-```{r, include = TRUE}
-dyad(reh = edgelist_reh, dyadID = c(1:5)) # method dyad.reh(), see more in ?remify::dyad
-```
-
-The ID of the dyads (`dyadID`) is also the order of the dyads used by the functions in <a href='https://github.com/TilburgNetworkGroup/'>`remverse`</a> and it is defined by a two-steps approach:
+The ID of the dyads (`dyadID`) corresponds to the order of the dyads used by the functions in <a href='https://github.com/TilburgNetworkGroup/remverse'>`remverse`</a> and it is defined by a two-steps approach:
 
 1. Actors' and types' names are first sorted according to their <div class="hovertip">
  alphanumeric<span class="hovertiptext"><p>The alphanumeric order first follows the order of numbers from 0 to 9, then the alphabetical order of the letters.</p> <p>For instance, given the vector of names `c("user22","0usr","1user","1deer")`, its alphanumeric order will be `c("0usr","1deer","1user","user22)`</p><i></i></span></div> order, that for the random network is
 ```{r, include = TRUE}
-sorted_actors <- sort(randomREH$actors) # sorted vector of actors' names
-N <- length(randomREH$actors)
-```
-```{r, include = TRUE}
-sorted_types <- sort(randomREH$types) # sorted vector of types' names
-C <- length(randomREH$types)
+# sorted vector of actors' names
+sorted_actors <- sort(randomREHsmall$actors)
+
+# number of actors in the network
+N <- length(randomREHsmall$actors)
 ```
 
 2. dyads are defined by the triple `c(actor1,actor2,type)` that is found by looping first on `actor2`, then `actor1`, and finally `type`. An example of the loops is shown below
 ```{r, include = TRUE}
-dyad <- matrix(NA, nrow = N*(N-1)*C, ncol = 3)
-colnames(dyad) <- c("actor1","actor2","type")
-rownames(dyad) <- 1:(N*(N-1)*C)
-d <- 1 # position index
-for(type in sorted_types){ # loop over event types
+# no event type, we set it to an empty string
+sorted_types <- c("") 
+
+# C = 1 for 'randomREHsmall'
+C <- length(sorted_types) 
+
+# initializing matrix object where to store the dyads with their composition [actor1,actor2,type]
+dyad_mat <- matrix(NA, nrow = N*(N-1)*C, ncol = 3)
+colnames(dyad_mat) <- c("actor1","actor2","type")
+rownames(dyad_mat) <- 1:(N*(N-1)*C)
+
+# initializing position index
+d <- 1 
+
+# start three loops
+for(type in sorted_types){ # loop over event types, 
   for(actor1 in sorted_actors){ # loop over actor1
     for(actor2 in sorted_actors){ # loop over actor2
       if(actor1!=actor2){ # avoid self-loops
-        dyad[d,] <- c(actor1,actor2,type)
+        dyad_mat[d,] <- c(actor1,actor2,type)
         d <- d + 1
       }
     }
   }
 }
 
-dyad[1:5,] # same result as showed above by using the method `dyad()`
-dim(dyad)[1] # checking the size of the static risk set that is 1140
+ # same result as showed above by using the method `dyad()`
+dyad_mat[1:5,]
+
+# checking the size of the static risk set that is 20
+dim(dyad_mat)[1] 
 ```
-The matrix `dyad` above describes the static risk set and the row indces correspond to the ID of the dyad (`dyadID`). For instance, `dyadID` is used in the output of the processed edgelist, under the column named `"dyad"`
+The matrix `dyad_mat` above describes the static risk set and the row indices correspond to the ID of the dyad (`dyadID`). For instance, `dyadID` is used in the output of the processed edgelist, under the column named `"dyad"`
 
 ```{r, include = TRUE}
-head(edgelist_reh$edgelist)
+head(small_edgelist_reh$edgelist$dyad)
 ```
+A possible way for visualizing the risk set composition at each time point consists in plotting a grid with actors' names on both axes: referring to the senders (on the y axis) and to the receivers (on the x axis). 
 
-
-### A risk set changing composition over time
-
-A static risk set assumes that all the possible dyads are always at risk regardless any consideration about the actual possibility of one or more actors to still be able to interact with the other actors.
-
-However, there are circumstances in which one or more actors cannot physically take part in interactions and this can happen either temporarily or since a starting time point until the end of the study. For instance, when the relational event network is about in-person interactions (for instance at the university or at school) and it is measured over days (or even weeks or months), one or more actors may not be present during one or more days, thus we want to exclude such actors from the risk set for the time window in which they are not present. Another example is when a relational event network is observed at a conference where multiple sessions or workshops can occur at the same time. In this case, the set of dyads at risk splits down to smaller different risk sets each one based on the groups of actors participating at a specific session or workshop.
-If the relational event network is about digital forms of interactions, for instance, one or more actors cannot interact one another because they do not appear in each other's friends list.
-In such scenarios, a static risk set would account for relational events that are not feasible which may even lead to biased estimates of the model parameters. It is possible to account for changes of the risk set over time by defining a dynamic risk set.
-
-A dynamic risk set consists of a time-varying ensemble of dyads at risk that is based on reasoned considerations about the study (as in the examples above). If actor "A" is not present during one day, it is then excluded from the risk set as both sender and receiver on that day. Thus, the excluded events will be all the directed events "A->X" and "X->A" with "X" being any actor that can interact at that time point.
-If actor "A" is not in the study anymore, it is then excluded as possible sender and receiver of future interactions after the last day in which it was present. Note that such considerations on excuding dyads from the risk set strongly depend on the study, on its design and they should be well motivated. For instance, if actor "A" is not present one day, but the study also records the network of digital interactions between actors, it makes sense to exclude the actor "A" from the network of in-person events but not from the network of digital interactions (unless more information is provided on actor "A", for instance being also offline on the digital platform). Several other examples on dynamic risk sets can be introduced but we limit our discussion to those presented above on actor "A".
-
-In order to provide a visual example of a dynamic risk set, consider the network of events below. The sequence is represented along the time line from left (first events) to right (last events).
-
-```{r, echo=FALSE, engine='tikz', out.width='100%', fig.ext='png'}
-\usetikzlibrary{shapes,decorations,arrows,calc,arrows.meta,fit,positioning,decorations.pathreplacing,decorations.pathmorphing}
-\tikzset{
-    -Latex,auto,node distance =1 cm and 1 cm,semithick,
-    state/.style ={ellipse, draw, minimum width = 0.7 cm},
-    point/.style = {circle, draw, inner sep=0.04cm,fill,node contents={}},
-    bidirected/.style={Latex-Latex,dashed},
-    el/.style = {inner sep=2pt, align=left, sloped}
+<center>
+```{r, echo = FALSE}
+library(ggplot2)
+N <- length(randomREHsmall$actors)
+risk_set <- expand.grid(sort(randomREHsmall$actors),sort(randomREHsmall$actors))
+p <- list()
+dyad_occurred <- c(11,4,11,11) 
+for(m in 1:4){
+value <- rep(NA,dim(risk_set)[1])
+for(d in 1:length(value)){
+    if(risk_set[d,1]!=risk_set[d,2]){
+        if(d == dyad_occurred[m]){
+            value[d] <- 50
+        }
+        else{
+            value[d] <- -50
+        }
+    }
+    else{
+       value[d] <- NA
+    }
 }
-\begin{tikzpicture}
-            \draw[<-,densely dashed] (-7.4,1.6) -- (-7.4,0.55) node[below]{};
-            \draw[<-,densely dashed] (-2.5,1.6) -- (-2.5,0.55) node[below]{};
-            \draw[<-,densely dashed] (3.74,1.6) -- (3.74,0.55) node[below]{};
-            \draw[<-,densely dashed] (6,1.6) -- (6,0.55) node[below]{};
-            \draw[->,semithick] (-7.4,0) -- (7,0); 
-            \draw [-,decorate,decoration={brace,amplitude=10pt},yshift=5pt] (-7.4,0.5) -- (-2.5,0.5) node [black,midway]{};
-            \draw [-,decorate,decoration={brace,amplitude=10pt},yshift=5pt] (-2.5,0.5) -- (3.74,0.5) node [black,midway]{};
-            \draw [-,decorate,decoration={brace,amplitude=10pt},yshift=5pt] (3.74,0.5) -- (6,0.5) node [black,midway]{};
-            \draw [-,decorate,decoration={brace,amplitude=10pt},yshift=-30pt] (6,0.4) -- (-7.4,0.4) node [black,midway,yshift=-10pt,scale=0.70]{$E_{t_{14}}$};
-            \foreach \x/\a in {-7/1,-6.2/2,-5/3,-4/4,-3.2/5,-2.1/6,-1.3/7,-0.2/8,0.8/9,2/10,2.9/11,4/12,4.8/13,6/14,6.6/15}
-            \draw[-,semithick] (\x,0.1) -- (\x,-0.1) node[below]{\small$t_{\a}$};
-            \node[scale=0.70] (x) at (-7,0.45) {$(i,j)$};
-            \node[text=gray,scale=0.70] (x) at (-6.2,0.45) {$(j,i)$};
-            \node[text=gray,scale=0.70] (x) at (-5,0.45) {$(l,j)$};
-            \node[scale=0.70] (x) at (-4,0.45) {$(i,j)$};
-            \node[text=gray,scale=0.70] (x) at (-3.2,0.45) {$(i,l)$};
-            \node[text=gray,scale=0.70] (x) at (-2.1,0.45) {$(j,i)$};
-            \node[scale=0.70] (x) at (-1.3,0.45) {$(i,j)$};
-            \node[text=gray,scale=0.70] (x) at (-0.2,0.45) {$(j,i)$};
-            \node[scale=0.70] (x) at (0.8,0.45) {$(i,j)$};
-            \node[text=gray,scale=0.70] (x) at (2,0.45) {$(j,l)$};
-            \node[scale=0.70] (x) at (2.9,0.45) {$(i,j)$};
-            \node[text=gray,scale=0.70] (x) at (4,0.45) {$(l,j)$};
-            \node[text=gray,scale=0.70] (x) at (4.8,0.45) {$(j,i)$};
-            \node[scale=0.70] (x) at (6,0.45) {$(i,j)$};
-            \node[scale=0.70] (x) at (-4.95,1.3) {$E_{t_{14},3}$};
-            \node[scale=0.70] (x) at (0.62,1.3) {$E_{t_{14},2}$};
-            \node[scale=0.70] (x) at (4.92,1.3) {$E_{t_{14},1}$};
-            \node[scale=0.70] (x) at (6,1.75) {$0secs$};
-            \node[scale=0.70] (x) at (3.74,1.75) {$30mins$};
-            \node[scale=0.70] (x) at (-2.5,1.75) {$2hrs$};
-            \node[scale=0.70] (x) at (-7.4,1.75) {$\infty$};
-\end{tikzpicture} 
+dat <- data.frame(actor1=risk_set[,1],actor2=risk_set[,2],value=value)
+p[[m]] <- ggplot(dat, aes(x=actor2, y=actor1, fill=value)) +
+    geom_tile(colour="grey20") +
+    scale_fill_gradient(low="yellow",high="green",na.value=NA)+
+    theme_minimal()+
+    theme(legend.position="none",
+    axis.text.x = element_text(color="black", size=10, angle=90),
+    axis.text.y = element_text(color="black", size=10, angle=0), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+    ggtitle(paste("t",m,sep=""))
+}
+gridExtra::grid.arrange(p[[1]],p[[2]],p[[3]],p[[4]], nrow=2)
 ```
+</center>
 
+In the first four time points, we observe the directed dyad _(Colton,Kayla)_ at time $t_1$, $t_3$ and $t_4$ and the dyad _(Lexy,Colton)_ at time $t_2$. The cell corresponding to the relational event occurred at each time point is colored in green. The rest of the cells are colored in yellow, meaning that those dyadic events could have occurred and they are part of the risk set.
 
+A static risk set in the case of undirected networks will assume a particular grid visualization. The dyads at risk will be on the lower triangular grid, because the actor names `c(actor1,actor2)` describing the dyad in the input edgelist are sorted according to their alphanumeric order before being processed. For instance, the event at $t_2$ `c("Lexy","Colton")`, will be rearranged as `c("Colton","Lexy")`, and the risk set will change as follows
 
+<center>
+```{r, echo = FALSE}
+library(ggplot2)
+N <- length(randomREHsmall$actors)
+risk_set <- expand.grid(sort(randomREHsmall$actors),sort(randomREHsmall$actors))
+p <- list()
+dyad_occurred <- c(NA,NA,16) 
+for(m in 3){
+value <- rep(NA,dim(risk_set)[1])
+for(d in 1:dim(risk_set)[1]){
+    if(risk_set[d,1]!=risk_set[d,2]){
+        if(d == dyad_occurred[m]){
+            value[d] <- 50
+        }
+        else if(as.character(risk_set[d,1])<as.character(risk_set[d,2])){
+            value[d] <- -50
+        }
+    }
+}
+dat <- data.frame(actor1=risk_set[,1],actor2=risk_set[,2],value=value)
+p[[1]] <- ggplot(dat, aes(x=actor2, y=actor1, fill=value)) +
+    geom_tile(colour="grey20") +
+    scale_fill_gradient(low="yellow",high="green",na.value=NA)+
+    theme_minimal()+
+    theme(legend.position="none",
+    axis.text.x = element_text(color="black", size=10, angle=90),
+    axis.text.y = element_text(color="black", size=10, angle=0), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+    ggtitle(paste("t",m,sep=""))
+}
+p[[1]]
+```
+</center>
 
-Each time point corresponds to the time of occurrence of a relational events and the occurred event is the
+In the case of a static risk set, the information about the risk set is constant over time: all the possible dyads will be colored in yellow and the cell for the occuring dyad at each time point will be green. 
 
-A dynamic risk set can be defined for both directed and undirected networks
+A static risk set assumes that all the possible dyads are always at risk regardless any consideration about the actual possibility of one or more actors to still be able to interact with the other actors at specific time windows. This is a starting point that allows us to introduce a dynamic risk set that is time-varying.
 
+### The _dynamic_ risk set
+There are circumstances in which one or more actors cannot physically take part in interactions and this can happen either temporarily or since a starting time point until the end of the study. For instance:
 
- - examples: actors leaving the study for several reasons or just unable to interact (I do not have your phone number so I can't interact with you if not only in person when we are at the university)
- - what a dinamy risk set implies in the model likelihood (events are excluded from the risk set) 
- - figure giving an example with dyads taken out from the risk set
+- __Example 1:__ when the relational event network is about in-person interactions (e.g., at the university or at school) and it is measured over days (or even weeks or months). One or more actors may not be present during one or more days, therefore we want to exclude such actors from the risk set for the specific time span in which they were not present. 
+
+- __Example 2:__ when relational events are observed at a conference where multiple sessions or workshops can occur at the same time. In this case, the set of dyads at risk splits down to smaller different risk sets, each one based on the groups of actors participating at a specific session or workshop.
+
+- __Example 3:__ when the relational events are digital interactions and one or more actors cannot interact one another because they do not appear in each other's friends list.
+
+In such and other scenarios, a static risk set would account for relational events that are not feasible and this may even lead to biased estimates of the model parameters. It is possible to account for changes of the risk set over time by defining a dynamic risk set.
+
+A dynamic risk set consists of a time-varying definition of the ensemble of dyads at risk and it is based on reasoned considerations about the study and the type of information collected (as in the examples above).
+
+Consider the first four time points of the small random network and assume this time that actors `"Richard"` and `"Francesca"` didn't join the study until the second day of the study. This means that the risk set for at least the first four time points will have the following composition,
+
+<center>
+```{r, echo = FALSE}
+library(ggplot2)
+N <- length(randomREHsmall$actors)
+risk_set <- expand.grid(sort(randomREHsmall$actors),sort(randomREHsmall$actors))
+p <- list()
+dyad_occurred <- c(11,4,11,11) 
+for(m in 1:4){
+value <- rep(NA,dim(risk_set)[1])
+for(d in 1:length(value)){
+    if(risk_set[d,1]!=risk_set[d,2]){
+        if(d == dyad_occurred[m]){
+            value[d] <- 50
+        }
+        else{
+            value[d] <- -50
+        }
+        if(risk_set[d,1] %in% c("Richard","Francesca") | risk_set[d,2] %in% c("Richard","Francesca")){
+          value[d] <- NA
+        }
+    }
+    else{
+       value[d] <- NA
+    }
+}
+dat <- data.frame(actor1=risk_set[,1],actor2=risk_set[,2],value=value)
+p[[m]] <- ggplot(dat, aes(x=actor2, y=actor1, fill=value)) +
+    geom_tile(colour="grey20") +
+    scale_fill_gradient(low="yellow",high="green",na.value=NA)+
+    theme_minimal()+
+    theme(legend.position="none",
+    axis.text.x = element_text(color="black", size=10, angle=90),
+    axis.text.y = element_text(color="black", size=10, angle=0), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+    ggtitle(paste("t",m,sep=""))
+}
+gridExtra::grid.arrange(p[[1]],p[[2]],p[[3]],p[[4]], nrow=2)
+```
+</center>
+
+where the cells defining the dyads where `"Richard"` and `"Francesca"` are the sender (actor1) or receiver (actor2) are excluded from the risk set (cells are now in white). The risk set is now made of only those dyads in which `"Colton"`, `"Kayla"` and `"Lexy"`are either the sender or the receiver of the interaction (cells in yellow).
+
+Finally, a dynamic risk set can be defined also for undirected networks and the grid visualization will focus on the lower triangular grid, because the actor names `c(actor1,actor2)` describing the dyad in the input edgelist are sorted according to their alphanumeric order before being processed. For instance, the event at $t_2$ `c("Lexy","Colton")`, will be rearranged as `c("Colton","Lexy")`, thus the risk set will change as below
+
+<center>
+```{r, echo = FALSE}
+library(ggplot2)
+N <- length(randomREHsmall$actors)
+risk_set <- expand.grid(sort(randomREHsmall$actors),sort(randomREHsmall$actors))
+p <- list()
+dyad_occurred <- c(NA,NA,16) 
+for(m in 3){
+value <- rep(NA,dim(risk_set)[1])
+for(d in 1:dim(risk_set)[1]){
+    if(risk_set[d,1]!=risk_set[d,2]){
+        if(d == dyad_occurred[m]){
+            value[d] <- 50
+        }
+        else if(as.character(risk_set[d,1])<as.character(risk_set[d,2])){
+            value[d] <- -50
+        }
+        if(risk_set[d,1] %in% c("Richard","Francesca") | risk_set[d,2] %in% c("Richard","Francesca")){
+          value[d] <- NA
+        }
+    }
+}
+dat <- data.frame(actor1=risk_set[,1],actor2=risk_set[,2],value=value)
+p[[1]] <- ggplot(dat, aes(x=actor2, y=actor1, fill=value)) +
+    geom_tile(colour="grey20") +
+    scale_fill_gradient(low="yellow",high="green",na.value=NA)+
+    theme_minimal()+
+    theme(legend.position="none",
+    axis.text.x = element_text(color="black", size=10, angle=90),
+    axis.text.y = element_text(color="black", size=10, angle=0), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+    ggtitle(paste("t",m,sep=""))
+}
+p[[1]]
+```
+</center>
 
 ## Specify a dynamic risk set in reh()
 
- - _remify::reh_ has an input argument (<i>omit_dyad</i>) that allows the user to define a dynamic riskset and remove specific dyads from one or more time points
+ - _remify::reh_ has an input argument (<i>omit_dyad</i>) that allows the user to define a dynamic risk set and remove specific dyads from one or more time points
  - explain the input omit_dyad, its structure and example from the _randomREH_ data 
  - plot a figure where the intervals specified via <i>omit_dyad</i> are plotted one over the other
 

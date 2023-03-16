@@ -71,7 +71,7 @@ randomREH$types
 
 ### <b><tt>directed</tt></b>
 
-It is a logical `TRUE`/`FALSE` value, indicating whether events are directed (`TRUE`) or not (`FALSE`). If `FALSE`, dyads will be sorted according to their names by following an alphanumerical order (e.g. `[actor1,actor2] = [Colton,Alexander]` will become `[actor1,actor2] = [Alexander,Colton]`).
+It is a logical `TRUE`/`FALSE` value, indicating whether events are directed (`TRUE`) or not (`FALSE`). If `FALSE`, dyads will be sorted according to their names by following an alphanumerical order (e.g. `[actor1,actor2] = ["Colton","Alexander"]` will become `[actor1,actor2] = ["Alexander","Colton"]`).
 
 ------
 
@@ -198,7 +198,7 @@ head(edgelist_reh$intereventTime)
 ------
 
 ### <b><tt>edgelist</tt></b>
-`edgelist` is a `data.matrix` and consists of the converted input edgelist, with columns `[time,dyad,weight]` where the inputs `actor1`, `actor2` and `type` are converted into a `dyad` ID with values ranging in  $\left\lbrace 0,\ldots,D-1 \right\rbrace$. If `weight` is not supplied as input, then its corresponding column in the output edgelist will be a vector of $1$'s.
+`edgelist` is a `data.frame` and consists of the converted input edgelist, with columns `[time,actor1_ID,actor2_ID,type_ID,weight]` where the inputs `actor1`, `actor2` and `type` are converted into IDs. If `weight` is not supplied as input, then its corresponding column in the output edgelist will be a vector of $1$'s.
 
 ```{r}
 head(edgelist_reh$edgelist)
@@ -322,15 +322,20 @@ attr(edgelist_reh, "dictionary")
 
 ------
 
-### <b><tt>time</tt></b>
-`time` is a list of three objects: `class`, `value` and `origin`.
-
-  - `class` returns the class of the column `time` provided in the input `edgelist`;
-  - `value` is a `data.frame` of size $[M \times 2]$ where the first column is the `time` variable supplied in the input `edgelist` and the second column is the `intereventTime` (already discussed in section 'Output');
-  - `origin` is the input argument already discussed in section 'Input'.
+### <b><tt>origin</tt></b>
+`origin` is the input argument already discussed in section 'Input'.
 
 ```{r}
-str(attr(edgelist_reh, "time")) # printing out only the str() of the attribute since the data.frame `value` is large
+str(attr(edgelist_reh, "origin")) # printing out only the str() of the attribute since the data.frame `value` is large
+```
+
+------
+
+### <b><tt>dyad</tt></b>
+`dyad` is the vector of IDs as to the observed dyads. The IDs range between 1 and `D` (`edgelist_reh$D`). This attribute is empty if `model = "actor"`. For more details about how the ID is assigned to a specific triple of `[actor1,actor2,type]`, see `vignette("riskset","remify")`
+
+```{r}
+attr(edgelist_reh, "dyad")[1:10] # printing out only first 10 observed dyads
 ```
 
 

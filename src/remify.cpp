@@ -523,9 +523,21 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
 // @param direcred boolean value: are events directed (1) or undirected (0)?
 // @param omit_dyad list. The same input in rehCpp.
 // @param model, "tie" or "actor" oriented
+// @param weighted true/false if the network is weighted (true) or not (false)
+// @param C number of event types, 1 is the minimum
 //
 // @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
-Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDictionary, Rcpp::DataFrame typesDictionary, arma::uword M, arma::uword D, bool directed, Rcpp::List omit_dyad, std::string model) {
+Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, 
+                            Rcpp::DataFrame actorsDictionary, 
+                            Rcpp::DataFrame typesDictionary, 
+                            arma::uword M, 
+                            arma::uword D, 
+                            bool directed, 
+                            Rcpp::List omit_dyad, 
+                            std::string model, 
+                            bool weighted, 
+                            int C)
+{
     // for loop iterators
     arma::uword m,r,z,d,R,Z_r,D_r,D_rr;
     // counter for warningMessages
@@ -533,49 +545,153 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
     // Creating output list object
     std::vector<int> dyad(M);
     Rcpp::List out = Rcpp::List::create();
-        
-    // edgelist input 
+    Rcpp::DataFrame convertedEdgelist; // empty data.frame
+
+    // edgelist input actor1 and actor2 with dictionary
     std::vector<std::string> stringActor1 = Rcpp::as<std::vector<std::string>>(edgelist["actor1"]);
     std::vector<std::string> stringActor2 = Rcpp::as<std::vector<std::string>>(edgelist["actor2"]);
-    std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]);
-
-    // strings in the dictionaries
     std::vector<std::string> actorName = Rcpp::as<std::vector<std::string>>(actorsDictionary["actorName"]);
     int N = actorName.size(); // number of actors
     std::vector<int> actorID = actorsDictionary["actorID"];
-    std::vector<std::string> typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
-    std::vector<int> typeID = typesDictionary["typeID"];
+    std::for_each(actorID.begin(), actorID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to N-1
 
-    // (1) Converting `edgelist`
-    for(m = 0; m < M; m++){
-        // m-th event in the edgelist input:
-        if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
-        // find actor1
-        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
-        int convertedActor1_m = actorID.at(std::distance(actorName.begin(), i));
+    //(1) Converting `edgelist`
+    std::vector<std::string> typeName(C);
+    // if C>1 (two or more event types) ...
+    if(C>1){
+        std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]);
+        typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
+        std::vector<int> typeID = typesDictionary["typeID"];
+        std::for_each(typeID.begin(), typeID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to C-1
 
-        // find actor2
-        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
-        int convertedActor2_m = actorID.at(std::distance(actorName.begin(), j));
+        // creating 
+        std::vector<int> convertedActor1_ID(M);
+        std::vector<int> convertedActor2_ID(M);
+        std::vector<int> convertedType_ID(M);
+        if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+            for(m = 0; m < M; m++){ 
+                // m-th event in the edgelist input:
+                if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                // find actor1
+                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
 
-        // find type 
-        std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
-        int convertedType_m = typeID.at(std::distance(typeName.begin(), c));
+                // find actor2
+                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
 
-        // getting dyad index
-        dyad[m] = getDyadIndex(convertedActor1_m,convertedActor2_m,convertedType_m,N,directed);    
+                // find type 
+                std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
+                convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c));
+
+                // getting dyad index
+                dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1;    
+                }
+                else{
+                    Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
+                } 
+            }
+            out["dyad"] = dyad;
+        }
+        else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+            for(m = 0; m < M; m++){ //loop without calculating the dyad
+                // m-th event in the edgelist input:
+                if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                // find actor1
+                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+
+                // find actor2
+                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+
+                // find type 
+                std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
+                convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c)); 
+                }
+                else{
+                    Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
+                } 
+            }
+            out["dyad"] = R_NilValue;
+        }
+
+        // .. we add a column 'weight' if it is present from the input edgelist, otherwise we don't
+        if(weighted){ 
+            convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
+                                    Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                                    Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                                    Rcpp::Named("type_ID") = convertedType_ID,
+                                    Rcpp::Named("weight") = edgelist["weight"]);
         }
         else{
-            Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
+            convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
+                                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                                            Rcpp::Named("type_ID") = convertedType_ID);
         } 
     }
+    else{ // if C = 1 then we will not process any input about type 
+        std::vector<int> convertedActor1_ID(M);
+        std::vector<int> convertedActor2_ID(M);
+        if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+            for(m = 0; m < M; m++){
+                // m-th event in the edgelist input:
+                if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                // find actor1
+                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
 
-    Rcpp::DataFrame convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
-                                        Rcpp::Named("dyad") = dyad, 
-                                        Rcpp::Named("weight") = edgelist["weight"]);
-                                    
+                // find actor2
+                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
 
-    // (2) Storing converted `edgelist`
+                // getting dyad index
+                dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1;    
+                }
+                else{
+                    Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
+                } 
+            }
+            out["dyad"] = dyad;
+        }
+        else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+            for(m = 0; m < M; m++){
+                // m-th event in the edgelist input:
+                if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                // find actor1
+                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+
+                // find actor2
+                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+                }
+                else{
+                    Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
+                } 
+            }
+            out["dyad"] = R_NilValue;
+        }
+
+        // .. we add a column 'weight' if it is present from the input edgelist, otherwise we don't
+        if(weighted){ 
+            convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
+                                    Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                                    Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                                    Rcpp::Named("weight") = edgelist["weight"]);
+        }
+        else{
+            convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
+                                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                                            Rcpp::Named("actor2_ID") = convertedActor2_ID);
+        } 
+
+        //
+    }
+
+                                                                                  
+    // (2) Storing converted `edgelist`...
     out["edgelist"] = convertedEdgelist; 
 
     // (3) Converting `omit_dyad` list
@@ -585,7 +701,6 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, Rcpp::DataFrame actorsDicti
         Rcpp::List convertedOmitDyad = Rcpp::List::create(); // r-th list with matrix inputs converted into IDs
         Rcpp::List convertedOmitDyad_time = Rcpp::List::create(); // r-th list with time inputs converted into IDs
         int N = actorName.size();
-        int C = typeName.size();
         R = omit_dyad.length();
 
         for(r = 0; r < R; r++){
@@ -792,12 +907,15 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
                   std::string model) {
 
     // Allocating memory for some variables and the output list
-    arma::uword D; // number of dyads which depends on the directed input value 
+    arma::uword N,C,D; // number of dyads which depends on the directed input value 
     Rcpp::List out = Rcpp::List::create(); // output list
 
     // START of the processing
 
-    // Converting (overwriting) actor1, actor2, type, weight columns to StringVector or NumericVector (process [3-4] columns when they miss here)
+    // storing the number of events
+    out["M"] = edgelist.nrows(); // number of events
+
+    // Processing actor1, actor2, type, weight columns to StringVector or NumericVector 
 
     // actor1
     edgelist["actor1"] = Rcpp::as<Rcpp::StringVector>(edgelist["actor1"]);
@@ -807,27 +925,17 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
 
     // type
     out["with_type"] = false;
-    if(!edgelist.containsElementNamed("type")){ // if type is not defined, one event type `0` is created for
-        Rcpp::DataFrame edgelist_loc = Rcpp::clone(edgelist);
-        Rcpp::StringVector one_type_vector(edgelist.nrows(),"0");
-        edgelist_loc.push_back(one_type_vector,"type");
-        edgelist = Rcpp::as<Rcpp::DataFrame>(edgelist_loc);
-    }
-    else{
+    if(edgelist.containsElementNamed("type")){ 
         edgelist["type"] = Rcpp::as<Rcpp::StringVector>(edgelist["type"]); 
+        out["with_type"] = true;
     }
 
-    // weight
+    // Is the network weighted?
     out["weighted"] = false;
-    if(!edgelist.containsElementNamed("weight")){ // if weight is not defined
-        Rcpp::DataFrame edgelist_loc = Rcpp::clone(edgelist);
-        Rcpp::NumericVector one_weight_vector(edgelist.nrows(),1.0);
-        edgelist_loc.push_back(one_weight_vector,"weight");
-        edgelist = Rcpp::as<Rcpp::DataFrame>(edgelist_loc);
-    }
-    else{
+    if(edgelist.containsElementNamed("weight")){ // if weight is not defined
         edgelist["weight"] = Rcpp::as<Rcpp::NumericVector>(edgelist["weight"]); 
-    }
+        out["weighted"] = true;
+    } 
 
     // processing `time` variable
     Rcpp::List intereventTime = getIntereventTime(edgelist["time"],origin,ordinal);
@@ -859,51 +967,54 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     // Finding unique strings in actor1_and_actor2 
     Rcpp::StringVector actorName = Rcpp::unique(actor1_and_actor2);
     actorName.sort(); // sorting actors
+    out["N"] = actorName.length(); // number of actors
+    N = actorName.length(); 
 
     // Finding unique strings in event types 
-    Rcpp::StringVector vector_of_types = edgelist["type"];
-    if(!Rf_isNull(types)){
-        Rcpp::StringVector types_vector = Rcpp::as<Rcpp::StringVector>(types);
-        arma::uword C_loc = types_vector.length();
-        for(arma::uword c = 0; c < C_loc; c++){
-            vector_of_types.push_back(types_vector[c]);
-        } 
+    Rcpp::StringVector typeName;
+    if(out["with_type"]){
+        Rcpp::StringVector vector_of_types = edgelist["type"];
+        if(!Rf_isNull(types)){
+            Rcpp::StringVector types_vector = Rcpp::as<Rcpp::StringVector>(types);
+            arma::uword C_loc = types_vector.length();
+            for(arma::uword c = 0; c < C_loc; c++){
+                vector_of_types.push_back(types_vector[c]);
+            } 
+        }
+        typeName = Rcpp::unique(vector_of_types);
+        typeName.sort(); // sorting types
+        C = typeName.length();  
+        out["C"] = C;
     } 
-    Rcpp::StringVector typeName = Rcpp::unique(vector_of_types);
-    typeName.sort(); // sorting types
-    
-    // Storing some useful dimensions
-    out["M"] = edgelist.nrows(); // number of events
-    out["N"] = actorName.length(); // number of actors
-    out["C"] = typeName.length(); // number of events types
+    else{
+        C = 1;
+        out["C"] = R_NilValue;
+    }
     
     // How many (possible) dyads? if `directed` N*(N-1), N*(N-1)/2 otherwise
     if(directed){
-        D = actorName.length()*(actorName.length()-1)*typeName.length();
+        D = N*(N-1)*C;
     }
     else{
-        D = ((actorName.length()*(actorName.length()-1))/2)*typeName.length();
+        D = ((N*(N-1))/2)*C;
     }
     out["D"] = D; // number of dyads (this dimension is the largest possible and doesn't account for the dynamic riskset)
 
-    // Are there more than one event type? (if event type is only one, then no event types are considered)
-    if(typeName.length() > 1) out["with_type"] = true;
-
-    // Is the network weighted?
-    Rcpp::NumericVector event_weights = edgelist["weight"]; 
-    Rcpp::NumericVector unique_weights = Rcpp::unique(event_weights);
-    if(unique_weights.length() > 1) out["weighted"] = true;   
 
     // Creating a dictionary for actors and event types, that is like: 'string_name' = integer (IDentifier)
-    Rcpp::DataFrame actorsDictionary = Rcpp::DataFrame::create(Rcpp::Named("actorName") = actorName, Rcpp::Named("actorID") = Rcpp::Range(0,actorName.length()-1)); 
+    Rcpp::DataFrame actorsDictionary = Rcpp::DataFrame::create(Rcpp::Named("actorName") = actorName, Rcpp::Named("actorID") = Rcpp::Range(1,N)); 
     out["actorsDictionary"] = actorsDictionary;
     
-    Rcpp::DataFrame typesDictionary = Rcpp::DataFrame::create(Rcpp::Named("typeName") = typeName, Rcpp::Named("typeID") = Rcpp::Range(0,typeName.length()-1)); 
-    out["typesDictionary"] = typesDictionary;
-  
+    Rcpp::DataFrame typesDictionary;
+    if(out["with_type"]){
+        typesDictionary = Rcpp::DataFrame::create(Rcpp::Named("typeName") = typeName, Rcpp::Named("typeID") = Rcpp::Range(1,C)); 
+        out["typesDictionary"] = typesDictionary;
+    }
 
+   
     // Converting input edgelist and omit_dyad list according to the new id's for both actors and event types
-    Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],out["D"],directed,omit_dyad,model);
+    Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],out["D"],directed,omit_dyad,model,out["weighted"],C);
+    out["dyad"] = convertedInput["dyad"];
     out["edgelist"] = convertedInput["edgelist"];
     out["omit_dyad"] = convertedInput["omit_dyad"]; 
 

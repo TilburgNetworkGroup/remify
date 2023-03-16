@@ -2,8 +2,8 @@ Type: Package
 Package: remify
 Title: Processing and transforming REH to formats suitable for the
     remverse packages and more
-Version: 2.0.0
-Date: 2022-09-20
+Version: 3.0.0
+Date: 2023-03-20
 Authors@R: 
     c(person(given = "Giuseppe",
              family = "Arena",
@@ -45,7 +45,6 @@ Imports:
     Rcpp (>= 1.0.8.3)
 Suggests: 
     knitr,
-    magick,
     rmarkdown,
     testthat (>= 3.0.0),
     usethis,

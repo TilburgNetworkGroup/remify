@@ -111,27 +111,27 @@ reh <- function(edgelist,
                     origin = origin,
                     omit_dyad = omit_dyad,
                     model = model)
-
-    str_out <- structure(list(
-      M = out$M,
-      N = out$N,
-      C = out$C,
-      D = out$D,
-      intereventTime = out$intereventTime,
-      edgelist = out$edgelist, #[[to remove]] it was a data.matrix()
-      omit_dyad = out$omit_dyad
-    ), class="reh")
-
-   
     
+    str_out <- structure(list(M = out$M
+                            ,N = out$N
+                            ,C = out$C
+                            ,D = out$D
+                            ,intereventTime = out$intereventTime
+                            ,edgelist = out$edgelist
+                            ,omit_dyad = out$omit_dyad
+                            )
+                            ,class="reh")
+
     attr(str_out, "with_type") <- out$with_type
     attr(str_out, "weighted") <- out$weighted
     attr(str_out, "directed") <- directed
     attr(str_out, "ordinal") <- ordinal
     attr(str_out, "model") <- model # useful because tie and actor models have two different ways for handling changing risksets
     attr(str_out, "riskset") <- ifelse(length(omit_dyad)>0,"dynamic","static")
-    attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary) 
-    attr(str_out, "time") <- list(class= class(out$edgelist$time), value = data.frame(time = out$edgelist$time,intereventTime = out$intereventTime), origin = origin)
+    attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary)
+    attr(str_out, "origin") <- origin #[[new]]
+    attr(str_out, "dyad") <- out$dyad #[[new]] with new reh$edgelist shape
+
 
     return(str_out)
 }
@@ -155,7 +155,7 @@ summary.reh <- function(object,...){
   model <- paste("(processed for ",attr(object,"model"),"-oriented modeling):",sep="")
   events <- paste("\t> events = ",object$M,sep="")
   actors <- paste("\t> actors = ",object$N,sep="")
-  types <- paste("\t> (event) types = ",object$C,sep="")
+  types <- if(!attr(object,"with_type")) NULL else {paste("\t> (event) types = ",object$C,sep="")}
   riskset <- paste("\t> riskset = ",attr(object,"riskset"),sep="")
   directed <- paste("\t> directed = ",attr(object,"directed"),sep="")
   ordinal <- paste("\t> ordinal = ",attr(object,"ordinal"),sep="")
@@ -190,7 +190,10 @@ summary.reh <- function(object,...){
     interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ",round(min_interevent_time,4)," ",units_minmax,"\n\t\t >> maximum ~ ",round(max_interevent_time,4)," ",units_minmax,"\n",sep="")
   }
 
-  cat(paste(title,model,events,actors,types,riskset,directed,ordinal,weighted,time_length,interevent_time,sep="\n"))
+  out_summary <- c(title,model,events,actors,types,riskset,directed,ordinal,weighted,time_length,interevent_time)
+  out_summary <- out_summary[!is.null(out_summary)]
+  cat(paste(out_summary,collapse="\n"))
+  
 }
 
 #######################################################################################
@@ -217,8 +220,15 @@ print.reh <- function(x,...){
 #' @method dim reh
 #' @export
 dim.reh <- function(x){
-  dimensions <- c(x$M, x$N, x$C, x$D)
-  names(dimensions) <- c("events","actors","types","dyads")
+  dimensions <- NULL
+  if(attr(x,"with_type")){
+    dimensions <- c(x$M, x$N, x$C, x$D)
+    names(dimensions) <- c("events","actors","types","dyads")
+  }
+  else{
+    dimensions <- c(x$M, x$N, x$D)
+    names(dimensions) <- c("events","actors","dyads")
+  }
   return(dimensions)
 }
 
@@ -237,6 +247,9 @@ getDynamicRiskset <- function(reh){
 #' @method getDynamicRiskset reh
 #' @export
 getDynamicRiskset.reh <- function(reh) {
+  if(!inherits(reh,"reh")){
+    stop("the input argument 'reh' must be an object of class 'reh'") 
+  }
   if(attr(reh, "riskset") == "dynamic"){
     if(attr(reh,"model") == "tie"){
       return(list(riskset = reh$omit_dyad$riskset))
@@ -253,23 +266,30 @@ getDynamicRiskset.reh <- function(reh) {
 #######################################################################################
 #######################################################################################
 
-#' @title actorName
+#' @title getActorName
 #' @description A function that given a vector of actor ID's returns the corresponding vector of actor (input) names.
 #' @param reh an \code{reh} object.
-#' @param actorID a vector of actor ID's.
+#' @param actorID a vector of actor ID's. The ID value can range between \code{1} and \code{N} (number of actors in the network)
 #' @export
-actorName <- function(reh, actorID = NULL){
-  UseMethod("actorName")
+getActorName <- function(reh, actorID = NULL){
+  UseMethod("getActorName")
 }
 
-#' @describeIn actorName actor's name from actor's ID
-#' @method actorName reh
+#' @describeIn getActorName return actor's name from actor's ID
+#' @method getActorName reh
 #' @export
-actorName.reh <- function(reh, actorID = NULL) {
+getActorName.reh <- function(reh, actorID = NULL) {
+  if(!inherits(reh,"reh")){
+    stop("the input argument 'reh' must be an object of class 'reh'") 
+  }
   names <- NULL
   if(is.null(actorID)) stop("provide at least one actorID.")
   else{ 
-    if(!is.null(actorID)){
+    if(!is.numeric(actorID)){
+      stop("'actorID' must be numeric or integer.")
+    }
+    else{
+      actorID <- as.integer(actorID)
       actors <- attr(reh, "dictionary")$actors
       which_actor <- sapply(actorID, function(x) which(actors$actorID == x))
       which_actor <- unlist(which_actor)
@@ -284,23 +304,30 @@ actorName.reh <- function(reh, actorID = NULL) {
 #######################################################################################
 #######################################################################################
 
-#' @title typeName
+#' @title getTypeName
 #' @description A function that given a vector of type ID's returns the corresponding vector of type (input) names.
 #' @param reh an \code{reh} object.
-#' @param typeID a vector of type ID's.
+#' @param typeID a vector of type ID's. The ID value can range between \code{1} and \code{C} (number of event types in the network)
 #' @export
-typeName <- function(reh, typeID = NULL){
-  UseMethod("typeName")
+getTypeName <- function(reh, typeID = NULL){
+  UseMethod("getTypeName")
 }
 
-#' @describeIn typeName type's name from type's ID
-#' @method typeName reh
+#' @describeIn getTypeName return type's name from type's ID
+#' @method getTypeName reh
 #' @export
-typeName.reh <- function(reh, typeID = NULL) {
+getTypeName.reh <- function(reh, typeID = NULL) {
+  if(!inherits(reh,"reh")){
+    stop("the input argument 'reh' must be an object of class 'reh'") 
+  }
   names <- NULL
   if(is.null(typeID)) stop("provide at least one typeID.")
   else{ 
-    if(!is.null(typeID)){
+    if(!is.numeric(typeID)){
+      stop("'typeID' must be numeric or integer.")
+    }
+    else{
+      typeID <- as.integer(typeID)
       types <- attr(reh, "dictionary")$types
       which_type <- sapply(typeID, function(x) which(types$typeID == x))
       which_type <- unlist(which_type)
@@ -315,30 +342,33 @@ typeName.reh <- function(reh, typeID = NULL) {
 #######################################################################################
 #######################################################################################
 
-#' @title actorID
+#' @title getActorID
 #' @description A function that given a vector of actor names returns the corresponding vector of ID's.
 #' @param reh an \code{reh} object.
-#' @param actorName a vector of actor names.
+#' @param actorName a vector of actor names. The same names in the input edgelist.
 #' @export
-actorID <- function(reh, actorName = NULL){
-  UseMethod("actorID")
+getActorID <- function(reh, actorName = NULL){
+  UseMethod("getActorID")
 }
 
-#' @describeIn actorID actor's ID from actor's name
-#' @method actorID reh
+#' @describeIn getActorID return actor's ID from actor's name
+#' @method getActorID reh
 #' @export
-actorID.reh <- function(reh, actorName = NULL) {
+getActorID.reh <- function(reh, actorName = NULL) {
+  if(!inherits(reh,"reh")){
+    stop("the input argument 'reh' must be an object of class 'reh'") 
+  }
   IDs <- NULL
   if(is.null(actorName)) stop("provide at least one actorName.")
   else{ 
-    if(!is.null(actorName)){
+      actorName <- as.character(actorName)
       actors <- attr(reh, "dictionary")$actors
       which_actor <- sapply(actorName, function(x) which(actors$actorName == x))
       which_actor <- unlist(which_actor)
       IDs <- actors$actorID[which_actor]
       if(length(IDs) == 0) stop("no actorName was found in the dictionary.")
       else if(length(IDs) < length(actorName)) warning("some actorName was not found in the dictionary.") 
-    }
+    
   }
   return(IDs)
 }
@@ -346,30 +376,32 @@ actorID.reh <- function(reh, actorName = NULL) {
 #######################################################################################
 #######################################################################################
 
-#' @title typeID
+#' @title getTypeID
 #' @description A function that given a vector of type names returns the corresponding vector of ID's.
 #' @param reh an \code{reh} object.
-#' @param typeName a vector of type names.
+#' @param typeName a vector of type names. The same names in the input edgelist.
 #' @export
-typeID <- function(reh, typeName = NULL){
-  UseMethod("typeID")
+getTypeID <- function(reh, typeName = NULL){
+  UseMethod("getTypeID")
 }
 
-#' @describeIn typeID type's ID from type's name
-#' @method typeID reh
+#' @describeIn getTypeID return type's ID from type's name
+#' @method getTypeID reh
 #' @export
-typeID.reh <- function(reh, typeName = NULL) {
+getTypeID.reh <- function(reh, typeName = NULL) {
+  if(!inherits(reh,"reh")){
+    stop("the input argument 'reh' must be an object of class 'reh'") 
+  }
   IDs <- NULL
   if(is.null(typeName)) stop("provide at least one typeName.")
   else{ 
-    if(!is.null(typeName)){
-      types <- attr(reh, "dictionary")$types
-      which_type <- sapply(typeName, function(x) which(types$typeName == x))
-      which_type <- unlist(which_type)
-      IDs <- types$typeID[which_type]
-      if(length(IDs) == 0) stop("no typeName was found in the dictionary.")
-      else if(length(IDs) < length(typeName)) warning("some typeName was not found in the dictionary.")       
-    }
+    typeName <- as.character(typeName)
+    types <- attr(reh, "dictionary")$types
+    which_type <- sapply(typeName, function(x) which(types$typeName == x))
+    which_type <- unlist(which_type)
+    IDs <- types$typeID[which_type]
+    if(length(IDs) == 0) stop("no typeName was found in the dictionary.")
+    else if(length(IDs) < length(typeName)) warning("some typeName was not found in the dictionary.")       
   }
   return(IDs)
 }
@@ -377,23 +409,23 @@ typeID.reh <- function(reh, typeName = NULL) {
 #######################################################################################
 #######################################################################################
 
-#' @title dyadID
+#' @title getDyadID
 #' @description A function that given a vector of names as to actor1, actor2 and type returns the corresponding dyad ID. The names to supply are the original input names of the edgelist before the processing via the function \code{remify::reh()}
 #' @param reh an \code{reh} object.
 #' @param actor1 name of actor1 
 #' @param actor2 name of actor2 
 #' @param type name of type
 #' @export
-dyadID <- function(reh, actor1, actor2, type){
-  UseMethod("dyadID")
+getDyadID <- function(reh, actor1, actor2, type){
+  UseMethod("getDyadID")
 }
 
-#' @describeIn dyadID dyadID from dyad composition
-#' @method dyadID reh
+#' @describeIn getDyadID return dyad's ID from dyad's composition
+#' @method getDyadID reh
 #' @export
-dyadID.reh <- function(reh, actor1, actor2, type) {
+getDyadID.reh <- function(reh, actor1, actor2, type) {
   if(!inherits(reh,"reh")){
-    stop("the input argument 'reh' must be an object of class 'reh'") #[IMPORTANT] add this check in all the other methods and also perform tests on it
+    stop("the input argument 'reh' must be an object of class 'reh'") 
   }
   if(attr(reh,"with_type")){
     if(!is.vector(type) | (length(type)>1)){
@@ -414,29 +446,26 @@ dyadID.reh <- function(reh, actor1, actor2, type) {
 
   dict_loc <- attr(reh,"dictionary")
   # finding actors from the dictionary of names (attribute of the reh object)
-  actor1_which <- which(dict_loc$actors$actorName == actor1)
-  actor2_which <- which(dict_loc$actors$actorName == actor2)
-  check_on_actors <- (c(length(actor1_which),length(actor2_which))==0) 
+  actor1_id <- which(dict_loc$actors$actorName == actor1)
+  actor2_id <- which(dict_loc$actors$actorName == actor2)
+  check_on_actors <- (c(length(actor1_id),length(actor2_id))==0) 
   if(any(check_on_actors)){
     stop(paste("input ",ifelse(sum(check_on_actors)==1,c("'actor1' "," 'actor2' ")[check_on_actors],c("'actor1' and 'actor2' ")),"not found in the processed object 'reh'",sep=""))
   }
-  actor1_id <- dict_loc$actors$actorID[actor1_which]
-  actor2_id <- dict_loc$actors$actorID[actor2_which]
   # finding type from the dictionary of names (attribute of the reh object)
   type_id <- 0
   if(attr(reh,"with_type")){
-    type_which <- which(dict_loc$types$typeName == type)
-    if(length(type_which)==0){
+    type_id <- which(dict_loc$types$typeName == type)
+    if(length(type_id)==0){
       stop("input 'type' not found in the processed object 'reh'")
     }
-    type_id <- dict_loc$types$typeID[type_which]
   }
   # finding dyad ID
-  dyad_id <- remify:::getDyadIndex(actor1 = actor1_id,
-                                    actor2 = actor2_id,
-                                    type = type_id,
+  dyad_id <- remify:::getDyadIndex(actor1 = actor1_id-1,
+                                    actor2 = actor2_id-1,
+                                    type = type_id-1,
                                     N = reh$N,
-                                    directed = attr(reh,"directed")) # we return the id in the C++ form -- at the moment --
+                                    directed = attr(reh,"directed"))+1 
 
   return(dyad_id)
 }
@@ -444,21 +473,21 @@ dyadID.reh <- function(reh, actor1, actor2, type) {
 #######################################################################################
 #######################################################################################
 
-#' @title dyad
+#' @title getDyad
 #' @description A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).
 #' @param reh an \code{reh} object.
-#' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size)
+#' @param getDyad a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size)
 #' @export
-dyad <- function(reh, dyadID){
-  UseMethod("dyad")
+getDyad <- function(reh, dyadID){
+  UseMethod("getDyad")
 }
 
-#' @describeIn dyad dyad composition in actor1, actor2 and type from dyad ID
-#' @method dyad reh
+#' @describeIn getDyad return dyad composition in actor1, actor2 and type from one (or more) dyad ID
+#' @method getDyad reh
 #' @export
-dyad.reh <- function(reh, dyadID) {
+getDyad.reh <- function(reh, dyadID) {
   if(!inherits(reh,"reh")){
-    stop("the input argument 'reh' must be an object of class 'reh'") #[IMPORTANT] add this check in all the other methods and also perform tests on it
+    stop("the input argument 'reh' must be an object of class 'reh'") 
   }
   if(!is.numeric(dyadID) & !is.integer(dyadID)){
     stop("input argument 'dyadID' must be a numeric (or integer) vector")
@@ -527,159 +556,68 @@ dyad.reh <- function(reh, dyadID) {
 
 #######################################################################################
 #######################################################################################
+
+#' @title plot.reh
+#' @rdname plot.reh
+#' @description plot visualization
+#' @param x is an \code{reh} object 
+#' @param which one or more numbers between 1 and 4. Explain the numbers: (1) plots this, (2) plots that, (3) plots this and (4) plot that
+#' @param caption list of titles for each plot
+#' @param APA_style if \code{TRUE}, theme_remify_for_APA() will be applied, if \code{FALSE} theme_remify() will be applied by default
+#' @param ... further arguments to be passed.
+#' @method plot reh
+#' @export
+plot.reh <- function(x,
+                    which = c(1:4),
+                    caption = list("Title 1",
+                                   "Title 2", 
+                                   "Title 3",
+                                   "Title 4"),   
+                    APA_style = FALSE,
+                    ...){
+  
+
+# [[current status of the method]] this function ONLY works for single event sequences inside the reh object (two-mode and multiple sequences network)
+
+# checks on input arguments
+
+# class of input 'x' must be 'reh'
+if(!inherits(x,"reh")){
+  stop("the input 'x' must be an object of class 'reh'")
+}
+
+# check on captions supplied by the user
+
+# ---
+
+# setting theme of the output plot
+# ggplot2::theme_set( ifelse(APA_style,theme_remify_for_APA(),theme_remify()))
+
+# tie-oriented modeling
+if(attr(x,"model") == "tie"){
+  par(mfrow=c(2,2))
+  # [[1]] histogram of the waiting times
+  hist(x$intereventTime,breaks=30)
+
+  # [[2]] create a polt.reh function that shows a grid of frequencies of row (sender) by column (receiver), 
+  # and barplots in the row and column dimension showing the frequencies of actors as sender and receiver. Maybe reorder the actors depending on their 'activity'.
+  # geom_tile() + geom_bar() 
+
+
+  # [[??]] it would be useful to give a X by Y panel with the observed event times,
+  # [[?? this might need some discussion for large networks]] an aggregated network plot where the thickness is related to the number of events for a tie, 
+}
+# actor-oriented modeling
+else{
+
+}
+
+
+}
+
+#######################################################################################
+#######################################################################################
 ##########(END)             Methods for `reh` object             (END)#################
 #######################################################################################
 #######################################################################################
-
-
-#' @title Transform processed relational event sequences to different formats
-#'
-#' @description A function that transforms a \code{reh} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from (to) an object of class \code{reh} to (from) a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2023).
-#'
-#' @param data an object of either class 'reh' (see function \code{remify::reh()}) or class 'relevent'. The class 'relevent' is an dummy class object that contains a list of objects named after the argument names of the function \code{relvent::rem()} that need to be converted. For instance, if one wants to convert an object of structure 'relevent' we need it to contain: 'eventlist' (mandatory), 'supplist' (optional), 'timing'(mandatory). If the object 'timing' is \code{NULL}, the output object will assume an \code{"interval"} timing. The 'supplist' object can be left uspecified (\code{NULL}).
-#' @param output_format a character indicating the output format which the input data has to be converted to. It can assume two values: "reh" , "relevent"
-#'
-#' @return  an object of class specified by the \code{format} argument and containing the converted objects according to the required format
-#' @export
-rehshape <- function(data, output_format = c("reh","relevent")){
-
-    output_format <- match.arg(output_format)
-    data_format <- class(data)
-    if(length(data_format)>1){
-      stop("class of input data must be of length 1.")
-    }
-    # data has to be either of class 'reh' or 'relevent'
-    if(!any(data_format == c("reh","relevent"))){
-      stop("class of input data must be either `reh` or `relevent`.") 
-    }
-    # check data and output format
-    if(data_format == output_format){
-      warning("the format of the input data is the same as the required output format. The input data is returned.")
-      return(data)
-    }
-    
-    # if data structure is 'reh'
-    if(data_format ==  "reh"){
-
-      # check reh object here
-      ## ##
-      ## ## ##
-      # stop('') + add tests
-      ## ##
-
-      out <- NULL
-      if(output_format == "relevent"){
-        # (1) processing the edgelist
-        eventlist <- data$edgelist[,c(2,1)] # [dyad,time]
-        eventlist[,1] <- eventlist[,1]+1
-        if(is.null(attr(data,"time")$origin)){
-          eventlist[,2] <- attr(data,"time")$value[,1] # if 'origin' is NULL the we use the time column,
-        }
-        else{
-          eventlist[,2] <-cumsum(data$intereventTime) # if 'origin' is provided inside object 'reh', then the time variable is reconstructed via cumulative sum of intervent time variable 
-        }
-    
-        colnames(eventlist) <- c("dyad","time")
-        supplist <- NULL
-        if(!is.null(data$omit_dyad)){
-          # (2) converting the omit_dyad output object to the 'supplist' argument in relevent::rem()
-          supplist <- matrix(TRUE,nrow=data$M,ncol=data$D)
-          for(m in 1:data$M){
-            if(data$omit_dyad$time[m]!=(-1)){
-              change_m <- data$omit_dyad$riskset[data$omit_dyad$time[m]+1,]
-              supplist[m,] <- as.logical(change_m)
-              rm(change_m)
-            }
-          }
-        }
-        # (3) processing information about likelihood
-        timing <- ifelse(attr(data,"ordinal"),"ordinal","interval")
-        out <- structure(list(eventlist = eventlist,
-                              supplist = supplist,
-                              timing = timing),
-                        class = "relevent")
-      }
-      return(out)
-    }
-
-
-    if(data_format == "relevent"){
-
-      # check relevent object here
-      ## ##
-      ## ## ##
-      # stop('') + add tests
-      ## ##
-
-      out <- NULL
-      #convert from 'relevent' structure to 'reh'
-
-      # full riskset (this will have different actors' names than the original data)
-      dyads_l <- expand.grid(1:data$N,1:data$N) # number of actors 
-      dyads_l <- dyads_l[-which(dyads_l[,1]==dyads_l[,2]),]
-      dyads_l <- dyads_l[,c(2,1)] 
-      dyads_l <- data.frame(actor1=rep(dyads_l[,1],data$C),actor2=rep(dyads_l[,2],data$C),type=rep(1:data$C,each=data$N*(data$N-1))) # number of event types
-
-      # edgelist converted to [actor1,actor2,type]
-      data$M <- dim(data$eventlist)[1]
-      edgelist_orig <- data.frame(time = data$eventlist[,2], actor1 = rep(NA,data$M), actor2 = rep(NA,data$M), type = rep(NA,data$M))
-      for(m in 1:data$M){
-        edgelist_orig[m,2:4] <- dyads_l[data$eventlist[m,1],]
-      }
-
-      # convert supplist to omit_dyad (it remains NULL if supplist is NULL or has full riskset over all the time points)
-      converted_omit_dyad <- NULL
-      if(!is.null(data$supplist)){
-        check_changing_riskset <- sum(data$supplist)
-        if(check_changing_riskset < (data$M*data$N*(data$N-1)*data$C)){
-          converted_omit_dyad <- list()
-          converted_omit_dyad$riskset <- (rbind(unique(data$supplist)[-1,]))*1 # this operation can be faster at rcpp level
-          converted_omit_dyad$time <- rep(-1,data$M)
-          for(m in 1:data$M){
-            if(sum(data$supplist[m,]) < (data$N*(data$N-1)*data$C)){ #if there is a change in the riskset, we need to assign which row (in c++ notation it is in the riskset object matrix)
-            temp_mat <-  matrix(rep(data$supplist[m,],dim(converted_omit_dyad$riskset)[1]),nrow=dim(converted_omit_dyad$riskset)[1],byrow=TRUE)
-            find_loc <- apply(converted_omit_dyad$riskset - temp_mat,1,sum)
-            converted_omit_dyad$time[m] <- (which(find_loc==0)-1)
-            }
-          }
-        }
-      }
-
-      # create 'reh' class object
-      out <- remify::reh(edgelist = edgelist_orig,
-                          actors = as.character(1:data$N),
-                          types = as.character(1:data$C), 
-                          directed = TRUE, 
-                          ordinal = FALSE, 
-                          origin = 0,
-                          omit_dyad = NULL, # set to NULL but added later
-                          model = "tie")
-      # we have to reorder the columns of converted_omit_dyad
-      dict_loc <- attr(out,"dictionary")
-      position_rearranged <- NULL
-      for(d in 1:dim(dyads_l)[1]){
-        sender_old <- dyads_l$actor1[d]-1
-        receiver_old <- dyads_l$actor2[d]-1 
-        type_old <- dyads_l$type[d]-1
-        
-        sender_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == sender_old)])-1
-        receiver_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == receiver_old)])-1
-        type_new <- as.numeric(dict_loc$types$typeName[which(dict_loc$types$typeID == type_old)])-1
-
-        position_new <- getDyadIndex(actor1=sender_new,actor2=receiver_new,type=type_new,N=out$N,directed=attr(out,"directed"))+1 
-        position_rearranged <- c(position_rearranged,position_new)
-      }
-      converted_omit_dyad$riskset <- converted_omit_dyad$riskset[,position_rearranged]
-      out$omit_dyad <- converted_omit_dyad
-      return(out)
-    }
-         
-}                   
-
-
-
-
-
-
-
 
