@@ -2,23 +2,23 @@
 % Please edit documentation in R/remify.R
 \name{getDyad}
 \alias{getDyad}
-\alias{getDyad.reh}
+\alias{getDyad.remify}
 \title{getDyad}
 \usage{
-getDyad(reh, dyadID)
+getDyad(x, dyadID)
 
-\method{getDyad}{reh}(reh, dyadID)
+\method{getDyad}{remify}(x, dyadID)
 }
 \arguments{
-\item{reh}{an \code{reh} object.}
+\item{x}{a \code{remify} object.}
 
-\item{getDyad}{a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size)}
+\item{getDyad}{a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).}
 }
 \description{
 A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{getDyad(reh)}: return dyad composition in actor1, actor2 and type from one (or more) dyad ID
+\item \code{getDyad(remify)}: return dyad composition in actor1, actor2 and type from one (or more) dyad ID
 
 }}

@@ -2,15 +2,15 @@
 % Please edit documentation in R/remify.R
 \name{getActorID}
 \alias{getActorID}
-\alias{getActorID.reh}
+\alias{getActorID.remify}
 \title{getActorID}
 \usage{
-getActorID(reh, actorName = NULL)
+getActorID(x, actorName = NULL)
 
-\method{getActorID}{reh}(reh, actorName = NULL)
+\method{getActorID}{remify}(x, actorName = NULL)
 }
 \arguments{
-\item{reh}{an \code{reh} object.}
+\item{x}{a \code{remify} object.}
 
 \item{actorName}{a vector of actor names. The same names in the input edgelist.}
 }
@@ -19,6 +19,6 @@ A function that given a vector of actor names returns the corresponding vector o
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{getActorID(reh)}: return actor's ID from actor's name
+\item \code{getActorID(remify)}: return actor's ID from actor's name
 
 }}

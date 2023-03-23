@@ -16,11 +16,12 @@
 // @details function that rearrange a data.frame according to the input index (vector of integers)
 //
 // @param x \code{data.frame} object to reorder
-// @param index vector with the new order
+// @param input_index vector with the new order
 //
 // @return \code{data.frame} whose columns are rearranged according to the input index
-Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index) {
+Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, std::vector<std::size_t> input_index) {
     int j,m; 
+    arma::uvec index = arma::conv_to<arma::uvec>::from(input_index);
     for(j = 0; j < x.size(); j++){
         Rcpp::RObject x_j = x[j];
         switch (TYPEOF(x_j))
@@ -62,49 +63,47 @@ Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index) {
 
 // @title getIntereventTime
 //
-// @param time first column of the edgelist (time variable) 
-// @param origin origin time point (t_0)
+// @param input_time first column of the edgelist (time variable) 
+// @param input_origin origin time point (t_0)
 // @param ordinal boolean value  
 //
 // @return list object with: interevent time (object name 'value') and the order of the time variable if it changed (object name 'order').
-Rcpp::List getIntereventTime(Rcpp::RObject time,
-                             Rcpp::RObject origin,
+Rcpp::List getIntereventTime(Rcpp::RObject input_time,
+                             Rcpp::RObject input_origin,
                              bool ordinal) {
-    // intereventTime variable (calculating the waiting time between two subsequent events). If `ordinal = TRUE` do nothing.
+    // intereventTime variable (calculating the waiting time between two subsequent events). If `ordinal = TRUE` do nothing and return an empty list
     Rcpp::List out = Rcpp::List::create(); // output list
-    arma::vec time_input = Rcpp::as<arma::vec>(time);
-    arma::vec intereventTime(time_input.n_elem,arma::fill::ones);   
 
     if(!ordinal){
         int force_sorting = 0; // 0 = No, 1 = Yes
-        int force_even_spacing = 0; // 0 = No, 1 = Yes
         arma::uword m = 0;
+        arma::vec time = Rcpp::as<arma::vec>(input_time);
+        arma::vec intereventTime(time.n_elem,arma::fill::ones);
+        arma::vec time_vector(time.n_elem+1,arma::fill::zeros);
 
         // (1) Checking whether the origin is NULL or it is defined by the user (time variable is not yet sorted if needed, therefore we work with time_input.min() value)
-        arma::vec origin_input(1, arma::fill::zeros);
-        arma::vec time_vector(time_input.n_elem+1,arma::fill::zeros);
-        if(time_input.min() >= 0){
-            if(Rf_isNull(origin)){ // if origin input is NULL
-                origin_input(0) = time_input.min() - 1; // if in seconds event_0 will occur one second earlier than event_1, if in days it will be one day earlier
-                if(origin_input(0) < 0) origin_input(0) = 0; // if the supplied `time` is a vector of either integers or doubles, this case might be true and then t_0 = 0
+        if(time.min() >= 0){
+            arma::vec origin(1, arma::fill::zeros);
+            if(Rf_isNull(input_origin)){ // if origin input is NULL
+                origin(0) = time.min() - 1; // if in seconds event_0 will occur one second earlier than event_1, if in days it will be one day earlier
+                if(origin(0) < 0) origin(0) = 0; // if the supplied `time` is a vector of either integers or doubles, this case might be true and then t_0 = 0
             }
             else{ // otherwise store check the input value and store it
-                arma::vec origin_loc = Rcpp::as<arma::vec>(origin);
-                if(origin_loc(0) >= time_input.min()){ // check if the supplied origin has the same value of the first time point (throw a warning and change the value in the same way when origin is NULL)
+                arma::vec origin_loc = Rcpp::as<arma::vec>(input_origin);
+                if(origin_loc(0) >= time.min()){ // check if the supplied origin has the same value of the first time point (throw a warning and change the value in the same way when origin is NULL)
                     Rcpp::Rcout << warningMessage(2);
-                    origin_input(0) = time_input.min() - 1; // setting the origin to a second/day earlier
-                    if(origin_input(0) < 0) origin_input(0) = 0; // setting the origin to zero (if the previous value generated a negative time)
+                    origin(0) = time.min() - 1; // setting the origin to a second/day earlier
+                    if(origin(0) < 0) origin(0) = 0; // setting the origin to zero (if the previous value generated a negative time)
                 }
                 else{
-                    origin_input(0) = origin_loc(0);
+                    origin(0) = origin_loc(0);
                 }
             }
-            time_vector = arma::join_cols(origin_input,time_input);
+            time_vector = arma::join_cols(origin,time);
         }
         else{
             Rcpp::stop(errorMessage(5)); // time variable can't be negative
         }
-        
 
         // (2) Check if the `time` variable is sorted
         while(m < intereventTime.n_elem){
@@ -118,75 +117,29 @@ Rcpp::List getIntereventTime(Rcpp::RObject time,
             }
         }
         // (2.1) Force the sorting of `time` if force_sorting = 1
-        if(force_sorting == 1){
+        if(!time_vector.is_sorted()){
             Rcpp::Rcout << warningMessage(0); // warning message about the sorting operation
             out["order"] = arma::sort_index(time_vector(arma::span(1,time_vector.n_elem-1))); // excluding the origin in the ordering because it is used only for the computation of the intereventTime
             time_vector = arma::sort(time_vector); 
             intereventTime = arma::diff(time_vector);
         }
+        out["value"] = intereventTime;
 
-        // (3) Check if there are events occurred at the same time point
-        m = 1;     // we skip m=0 which is the origin because there can be cases in which origin value is 0 and time_input(0) is 0 as well so the intereventTime results zero
-        while(m < intereventTime.n_elem){
-            if(intereventTime(m) != 0.0) m++;
-            else{
-                force_even_spacing = 1;
-                m = intereventTime.n_elem;
-            }
-        }
+        // this code chunk is only for the rescaling of the time variable to larger time units, e.g., seconds -> hours
+        // ---
+        //if(Rcpp::is<Rcpp::DatetimeVector>(input_time)){ // if the input time is DatetimeVector
+            // ...
+       // }
+        //else if(Rcpp::is<Rcpp::DateVector>(input_time)){ // time is a Rcpp::DateVector
+            // ...
+        //}
+        // intereventTime *= scale;    
+        // ---
 
-        // (3.1) Force even spacing of events if force_even_spacing = 1
-        if(force_even_spacing == 1){
-            Rcpp::Rcout << warningMessage(1); // warning message about co-occurrence of events
-            arma::uword position_first_zero = intereventTime.n_elem + 1;
-            arma::uword counter = 0; // number of events to which evenly span the time
-            for(m = 0; m < intereventTime.n_elem; m++){ // seeking for intereven times values equal to zero
-                if((intereventTime(m) == 0.0)){ 
-                    if(position_first_zero == intereventTime.n_elem + 1){ // if it is the first time point found with waiting time zero: save position and increment counter
-                        position_first_zero = m;
-                        counter++;
-                        if(m == (intereventTime.n_elem-1)){ // when [(x),0] the last two events occurred at the same time
-                            // apply the forced spacing
-                            counter++; // adding one more event (x) that has to take part in the spacing 
-                            arma::vec time_spacing(m-position_first_zero+1);
-                            time_spacing.fill(1.0/counter); // operation that makes events equally spaced
-                            intereventTime(arma::span(position_first_zero,m)) = time_spacing;
-                            break;
-                        }
-                    }
-                    else{
-                        counter++;
-                        if(m == (intereventTime.n_elem-1)){ // when [(x),0,0,...,0], thus the last waiting time is zero as well
-                            // apply the forced spacing 
-                            counter++; // adding one more event (x) that has to take part in the spacing 
-                            arma::vec time_spacing(m-position_first_zero+1);
-                            time_spacing.fill(1.0/counter); // operation that makes events equally spaced
-                            intereventTime(arma::span(position_first_zero,m)) = time_spacing;
-                            break;
-                        }
-                    }
-                }
-                else{ 
-                    if(position_first_zero != intereventTime.n_elem + 1){ // if the waiting time is not zero and the position_first_zero is not the default. Case when [(x),0,0,..,0,y]
-                        // increment the counter 
-                        counter++; // adding one more event (x) that has to take part in the spacing 
-
-                        // apply the forced spacing when [(x),0,0,..,0,y], applied only to [(x),0,0,...,0]
-                        arma::vec time_spacing(m-position_first_zero);
-                        time_spacing.fill(1.0/counter); // operation that makes events equally spaced
-                        intereventTime(arma::span(position_first_zero,m-1)) = time_spacing;
-                        intereventTime(m) = intereventTime(m) - (1.0-1.0/counter);
-                        
-                        // reset values of both position_first_zero and counter
-                        position_first_zero = intereventTime.n_elem + 1;
-                        counter = 0;
-                    }
-                }
-            }
-        }
     }
-
-    out["value"] = intereventTime;
+    else{
+        out["value"] = R_NilValue;
+    }
     return out;
 }
 
@@ -515,7 +468,8 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
 
 // @title convertInputREH
 //
-// @param edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
+// @param input_edgelist is the input data frame with information about [time,actor1,actor2,type,weight] by row.
+// @param input_origin origin time point (t_0)
 // @param actorsDictionary dictionary of actor names 
 // @param typesDicitonary dictionary of event types 
 // @param M number of observed relational events
@@ -524,10 +478,12 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
 // @param omit_dyad list. The same input in rehCpp.
 // @param model, "tie" or "actor" oriented
 // @param weighted true/false if the network is weighted (true) or not (false)
+// @param ordinal true/false whether to consider the order or the waiting time between events in the network 
 // @param C number of event types, 1 is the minimum
 //
 // @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
-Rcpp::List convertInputREH(Rcpp::DataFrame edgelist, 
+Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist, 
+                            Rcpp::RObject input_origin,
                             Rcpp::DataFrame actorsDictionary, 
                             Rcpp::DataFrame typesDictionary, 
                             arma::uword M, 
@@ -536,6 +492,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist,
                             Rcpp::List omit_dyad, 
                             std::string model, 
                             bool weighted, 
+                            bool ordinal,
                             int C)
 {
     // for loop iterators
@@ -543,165 +500,567 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist,
     // counter for warningMessages
     int undefined_dyad = 0;
     // Creating output list object
-    std::vector<int> dyad(M);
     Rcpp::List out = Rcpp::List::create();
-    Rcpp::DataFrame convertedEdgelist; // empty data.frame
+    Rcpp::DataFrame edgelist = input_edgelist;
+   // edgelist = Rcpp::clone(input_edgelist); // this way we make a deep copy and the input edgelist won't be altered [[CHECK THIS!]]
+    Rcpp::DataFrame convertedEdgelist;
+
+    //[**1**] Processing time variable
+    if(!ordinal){
+        std::vector<double> input_time = Rcpp::as<std::vector<double>>(edgelist["time"]); // converting any time input to a double 
+        double min_time = *min_element(input_time.begin(), input_time.end()); 
+
+        // (1) Checking whether the origin is NULL or it is defined by the user (time variable is not yet sorted if needed, therefore we work with time_input.min() value) []
+        if(min_time >= 0.0){
+            int force_sorting = 0; // 0 = No, 1 = Yes
+            int m_loc = 0;
+            std::vector<double> intereventTime(input_time.size(),1.0);
+            double origin;
+            // (2) Check if the `time` variable is sorted
+            while(m_loc < input_time.size()){ 
+                if(input_time[m_loc] <=  input_time[m_loc+1]){
+                    intereventTime[m_loc+1] = input_time[m_loc+1] - input_time[m_loc]; // compute the interevent time
+                    m_loc++;
+                }
+                else{
+                    force_sorting = 1; 
+                    m_loc = intereventTime.size()+1; // the first occurrence of unsorted time the while will stop [saving time]
+                }
+            }
+            // (2.1) Force the sorting of `time` if force_sorting = 1
+            if(!std::is_sorted(std::begin(input_time), std::end(input_time))){
+                Rcpp::Rcout << warningMessage(0); // warning message about the sorting operation
+                // reordering edgelist
+                std::vector<std::size_t> sorted_time_order(input_time.size());
+                std::iota(std::begin(sorted_time_order), std::end(sorted_time_order), 0);
+                std::sort(std::begin(sorted_time_order), std::end(sorted_time_order),
+                        [&input_time](const auto & lhs, const auto & rhs)
+                        {
+                            return input_time[lhs] < input_time[rhs];
+                        }
+                );
+                edgelist = rearrangeDataFrame(edgelist,sorted_time_order); // overwriting 'edgelist' given the new order
+
+                // saving the new sorted time
+                input_time = Rcpp::as<std::vector<double>>(edgelist["time"]); // overwriting 'input time' given the new order
+                for(m_loc = 0; m_loc < (input_time.size()-1); m_loc++){ // compute the interevent time again std::adjacent_difference could be also used (CHECK)
+                    //std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // this still returns time_with_origin[0] [[CHECK!!!]]
+                    intereventTime[m_loc+1] = input_time[m_loc+1] - input_time[m_loc]; 
+                }
+            }
+
+            // processing input 'origin'
+            if(Rf_isNull(input_origin)){ // if origin input is NULL
+                origin = min_time - 1.0; // if in seconds event_0 will occur one second earlier than event_1, if in days it will be one day earlier
+                if(origin < 0) origin = 0.0; // if the supplied `time` is a vector of either integers or doubles, this case might be true and then t_0 = 0
+            }
+            else{ // otherwise store check the input value and store it
+                double origin_loc = Rcpp::as<double>(input_origin); 
+                if(origin_loc >= min_time){ // check if the supplied origin has the same value of the first time point (throw a warning and change the value in the same way when origin is NULL)
+                    Rcpp::Rcout << warningMessage(2); // the origin provided as input is a time value greater to at least one event, origin is now set to a different value 
+                    origin = min_time - 1.0; // setting the origin to a second/minute/hour/day earlier
+                    if(origin < 0) origin = 0.0; // setting the origin to zero (if the previous value generated a negative time)
+                }
+                else{
+                    origin = origin_loc;
+                }
+            }
+            intereventTime[0] = input_time[0] - origin;
+
+            out["intereventTime"] = intereventTime;
+        }
+        else{
+            Rcpp::stop(errorMessage(5)); // time variable can't be negative
+        }
+    }
+    else{
+        out["intereventTime"] = R_NilValue;
+    }
+
+    // this code chunk is only for the rescaling of the time variable to larger time units, e.g., seconds -> hours 
+    // ---
+    //if(Rcpp::is<Rcpp::DatetimeVector>(input_time)){ // if the input time is DatetimeVector
+        // ...
+    // }
+    //else if(Rcpp::is<Rcpp::DateVector>(input_time)){ // time is a Rcpp::DateVector
+        // ...
+    //}
+    // intereventTime *= scale;    
+    // ---
+
+    // process origin here (future version of remify)
+
+    //[**2**] Processing edgelist 
+    std::vector<double> time_loc = Rcpp::as<std::vector<double>>(edgelist["time"]); // converting time input to a double (if the time was not sorted, not it is because the edgelist is overwritten in case)
+    //for(int m = 0) calculate here the time_diff as time - origin , so that we work an increase time variable (in whatever time scale seconds / hours etc) for the conversion of the time input
 
     // edgelist input actor1 and actor2 with dictionary
     std::vector<std::string> stringActor1 = Rcpp::as<std::vector<std::string>>(edgelist["actor1"]);
     std::vector<std::string> stringActor2 = Rcpp::as<std::vector<std::string>>(edgelist["actor2"]);
-    std::vector<std::string> actorName = Rcpp::as<std::vector<std::string>>(actorsDictionary["actorName"]);
+    std::vector<std::string> actorName = Rcpp::as<std::vector<std::string>>(actorsDictionary["actorName"]); 
     int N = actorName.size(); // number of actors
     std::vector<int> actorID = actorsDictionary["actorID"];
     std::for_each(actorID.begin(), actorID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to N-1
 
     //(1) Converting `edgelist`
-    std::vector<std::string> typeName(C);
-    // if C>1 (two or more event types) ...
-    if(C>1){
-        std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]);
-        typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
-        std::vector<int> typeID = typesDictionary["typeID"];
-        std::for_each(typeID.begin(), typeID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to C-1
+    // we run here a long (and redundant) code to first select (via ifelse) the characteristics of the network and then apply the conversion of the 'edgelist'
+    // The sequence of ifelse will be about: [1] weighted/not weighted, [2] C>1 / C = 1, [3] tie / actor model, [4] class of time variable    
+    // We run the ifelse to avoid running them at each iteration of m=0,1,...M-1.
+    // This (sub)script (lines 618-1043) allows:
+    // - not to return a weight column if there is no weight in the input edgelist
+    // - not to return a type column if there is no type measured in the networks
+    // - not to return dyad attribute for actor-oriented modeling
+    // - carefully reduce the size of the event sequence when self-loops need to be removed (this influences all the points above)
 
-        // creating 
-        std::vector<int> convertedActor1_ID(M);
-        std::vector<int> convertedActor2_ID(M);
-        std::vector<int> convertedType_ID(M);
-        if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
-            for(m = 0; m < M; m++){ 
-                // m-th event in the edgelist input:
-                if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
-                // find actor1
-                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
-                convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+    
+    std::vector<std::string> typeName(C,"0"); // initialize typeName because it will also be used later when omit_dyad will be processed
+    int INFTY_DYAD = 0; // creating a reference constant to remove self-loops from the 'dyad' vector
+    double INFTY_TIME = *max_element(time_loc.begin(), time_loc.end()) + 1.0; // creating a reference constant to remove self-loops from the 'time'vector
+    std::vector<int> convertedActor1_ID(M,0); // initialize vector of actor1 IDs 
+    std::vector<int> convertedActor2_ID(M,0); // initialize vector of actor2 IDs
+    std::vector<int> dyad(M,1); // initialize vector of dyads (useful to throw the warning in case there are self-loops)
+    if(weighted){
+        std::vector<double> weight = Rcpp::as<std::vector<double>>(edgelist["weight"]);
+        double INFTY_WEIGHT = *max_element(weight.begin(), weight.end()) + 1.0; // creating a reference constant to remove self-loops from the 'weight' vector
+        if(C>1){
+            std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]); // get type column from edgelist
+            typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
+            std::vector<int> typeID = typesDictionary["typeID"];
+            std::for_each(typeID.begin(), typeID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to C-1
 
-                // find actor2
-                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
-                convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+            // allocating memory for actor1, actor2, type and dyad (dyad is used also for the actor-oriented code as helper for the exclusion of self-events)
+            std::vector<int> convertedType_ID(M,0);
+            if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+                for(m = 0; m < M; m++){ 
+                    // m-th event in the edgelist input:
+                    if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                        // find actor1
+                        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                        convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
 
-                // find type 
-                std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
-                convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c));
+                        // find actor2
+                        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                        convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
 
-                // getting dyad index
-                dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1;    
+                        // find type 
+                        std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
+                        convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c));
+
+                        // getting dyad index
+                        dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D    
+                    }
+                    else{ // m-th event is a self-loop 
+                        dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
+                        weight[m] = INFTY_WEIGHT;
+                        time_loc[m] = INFTY_TIME;
+                    }
+                }
+                // check for self-loop in [weighted/C>1/tie]
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                    dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
+                }            
+                out["dyad"] = dyad; 
+            } 
+            else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+                for(m = 0; m < M; m++){ //loop without calculating the dyad
+                    // m-th event in the edgelist input:
+                    if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                        // find actor1
+                        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                        convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+
+                        // find actor2
+                        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                        convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+
+                        // find type 
+                        std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
+                        convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c)); 
+                    }
+                    else{
+                        // m-th event is a self-loop
+                        dyad[m] = INFTY_DYAD;
+                        weight[m] = INFTY_WEIGHT;
+                        time_loc[m] = INFTY_TIME;
+                    }
+                }
+                // check for self-loop in [weighted/C>1/actor]
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                    dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
+                }  
+                out["dyad"] = R_NilValue;
+            }
+            // save size of the network
+            out["M"] = dyad.size(); 
+            if(dyad.size() < M){ // there are self-loops to be removed from the sequence
+                // time
+                time_loc.erase(std::remove_if(time_loc.begin(), time_loc.end(), [&INFTY_TIME](double x){return (x>=INFTY_TIME);}),time_loc.end());
+                // actor1
+                convertedActor1_ID.erase(std::remove_if(convertedActor1_ID.begin(), convertedActor1_ID.end(), [](int x){return (x==0);}),convertedActor1_ID.end());
+                // actor2
+                convertedActor2_ID.erase(std::remove_if(convertedActor2_ID.begin(), convertedActor2_ID.end(), [](int x){return (x==0);}),convertedActor2_ID.end());
+                // type
+                convertedType_ID.erase(std::remove_if(convertedType_ID.begin(), convertedType_ID.end(), [](int x){return (x==0);}),convertedType_ID.end());
+                // weight
+                weight.erase(std::remove_if(weight.begin(), weight.end(), [&INFTY_WEIGHT](double x){return (x>=INFTY_WEIGHT);}),weight.end());
+                if(Rcpp::is<Rcpp::DateVector>(edgelist["time"])){
+                    Rcpp::DateVector time_converted = Rcpp::wrap(time_loc);
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                            Rcpp::Named("type_ID") = convertedType_ID,
+                            Rcpp::Named("weight") = weight);
+                            //Rcpp::Rcout << " time class is Date " << "\n";
+                }
+                else if(Rcpp::is<Rcpp::DatetimeVector>(edgelist["time"])){
+                    Rcpp::DatetimeVector time_converted = Rcpp::wrap(time_loc);
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                            Rcpp::Named("type_ID") = convertedType_ID,
+                            Rcpp::Named("weight") = weight);
+                            //Rcpp::Rcout << " time class is Datetime " << "\n";
                 }
                 else{
-                    Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
-                } 
-            }
-            out["dyad"] = dyad;
-        }
-        else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
-            for(m = 0; m < M; m++){ //loop without calculating the dyad
-                // m-th event in the edgelist input:
-                if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
-                // find actor1
-                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
-                convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
-
-                // find actor2
-                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
-                convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
-
-                // find type 
-                std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
-                convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c)); 
+                    Rcpp::NumericVector time_converted = Rcpp::wrap(time_loc); // we treat 'integer' time as 'numeric'
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                            Rcpp::Named("type_ID") = convertedType_ID,
+                            Rcpp::Named("weight") = weight);
+                            //Rcpp::Rcout << " time class is numeric" << "\n";
                 }
-                else{
-                    Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
-                } 
             }
-            out["dyad"] = R_NilValue;
-        }
-
-        // .. we add a column 'weight' if it is present from the input edgelist, otherwise we don't
-        if(weighted){ 
-            convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
-                                    Rcpp::Named("actor1_ID") = convertedActor1_ID, 
-                                    Rcpp::Named("actor2_ID") = convertedActor2_ID,
-                                    Rcpp::Named("type_ID") = convertedType_ID,
-                                    Rcpp::Named("weight") = edgelist["weight"]);
+            else{ // no self-loops tp remove
+                convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
+                                        Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                                        Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                                        Rcpp::Named("type_ID") = convertedType_ID,
+                                        Rcpp::Named("weight") = edgelist["weight"]);
+            }                     
         }
         else{
-            convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
-                                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
-                                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
-                                            Rcpp::Named("type_ID") = convertedType_ID);
-        } 
+            if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+                for(m = 0; m < M; m++){ 
+                    // m-th event in the edgelist input:
+                    if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                        // find actor1
+                        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                        convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+
+                        // find actor2
+                        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                        convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+
+                        // getting dyad index
+                        dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D    
+                    }
+                    else{ // m-th event is a self-loop 
+                        dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
+                        weight[m] = INFTY_WEIGHT;
+                        time_loc[m] = INFTY_TIME;
+                    }
+                }
+                // check for self-loop in [weighted/C>1/tie]
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                    dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
+                }            
+                out["dyad"] = dyad; 
+            } 
+            else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+                for(m = 0; m < M; m++){ //loop without calculating the dyad
+                    // m-th event in the edgelist input:
+                    if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                        // find actor1
+                        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                        convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+
+                        // find actor2
+                        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                        convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+                    }
+                    else{
+                        // m-th event is a self-loop
+                        dyad[m] = INFTY_DYAD;
+                        weight[m] = INFTY_WEIGHT;
+                        time_loc[m] = INFTY_TIME;
+                    }
+                }
+                // check for self-loop in [weighted/C>1/actor]
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                    dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
+                }  
+                out["dyad"] = R_NilValue;
+            }
+            // save size of the network
+            out["M"] = dyad.size(); 
+            if(dyad.size() < M){ // there are self-loops to be removed from the sequence
+                // time
+                time_loc.erase(std::remove_if(time_loc.begin(), time_loc.end(), [&INFTY_TIME](double x){return (x>=INFTY_TIME);}),time_loc.end());
+                // actor1
+                convertedActor1_ID.erase(std::remove_if(convertedActor1_ID.begin(), convertedActor1_ID.end(), [](int x){return (x==0);}),convertedActor1_ID.end());
+                // actor2
+                convertedActor2_ID.erase(std::remove_if(convertedActor2_ID.begin(), convertedActor2_ID.end(), [](int x){return (x==0);}),convertedActor2_ID.end());
+                // weight
+                weight.erase(std::remove_if(weight.begin(), weight.end(), [&INFTY_WEIGHT](double x){return (x>=INFTY_WEIGHT);}),weight.end());
+                if(Rcpp::is<Rcpp::DateVector>(edgelist["time"])){
+                    Rcpp::DateVector time_converted = Rcpp::wrap(time_loc);
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                            Rcpp::Named("weight") = weight);
+                            //Rcpp::Rcout << " time class is Date " << "\n";
+                }
+                else if(Rcpp::is<Rcpp::DatetimeVector>(edgelist["time"])){
+                    Rcpp::DatetimeVector time_converted = Rcpp::wrap(time_loc);
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                            Rcpp::Named("weight") = weight);
+                            //Rcpp::Rcout << " time class is Datetime " << "\n";
+                }
+                else{
+                    Rcpp::NumericVector time_converted = Rcpp::wrap(time_loc); // we treat 'integer' time as 'numeric'
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                            Rcpp::Named("weight") = weight);
+                            //Rcpp::Rcout << " time class is numeric" << "\n";
+                }
+            }
+            else{ // no self-loops tp remove
+                convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
+                                        Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                                        Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                                        Rcpp::Named("weight") = edgelist["weight"]);
+            }    
+        }
     }
-    else{ // if C = 1 then we will not process any input about type 
-        std::vector<int> convertedActor1_ID(M);
-        std::vector<int> convertedActor2_ID(M);
-        if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
-            for(m = 0; m < M; m++){
-                // m-th event in the edgelist input:
-                if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
-                // find actor1
-                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
-                convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+    else{ // no 'weight' column in 'edgelist'
+        if(C>1){ // two or more event types
+            std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]); // get type column from edgelist
+            typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
+            std::vector<int> typeID = typesDictionary["typeID"];
+            std::for_each(typeID.begin(), typeID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to C-1
+            std::vector<int> convertedType_ID(M,0);
+            if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+                for(m = 0; m < M; m++){ 
+                    // m-th event in the edgelist input:
+                    if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                        // find actor1
+                        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                        convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
 
-                // find actor2
-                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
-                convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+                        // find actor2
+                        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                        convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
 
-                // getting dyad index
-                dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1;    
+                        // find type 
+                        std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
+                        convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c));
+
+                        // getting dyad index
+                        dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D    
+                    }
+                    else{ // m-th event is a self-loop 
+                        dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
+                        time_loc[m] = INFTY_TIME;
+                    }
+                }
+                // check for self-loop in [weighted/C>1/tie]
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                    dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
+                }            
+                out["dyad"] = dyad; 
+            } 
+            else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+                for(m = 0; m < M; m++){ //loop without calculating the dyad
+                    // m-th event in the edgelist input:
+                    if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                        // find actor1
+                        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                        convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+
+                        // find actor2
+                        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                        convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+
+                        // find type 
+                        std::vector<std::string>::iterator c = std::find(typeName.begin(), typeName.end(), stringType[m]);
+                        convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c)); 
+                    }
+                    else{
+                        // m-th event is a self-loop
+                        dyad[m] = INFTY_DYAD;
+                        time_loc[m] = INFTY_TIME;
+                    }
+                }
+                // check for self-loop in [weighted/C>1/actor]
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                    dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
+                }  
+                out["dyad"] = R_NilValue;
+            }
+            // save size of the network
+            out["M"] = dyad.size(); 
+            if(dyad.size() < M){ // there are self-loops to be removed from the sequence
+                // time
+                time_loc.erase(std::remove_if(time_loc.begin(), time_loc.end(), [&INFTY_TIME](double x){return (x>=INFTY_TIME);}),time_loc.end());
+                // actor1
+                convertedActor1_ID.erase(std::remove_if(convertedActor1_ID.begin(), convertedActor1_ID.end(), [](int x){return (x==0);}),convertedActor1_ID.end());
+                // actor2
+                convertedActor2_ID.erase(std::remove_if(convertedActor2_ID.begin(), convertedActor2_ID.end(), [](int x){return (x==0);}),convertedActor2_ID.end());
+                // type
+                convertedType_ID.erase(std::remove_if(convertedType_ID.begin(), convertedType_ID.end(), [](int x){return (x==0);}),convertedType_ID.end());
+                if(Rcpp::is<Rcpp::DateVector>(edgelist["time"])){
+                    Rcpp::DateVector time_converted = Rcpp::wrap(time_loc);
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                            Rcpp::Named("type_ID") = convertedType_ID);
+                            //Rcpp::Rcout << " time class is Date " << "\n";
+                }
+                else if(Rcpp::is<Rcpp::DatetimeVector>(edgelist["time"])){
+                    Rcpp::DatetimeVector time_converted = Rcpp::wrap(time_loc);
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                            Rcpp::Named("type_ID") = convertedType_ID);
+                            //Rcpp::Rcout << " time class is Datetime " << "\n";
                 }
                 else{
-                    Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
-                } 
-            }
-            out["dyad"] = dyad;
-        }
-        else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
-            for(m = 0; m < M; m++){
-                // m-th event in the edgelist input:
-                if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
-                // find actor1
-                std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
-                convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
-
-                // find actor2
-                std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
-                convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+                    Rcpp::NumericVector time_converted = Rcpp::wrap(time_loc); // we treat 'integer' time as 'numeric'
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                            Rcpp::Named("type_ID") = convertedType_ID);
+                            //Rcpp::Rcout << " time class is numeric" << "\n";
                 }
-                else{
-                    Rcpp::stop(errorMessage(1)); // self-events are not supported yet, throwing an error message
-                } 
             }
-            out["dyad"] = R_NilValue;
-        }
-
-        // .. we add a column 'weight' if it is present from the input edgelist, otherwise we don't
-        if(weighted){ 
-            convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
-                                    Rcpp::Named("actor1_ID") = convertedActor1_ID, 
-                                    Rcpp::Named("actor2_ID") = convertedActor2_ID,
-                                    Rcpp::Named("weight") = edgelist["weight"]);
+            else{ // no self-loops tp remove
+                convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
+                                        Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                                        Rcpp::Named("actor2_ID") = convertedActor2_ID,
+                                        Rcpp::Named("type_ID") = convertedType_ID);
+            }                     
         }
         else{
-            convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
-                                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
-                                            Rcpp::Named("actor2_ID") = convertedActor2_ID);
-        } 
+            if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+                for(m = 0; m < M; m++){ 
+                    // m-th event in the edgelist input:
+                    if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                        // find actor1
+                        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                        convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
 
-        //
+                        // find actor2
+                        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                        convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+
+                        // getting dyad index
+                        dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D    
+                    }
+                    else{ // m-th event is a self-loop 
+                        dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
+                        time_loc[m] = INFTY_TIME;
+                    }
+                }
+                // check for self-loop in [weighted/C>1/tie]
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                    dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
+                }            
+                out["dyad"] = dyad; 
+            } 
+            else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+                for(m = 0; m < M; m++){ //loop without calculating the dyad
+                    // m-th event in the edgelist input:
+                    if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
+                        // find actor1
+                        std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
+                        convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+
+                        // find actor2
+                        std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
+                        convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
+                    }
+                    else{
+                        // m-th event is a self-loop
+                        dyad[m] = INFTY_DYAD;
+                        time_loc[m] = INFTY_TIME;
+                    }
+                }
+                // check for self-loop in [weighted/C>1/actor]
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                    dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
+                }  
+                out["dyad"] = R_NilValue;
+            }
+            // save size of the network
+            out["M"] = dyad.size(); 
+            if(dyad.size() < M){ // there are self-loops to be removed from the sequence
+                // time
+                time_loc.erase(std::remove_if(time_loc.begin(), time_loc.end(), [&INFTY_TIME](double x){return (x>=INFTY_TIME);}),time_loc.end());
+                // actor1
+                convertedActor1_ID.erase(std::remove_if(convertedActor1_ID.begin(), convertedActor1_ID.end(), [](int x){return (x==0);}),convertedActor1_ID.end());
+                // actor2
+                convertedActor2_ID.erase(std::remove_if(convertedActor2_ID.begin(), convertedActor2_ID.end(), [](int x){return (x==0);}),convertedActor2_ID.end());
+                if(Rcpp::is<Rcpp::DateVector>(edgelist["time"])){
+                    Rcpp::DateVector time_converted = Rcpp::wrap(time_loc);
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID);
+                            //Rcpp::Rcout << " time class is Date " << "\n";
+                }
+                else if(Rcpp::is<Rcpp::DatetimeVector>(edgelist["time"])){
+                    Rcpp::DatetimeVector time_converted = Rcpp::wrap(time_loc);
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID);
+                            //Rcpp::Rcout << " time class is Datetime " << "\n";
+                }
+                else{
+                    Rcpp::NumericVector time_converted = Rcpp::wrap(time_loc); // we treat 'integer' time as 'numeric'
+                    convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = time_converted,
+                            Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                            Rcpp::Named("actor2_ID") = convertedActor2_ID);
+                            //Rcpp::Rcout << " time class is numeric" << "\n";
+                }
+            }
+            else{ // no self-loops tp remove
+                convertedEdgelist = Rcpp::DataFrame::create(Rcpp::Named("time") = edgelist["time"],
+                                        Rcpp::Named("actor1_ID") = convertedActor1_ID, 
+                                        Rcpp::Named("actor2_ID") = convertedActor2_ID);
+            }    
+        }
     }
 
-                                                                                  
-    // (2) Storing converted `edgelist`...
+    // throw a warning about self-loops removed from the event sequence
+    if(dyad.size() < M){
+        Rcpp::Rcout << warningMessage(1);
+        // removing self-loops from the convertedEdgelist here
+    }                                                                            
+    // Storing converted `edgelist` (without self-loops, if present)
     out["edgelist"] = convertedEdgelist; 
 
-    // (3) Converting `omit_dyad` list
+
+    // [**3**] Converting `omit_dyad` list
     if(omit_dyad.length()>0){
         // input time
-        std::vector<double> time = Rcpp::as<std::vector<double>>(edgelist["time"]);
+        std::vector<double> time = Rcpp::as<std::vector<double>>(convertedEdgelist["time"]); // consider the vector of time from the convertedEdgelist (because there might be some self-loop removed, in turn, changing the size of the time vector)
         Rcpp::List convertedOmitDyad = Rcpp::List::create(); // r-th list with matrix inputs converted into IDs
         Rcpp::List convertedOmitDyad_time = Rcpp::List::create(); // r-th list with time inputs converted into IDs
         int N = actorName.size();
         R = omit_dyad.length();
+        int M_processed = time.size();
+        Rcpp::Rcout << M_processed << "\n";
 
         for(r = 0; r < R; r++){
             // converting r-th element in omit_dyad
@@ -710,7 +1069,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist,
             // (1) converting vector of time points
             std::vector<double> time_r = Rcpp::as<std::vector<double>>(omit_r["time"]);
             std::vector<int> timeID_r;
-            Z_r = time_r.size();
+            Z_r = time_r.size(); // Z_r must be 2 elements long but we check its length and throw an errorMessage if it is not equal to 2
 
             
             if(Z_r != 2){
@@ -724,7 +1083,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist,
                         timeID_r.push_back(0); // if (NA,xx), NA is set to 0
                     }
                     if(z == 1){
-                        timeID_r.push_back(M-1); // if (xx,NA), NA is set to M-1
+                        timeID_r.push_back(M_processed-1); // if (xx,NA), NA is set to M-1
                     }
                 }
                 else{
@@ -878,11 +1237,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist,
 
 
 
-// @title rehCpp (the Rcpp alias of \code{reh()})
+// @title remifyCpp (the Rcpp alias of \code{remify()})
 //
 // @details more details can be found at the following documentation: \link[remify]{reh}.
 // 
-// @param edgelist an object of class \code{"\link[base]{data.frame}"} or 
+// @param input_edgelist an object of class \code{"\link[base]{data.frame}"} or 
 // \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
 // time with columns 'time', 'actor1', 'actor2' and optionally 'type' and 
 // 'weight'.  
@@ -897,23 +1256,27 @@ Rcpp::List convertInputREH(Rcpp::DataFrame edgelist,
 // @return list of objects with processed raw data.
 //
 // [[Rcpp::export]]
-Rcpp::List rehCpp(Rcpp::DataFrame edgelist, 
+Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist, 
                   Rcpp::RObject actors, 
                   Rcpp::RObject types,  
                   bool directed,
                   bool ordinal,
                   Rcpp::RObject origin,
                   Rcpp::List omit_dyad,
-                  std::string model) {
+                  std::string model){
 
     // Allocating memory for some variables and the output list
     arma::uword N,C,D; // number of dyads which depends on the directed input value 
     Rcpp::List out = Rcpp::List::create(); // output list
 
+    // cloning some input objects
+    Rcpp::DataFrame edgelist = Rcpp::clone(input_edgelist);
+
+
     // START of the processing
 
     // storing the number of events
-    out["M"] = edgelist.nrows(); // number of events
+    arma::uword M = edgelist.nrows(); // number of events
 
     // Processing actor1, actor2, type, weight columns to StringVector or NumericVector 
 
@@ -936,16 +1299,6 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
         edgelist["weight"] = Rcpp::as<Rcpp::NumericVector>(edgelist["weight"]); 
         out["weighted"] = true;
     } 
-
-    // processing `time` variable
-    Rcpp::List intereventTime = getIntereventTime(edgelist["time"],origin,ordinal);
-    out["intereventTime"] = intereventTime["value"];
-    // Reordering `edgelist` if `intereventTime` was sorted
-    if(intereventTime.containsElementNamed("order")){  
-        arma::uvec new_order = intereventTime["order"];
-        // reordering edgelist
-        edgelist = rearrangeDataFrame(edgelist,new_order);
-    }
 
     // StringVector of actor1
     Rcpp::StringVector actor1 = edgelist["actor1"]; // actor1/sender
@@ -1012,12 +1365,52 @@ Rcpp::List rehCpp(Rcpp::DataFrame edgelist,
     }
 
    
-    // Converting input edgelist and omit_dyad list according to the new id's for both actors and event types
-    Rcpp::List convertedInput = convertInputREH(edgelist,actorsDictionary,typesDictionary,out["M"],out["D"],directed,omit_dyad,model,out["weighted"],C);
+    // Processing time variable, converting input edgelist and omit_dyad list according to the new id's for both actors and event types
+    Rcpp::List convertedInput = convertInputREH(edgelist,origin,actorsDictionary,typesDictionary,M,out["D"],directed,omit_dyad,model,out["weighted"],ordinal,C);
     out["dyad"] = convertedInput["dyad"];
     out["edgelist"] = convertedInput["edgelist"];
-    out["omit_dyad"] = convertedInput["omit_dyad"]; 
+    out["M"] = convertedInput["M"]; // if there are self-loops the number of events decreases
+    out["omit_dyad"] = convertedInput["omit_dyad"];
+    out["intereventTime"] = convertedInput["intereventTime"];
 
     // END of the processing and returning output
     return out;
 }
+
+// @title check_process
+//
+// @details checking some codes in local examples
+// 
+// @param time
+// @param origin
+//
+// @return time variable first converted to a c++ data type
+//
+// [[Rcpp::export]]
+Rcpp::List check_process(Rcpp::RObject time, Rcpp::RObject origin){
+  //if(Rcpp::is<Rcpp::NumericVector>(time) | Rcpp::is<Rcpp::IntegerVector>(time)){
+            //        auto time_output_edgelist = Rcpp::as<std::vector<double>>(time);
+            //    }
+               // else if(Rcpp::is<Rcpp::DateVector>(time) | Rcpp::is<Rcpp::DatetimeVector>(time)){
+                    //auto time_output = Rcpp::as<std::vector<time_t>>(time);
+                    //auto origin_output = Rcpp::as<time_t>(origin);
+                    std::vector<double> time_output = Rcpp::as<std::vector<double>>(time);
+                    double origin_output = Rcpp::as<double>(origin);
+                    
+              //  }
+    
+    Rcpp::List out = Rcpp::List::create(); // output list
+
+    std::vector<double> out_diff = time_output;
+    for(int m = 0; m < time_output.size(); m++){
+    //    out_diff[m] = std::difftime(time_output[m],origin_output);
+        out_diff[m] -= origin_output;
+    }
+    out["time_diff"] = out_diff;
+    out["time"] = time_output;
+    out["origin"] = origin_output;
+    return out;
+} 
+
+
+//6893887 6894839 6897013 6897425 6898176 6898428

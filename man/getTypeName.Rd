@@ -2,23 +2,23 @@
 % Please edit documentation in R/remify.R
 \name{getTypeName}
 \alias{getTypeName}
-\alias{getTypeName.reh}
+\alias{getTypeName.remify}
 \title{getTypeName}
 \usage{
-getTypeName(reh, typeID = NULL)
+getTypeName(x, typeID = NULL)
 
-\method{getTypeName}{reh}(reh, typeID = NULL)
+\method{getTypeName}{remify}(x, typeID = NULL)
 }
 \arguments{
-\item{reh}{an \code{reh} object.}
+\item{x}{a \code{remify} object.}
 
-\item{typeID}{a vector of type ID's. The ID value can range between \code{1} and \code{C} (number of event types in the network)}
+\item{typeID}{a vector of type ID's. The ID value can range between \code{1} and \code{C} (number of event types in the network).}
 }
 \description{
 A function that given a vector of type ID's returns the corresponding vector of type (input) names.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{getTypeName(reh)}: return type's name from type's ID
+\item \code{getTypeName(remify)}: return type's name from type's ID
 
 }}

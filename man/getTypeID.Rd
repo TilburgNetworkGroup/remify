@@ -2,15 +2,15 @@
 % Please edit documentation in R/remify.R
 \name{getTypeID}
 \alias{getTypeID}
-\alias{getTypeID.reh}
+\alias{getTypeID.remify}
 \title{getTypeID}
 \usage{
-getTypeID(reh, typeName = NULL)
+getTypeID(x, typeName = NULL)
 
-\method{getTypeID}{reh}(reh, typeName = NULL)
+\method{getTypeID}{remify}(x, typeName = NULL)
 }
 \arguments{
-\item{reh}{an \code{reh} object.}
+\item{x}{a \code{remify} object.}
 
 \item{typeName}{a vector of type names. The same names in the input edgelist.}
 }
@@ -19,6 +19,6 @@ A function that given a vector of type names returns the corresponding vector of
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{getTypeID(reh)}: return type's ID from type's name
+\item \code{getTypeID(remify)}: return type's ID from type's name
 
 }}

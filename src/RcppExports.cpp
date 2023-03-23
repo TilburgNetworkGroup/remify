@@ -14,13 +14,13 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// rehCpp
-Rcpp::List rehCpp(Rcpp::DataFrame edgelist, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List omit_dyad, std::string model);
-RcppExport SEXP _remify_rehCpp(SEXP edgelistSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP omit_dyadSEXP, SEXP modelSEXP) {
+// remifyCpp
+Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::List omit_dyad, std::string model);
+RcppExport SEXP _remify_remifyCpp(SEXP input_edgelistSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP omit_dyadSEXP, SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type edgelist(edgelistSEXP);
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type input_edgelist(input_edgelistSEXP);
     Rcpp::traits::input_parameter< Rcpp::RObject >::type actors(actorsSEXP);
     Rcpp::traits::input_parameter< Rcpp::RObject >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
@@ -28,7 +28,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type omit_dyad(omit_dyadSEXP);
     Rcpp::traits::input_parameter< std::string >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(rehCpp(edgelist, actors, types, directed, ordinal, origin, omit_dyad, model));
+    rcpp_result_gen = Rcpp::wrap(remifyCpp(input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model));
+    return rcpp_result_gen;
+END_RCPP
+}
+// check_process
+Rcpp::List check_process(Rcpp::RObject time, Rcpp::RObject origin);
+RcppExport SEXP _remify_check_process(SEXP timeSEXP, SEXP originSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
+    rcpp_result_gen = Rcpp::wrap(check_process(time, origin));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -127,7 +139,8 @@ RcppExport SEXP _remify_RcppExport_registerCCallable() {
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_remify_rehCpp", (DL_FUNC) &_remify_rehCpp, 8},
+    {"_remify_remifyCpp", (DL_FUNC) &_remify_remifyCpp, 8},
+    {"_remify_check_process", (DL_FUNC) &_remify_check_process, 2},
     {"_remify_getDyadIndex", (DL_FUNC) &_remify_getDyadIndex, 5},
     {"_remify_getDyadComposition", (DL_FUNC) &_remify_getDyadComposition, 4},
     {"_remify_RcppExport_registerCCallable", (DL_FUNC) &_remify_RcppExport_registerCCallable, 0},

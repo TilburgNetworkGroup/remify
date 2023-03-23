@@ -2,27 +2,27 @@
 % Please edit documentation in R/remify.R
 \name{getDyadID}
 \alias{getDyadID}
-\alias{getDyadID.reh}
+\alias{getDyadID.remify}
 \title{getDyadID}
 \usage{
-getDyadID(reh, actor1, actor2, type)
+getDyadID(x, actor1, actor2, type)
 
-\method{getDyadID}{reh}(reh, actor1, actor2, type)
+\method{getDyadID}{remify}(x, actor1, actor2, type)
 }
 \arguments{
-\item{reh}{an \code{reh} object.}
+\item{x}{a \code{remify} object.}
 
-\item{actor1}{name of actor1}
+\item{actor1}{[character] name of actor1.}
 
-\item{actor2}{name of actor2}
+\item{actor2}{[character] name of actor2.}
 
-\item{type}{name of type}
+\item{type}{[character] name of type.}
 }
 \description{
-A function that given a vector of names as to actor1, actor2 and type returns the corresponding dyad ID. The names to supply are the original input names of the edgelist before the processing via the function \code{remify::reh()}
+A function that given a vector of names as to actor1, actor2 and type returns the corresponding dyad ID. The names to supply are the original input names of the edgelist before the processing via the function \code{remify::remify()}.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{getDyadID(reh)}: return dyad's ID from dyad's composition
+\item \code{getDyadID(remify)}: return dyad's ID from dyad's composition
 
 }}

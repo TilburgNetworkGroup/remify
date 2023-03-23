@@ -2,23 +2,23 @@
 % Please edit documentation in R/remify.R
 \name{getActorName}
 \alias{getActorName}
-\alias{getActorName.reh}
+\alias{getActorName.remify}
 \title{getActorName}
 \usage{
-getActorName(reh, actorID = NULL)
+getActorName(x, actorID = NULL)
 
-\method{getActorName}{reh}(reh, actorID = NULL)
+\method{getActorName}{remify}(x, actorID = NULL)
 }
 \arguments{
-\item{reh}{an \code{reh} object.}
+\item{x}{a \code{remify} object.}
 
-\item{actorID}{a vector of actor ID's. The ID value can range between \code{1} and \code{N} (number of actors in the network)}
+\item{actorID}{a vector of actor ID's. The ID value can range between \code{1} and \code{N} (number of actors in the network).}
 }
 \description{
 A function that given a vector of actor ID's returns the corresponding vector of actor (input) names.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{getActorName(reh)}: return actor's name from actor's ID
+\item \code{getActorName(remify)}: return actor's name from actor's ID
 
 }}

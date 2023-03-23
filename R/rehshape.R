@@ -1,39 +1,31 @@
 
 #' @title Transform processed relational event sequences to different formats
 #'
-#' @description A function that transforms a \code{reh} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from (to) an object of class \code{reh} to (from) a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2023).
+#' @description A function that transforms a \code{remify} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from an object of class \code{remify} to a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2023) (and vice versa).
 #'
-#' @param data an object of either class 'reh' (see function \code{remify::reh()}) or class 'relevent'. The class 'relevent' is an dummy class object that contains a list of objects named after the argument names of the function \code{relvent::rem()} that need to be converted. For instance, if one wants to convert an object of structure 'relevent' we need it to contain: 'eventlist' (mandatory), 'supplist' (optional), 'timing'(mandatory). If the object 'timing' is \code{NULL}, the output object will assume an \code{"interval"} timing. The 'supplist' object can be left uspecified (\code{NULL}).
-#' @param output_format a character indicating the output format which the input data has to be converted to. It can assume two values: "reh" , "relevent"
+#' @param data an object of either class 'remify' (see function \code{remify::remify()}) or class 'relevent'. The class 'relevent' is an artificial class object that contains a list of objects named after the argument names of the function \code{relevent::rem()}. For instance, if one wants to convert an object of structure 'relevent' we need it to contain: 'eventlist' (mandatory), 'supplist' (optional), 'timing'(mandatory). If the object 'timing' is \code{NULL}, the output object will assume an \code{"interval"} timing. The 'supplist' object can be left uspecified (\code{NULL}). If a 'remify' object is converted to a 'relevent' object, then the output will contain the same argument useful for running the \code{relevent::rem()} function.
+#' @param output_format a character indicating the output format which the input data has to be converted to. It can assume two values: "remify" , "relevent"
 #'
-#' @return  an object of class specified by the \code{format} argument and containing the converted objects according to the required format
+#' @return  an object of class specified in the \code{output_format} argument 
 #' @export
-rehshape <- function(data, output_format = c("reh","relevent")){
+rehshape <- function(data, output_format = c("remify","relevent")){
 
     output_format <- match.arg(output_format)
-    data_format <- class(data)
-    if(length(data_format)>1){
-      stop("class of input data must be of length 1.")
-    }
-    # data has to be either of class 'reh' or 'relevent'
-    if(!any(data_format == c("reh","relevent"))){
-      stop("class of input data must be either `reh` or `relevent`.") 
+    if(!inherits(data,"remify") & !inherits(data,"relevent")){
+      stop("'data' must be either a 'remify' object or a (artificial) object of class 'relevent'")
     }
     # check data and output format
-    if(data_format == output_format){
-      warning("the format of the input data is the same as the required output format. The input data is returned.")
-      return(data)
+    if(class(data) == output_format){
+      stop("'output_format' and class of 'data' must be different")
     }
     
-    # if data structure is 'reh'
-    if(data_format ==  "reh"){
-
-      # check reh object here
+    # if data structure is 'remify'
+    if(inherits(data,"remify")){
+      # check remify object here
       ## ##
       ## ## ##
       # stop('') + add tests
       ## ##
-
       out <- NULL
       if(output_format == "relevent"){
         # (1) processing the edgelist
@@ -43,7 +35,7 @@ rehshape <- function(data, output_format = c("reh","relevent")){
           eventlist[,2] <- attr(data,"time")$value[,1] # if 'origin' is NULL the we use the time column,
         }
         else{
-          eventlist[,2] <-cumsum(data$intereventTime) # if 'origin' is provided inside object 'reh', then the time variable is reconstructed via cumulative sum of intervent time variable 
+          eventlist[,2] <-cumsum(data$intereventTime) # if 'origin' is provided inside object 'remify', then the time variable is reconstructed via cumulative sum of intervent time variable 
         }
     
         colnames(eventlist) <- c("dyad","time")
@@ -70,7 +62,7 @@ rehshape <- function(data, output_format = c("reh","relevent")){
     }
 
 
-    if(data_format == "relevent"){
+    if(inherits(data,"relevent")){
 
       # check relevent object here
       ## ##
@@ -79,7 +71,7 @@ rehshape <- function(data, output_format = c("reh","relevent")){
       ## ##
 
       out <- NULL
-      #convert from 'relevent' structure to 'reh'
+      #convert from 'relevent' structure to 'remify'
 
       # full riskset (this will have different actors' names than the original data)
       dyads_l <- expand.grid(1:data$N,1:data$N) # number of actors 
@@ -112,8 +104,8 @@ rehshape <- function(data, output_format = c("reh","relevent")){
         }
       }
 
-      # create 'reh' class object
-      out <- remify::reh(edgelist = edgelist_orig,
+      # create 'remify' class object
+      out <- remify::remify(edgelist = edgelist_orig,
                           actors = as.character(1:data$N),
                           types = as.character(1:data$C), 
                           directed = TRUE, 

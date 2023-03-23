@@ -3,7 +3,7 @@ Package: remify
 Title: Processing and transforming REH to formats suitable for the
     remverse packages and more
 Version: 3.0.0
-Date: 2023-03-20
+Date: 2023-04-01
 Authors@R: 
     c(person(given = "Giuseppe",
              family = "Arena",
