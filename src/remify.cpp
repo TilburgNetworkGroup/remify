@@ -973,7 +973,6 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
         int N = actorName.size();
         R = omit_dyad.length();
         int M_processed = time.size();
-        Rcpp::Rcout << M_processed << "\n";
 
         for(r = 0; r < R; r++){
             // converting r-th element in omit_dyad

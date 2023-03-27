@@ -1,5 +1,7 @@
 test_that("rehshape", {
-    out <- reh(edgelist = randomREH$edgelist,
+
+    # tie-oriented modeling
+    out <- remify(edgelist = randomREH$edgelist,
                     actors = randomREH$actors,
                     types = randomREH$types, 
                     directed = TRUE, # events are directed
@@ -17,7 +19,7 @@ test_that("rehshape", {
     expect_true(is.list(to_relevent_obj))
     expect_equal(length(to_relevent_obj),3)
 
-    # expectations on objects inside the 'reh' object
+    # expectations on objects inside the 'remify' object
     expect_identical(names(to_relevent_obj),c("eventlist","supplist","timing"))
     expect_equal(out$M, dim(to_relevent_obj$supplist)[1])
     expect_equal(out$M, dim(to_relevent_obj$eventlist)[1])
@@ -27,29 +29,27 @@ test_that("rehshape", {
     ## tests on converted reh object ##
     to_relevent_obj$N <- 20
     to_relevent_obj$C <- 3
-    to_reh_obj <- rehshape(data = to_relevent_obj, output_format = "reh") 
+    to_remify_obj <- rehshape(data = to_relevent_obj, output_format = "remify") 
+    expect_s3_class(to_remify_obj, "remify")
 
     ## tests on error messages ##
-
-    # length of class input data is greater than 1
-    class(to_relevent_obj) <- c("relevent","rem")
-    expect_error(rehshape(data = to_relevent_obj, output_format = "reh"),
-    "class of input data must be of length 1.")
     
     # input class data
     class(to_relevent_obj) <- c("class1")
-    expect_error(rehshape(data = to_relevent_obj, output_format = "reh"),
-    "class of input data must be either `reh` or `relevent`.")
+    expect_error(rehshape(data = to_relevent_obj, output_format = "remify"),
+    "'data' must be either a 'remify' object or a (artificial) object of class 'relevent'.",
+    fixed = TRUE)
 
     ## tests on warning messages ##
 
     # same input and output structure
     class(to_relevent_obj) <- c("relevent")
-    expect_warning(rehshape(data = to_relevent_obj, output_format = "relevent"),
-    "the format of the input data is the same as the required output format. The input data is returned.")
+    expect_error(rehshape(data = to_relevent_obj, output_format = "relevent"),
+    "'output_format' and class of 'data' must be different.",
+    fixed = TRUE)
 
     ## expecting no errors if origin = NULL
-    out <- reh(edgelist = randomREH$edgelist,
+    out <- remify(edgelist = randomREH$edgelist,
                 actors = randomREH$actors,
                 types = randomREH$types, 
                 directed = TRUE, # events are directed
@@ -57,6 +57,32 @@ test_that("rehshape", {
                 origin = NULL, # origin time is defiend
                 omit_dyad = randomREH$omit_dyad, 
                 model = "tie")
-    expect_no_error(rehshape(data = out, output_format = "relevent"))     
+    expect_no_error(rehshape(data = out, output_format = "relevent"))    
+
+    # actor-oriented modeling
+
+    ## with type
+    reh_loc <- randomREH
+    out <- remify(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = reh_loc$types, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = reh_loc$origin, # origin time is defiend
+                    omit_dyad = reh_loc$omit_dyad, 
+                    model = "actor")
+    expect_no_error(rehshape(data = out, output_format = "relevent"))
+    ## without type
+    reh_loc$edgelist$type <- NULL    
+    out <- remify(edgelist = reh_loc$edgelist,
+                    actors = reh_loc$actors,
+                    types = NULL, 
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # REM with waiting times
+                    origin = reh_loc$origin, # origin time is defiend
+                    omit_dyad = NULL, 
+                    model = "actor")
+    expect_no_error(rehshape(data = out, output_format = "relevent"))
+    
 
 })

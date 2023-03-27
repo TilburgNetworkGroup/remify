@@ -12,11 +12,11 @@ rehshape <- function(data, output_format = c("remify","relevent")){
 
     output_format <- match.arg(output_format)
     if(!inherits(data,"remify") & !inherits(data,"relevent")){
-      stop("'data' must be either a 'remify' object or a (artificial) object of class 'relevent'")
+      stop("'data' must be either a 'remify' object or a (artificial) object of class 'relevent'.")
     }
     # check data and output format
     if(class(data) == output_format){
-      stop("'output_format' and class of 'data' must be different")
+      stop("'output_format' and class of 'data' must be different.")
     }
     
     # if data structure is 'remify'
@@ -29,15 +29,19 @@ rehshape <- function(data, output_format = c("remify","relevent")){
       out <- NULL
       if(output_format == "relevent"){
         # (1) processing the edgelist
-        eventlist <- data$edgelist[,c(2,1)] # [dyad,time]
-        eventlist[,1] <- eventlist[,1]+1
-        if(is.null(attr(data,"time")$origin)){
-          eventlist[,2] <- attr(data,"time")$value[,1] # if 'origin' is NULL the we use the time column,
+        eventlist <- matrix(NA,nrow=data$M,ncol=2)
+        if(attr(data,"model")=="tie"){  # if remify object is processed for tie-oriented modeling, then we consider the attribute "dyad"
+          eventlist[,1] <- attr(data,"dyad")
         }
         else{
-          eventlist[,2] <-cumsum(data$intereventTime) # if 'origin' is provided inside object 'remify', then the time variable is reconstructed via cumulative sum of intervent time variable 
+          if(attr(data,"with_type")){ # if the remify object is processed for actor-oriented modeling, then we have to find the dyad ID ([[IMPROVEMENT!!]] this step can be run on a Rcpp function with parallelization)
+            for(m in 1:data$M) eventlist[m,1] <- remify:::getDyadIndex(actor1 = data$edgelist$actor1[m]-1,actor2 = data$edgelist$actor2[m]-1,type = data$edgelist$type[m]-1,N = data$N, directed = attr(data,"directed"))
+          }
+          else{
+            for(m in 1:data$M) eventlist[m,1] <- remify:::getDyadIndex(actor1 = data$edgelist$actor1[m]-1,actor2 = data$edgelist$actor2[m]-1,type = 0,N = data$N, directed = attr(data,"directed"))
+          }
         }
-    
+        eventlist[,2] <- as.numeric(data$edgelist$time)
         colnames(eventlist) <- c("dyad","time")
         supplist <- NULL
         if(!is.null(data$omit_dyad)){
@@ -82,7 +86,7 @@ rehshape <- function(data, output_format = c("remify","relevent")){
       # edgelist converted to [actor1,actor2,type]
       data$M <- dim(data$eventlist)[1]
       edgelist_orig <- data.frame(time = data$eventlist[,2], actor1 = rep(NA,data$M), actor2 = rep(NA,data$M), type = rep(NA,data$M))
-      for(m in 1:data$M){
+      for(m in 1:data$M){ # [[IMPROVEMENT!!]] parallelization
         edgelist_orig[m,2:4] <- dyads_l[data$eventlist[m,1],]
       }
 
@@ -94,7 +98,7 @@ rehshape <- function(data, output_format = c("remify","relevent")){
           converted_omit_dyad <- list()
           converted_omit_dyad$riskset <- (rbind(unique(data$supplist)[-1,]))*1 # this operation can be faster at rcpp level
           converted_omit_dyad$time <- rep(-1,data$M)
-          for(m in 1:data$M){
+          for(m in 1:data$M){ # [[IMPROVEMENT!!]] parallelization
             if(sum(data$supplist[m,]) < (data$N*(data$N-1)*data$C)){ #if there is a change in the riskset, we need to assign which row (in c++ notation it is in the riskset object matrix)
             temp_mat <-  matrix(rep(data$supplist[m,],dim(converted_omit_dyad$riskset)[1]),nrow=dim(converted_omit_dyad$riskset)[1],byrow=TRUE)
             find_loc <- apply(converted_omit_dyad$riskset - temp_mat,1,sum)
@@ -117,15 +121,15 @@ rehshape <- function(data, output_format = c("remify","relevent")){
       dict_loc <- attr(out,"dictionary")
       position_rearranged <- NULL
       for(d in 1:dim(dyads_l)[1]){
-        sender_old <- dyads_l$actor1[d]-1
-        receiver_old <- dyads_l$actor2[d]-1 
-        type_old <- dyads_l$type[d]-1
+        sender_old <- dyads_l$actor1[d]
+        receiver_old <- dyads_l$actor2[d]
+        type_old <- dyads_l$type[d]
         
         sender_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == sender_old)])-1
         receiver_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == receiver_old)])-1
         type_new <- as.numeric(dict_loc$types$typeName[which(dict_loc$types$typeID == type_old)])-1
 
-        position_new <- getDyadIndex(actor1=sender_new,actor2=receiver_new,type=type_new,N=out$N,directed=attr(out,"directed"))+1 
+        position_new <- remify:::getDyadIndex(actor1=sender_new,actor2=receiver_new,type=type_new,N=out$N,directed=attr(out,"directed"))+1 
         position_rearranged <- c(position_rearranged,position_new)
       }
       converted_omit_dyad$riskset <- converted_omit_dyad$riskset[,position_rearranged]

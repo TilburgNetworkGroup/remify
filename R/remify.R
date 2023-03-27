@@ -59,8 +59,7 @@ remify <- function(edgelist,
     }
 
     # checking input argument "model" :
-    model <- match.arg(model)
-    if(is.null(model) || all(model==c("tie","actor"))) { # remove: || all(model==c("tie","actor") because match.arg() should already deal with this case
+    if(is.null(model) || all(model==c("tie","actor")) || (length(model)>1)) {
         model <- "tie"
         warning("`model` set to `tie` by default")
     }
@@ -165,18 +164,9 @@ summary.remify <- function(object,...){
   time <- object$edgelist$time
   origin <- attr(object, "time")$origin
   if(!attr(object,"ordinal")){
-    if(is.null(origin)){
-      origin <- min(time) - 1
-      if(origin < 0) origin <- 0
-    }
-    else if( origin >= min(time)){
-      origin <- min(time) - 1
-      if(origin < 0) origin <-0
-    }
-    time_length <- time[object$M] - origin
+    time_length <- time[object$M] - attr(object,"origin")
     time_length <- paste("\t> time length ~ ",round(time_length)," ",attr(time_length, "units"),sep="")
   }
-
   interevent_time <- NULL
   if(!attr(object,"ordinal")){
     min_interevent_time <- min(object$intereventTime) 
@@ -190,11 +180,9 @@ summary.remify <- function(object,...){
     }
     interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ",round(min_interevent_time,4)," ",units_minmax,"\n\t\t >> maximum ~ ",round(max_interevent_time,4)," ",units_minmax,"\n",sep="")
   }
-
   out_summary <- c(title,model,events,actors,types,riskset,directed,ordinal,weighted,time_length,interevent_time)
   out_summary <- out_summary[!is.null(out_summary)]
   cat(paste(out_summary,collapse="\n"))
-  
 }
 
 #######################################################################################
@@ -277,9 +265,6 @@ getActorName <- function(x, actorID = NULL){
 #' @method getActorName remify
 #' @export
 getActorName.remify <- function(x, actorID = NULL) {
-  if(!inherits(x,"remify")){
-    stop("'x' must be an object of class 'remify'") 
-  }
   names <- NULL
   if(is.null(actorID)) stop("provide at least one actorID.")
   else{ 
@@ -315,9 +300,6 @@ getTypeName <- function(x, typeID = NULL){
 #' @method getTypeName remify
 #' @export
 getTypeName.remify <- function(x, typeID = NULL) {
-  if(!inherits(x,"remify")){
-    stop("'x' must be an object of class 'remify'") 
-  }
   names <- NULL
   if(is.null(typeID)) stop("provide at least one typeID.")
   else{ 
@@ -353,9 +335,6 @@ getActorID <- function(x, actorName = NULL){
 #' @method getActorID remify
 #' @export
 getActorID.remify <- function(x, actorName = NULL) {
-  if(!inherits(x,"remify")){
-    stop("'x' must be an object of class 'remify'") 
-  }
   IDs <- NULL
   if(is.null(actorName)) stop("provide at least one actorName.")
   else{ 
@@ -387,9 +366,6 @@ getTypeID <- function(x, typeName = NULL){
 #' @method getTypeID remify
 #' @export
 getTypeID.remify <- function(x, typeName = NULL) {
-  if(!inherits(x,"remify")){
-    stop("'x' must be an object of class 'remify'") 
-  }
   IDs <- NULL
   if(is.null(typeName)) stop("provide at least one typeName.")
   else{ 
@@ -422,9 +398,6 @@ getDyadID <- function(x, actor1, actor2, type){
 #' @method getDyadID remify
 #' @export
 getDyadID.remify <- function(x, actor1, actor2, type) {
-  if(!inherits(x,"remify")){
-    stop("'x' must be an object of class 'remify'") 
-  }
   if(attr(x,"with_type")){
     if(!is.vector(type) | (length(type)>1)){
       stop("'type' must be a character vector of length 1")
@@ -451,7 +424,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
     stop(paste("input ",ifelse(sum(check_on_actors)==1,c("'actor1' "," 'actor2' ")[check_on_actors],c("'actor1' and 'actor2' ")),"not found in the 'remify' object",sep=""))
   }
   # finding type from the dictionary of names (attribute of the reh object)
-  type_id <- 0
+  type_id <- 1
   if(attr(x,"with_type")){
     type_id <- which(dict_loc$types$typeName == type)
     if(length(type_id)==0){
@@ -484,71 +457,51 @@ getDyad <- function(x, dyadID){
 #' @method getDyad remify
 #' @export
 getDyad.remify <- function(x, dyadID) {
-  if(!inherits(x,"remify")){
-    stop("'x' must be an object of class 'remify'") 
-  }
   if(!is.numeric(dyadID) & !is.integer(dyadID)){
     stop("'dyadID' must be a numeric (or integer) vector")
   }
   out <- NULL
   dyadID <- as.integer(dyadID) # if the ID supplied is 124.8, the ID considered will be 124
-  if(length(dyadID)==1){
-    # the output will be a character vector
-    if((dyadID < 1) | (dyadID > x$D)){
-      stop(paste("'dyadID' must range between 1 and ",x$D,", given that the size of the largest risk set is ",x$D,sep="")) 
-    }
-    out <- remify:::getDyadComposition(d = dyadID-1, C = x$C, N = x$N, D = x$D)
-    if(attr(x,"with_type")){
-      out <- c(dyadID,out)
-      names(out) <- c("dyadID","actor1","actor2","type")
-    }
-    else{
-      out <- c(dyadID,out[-3]) # excluding the base event type (if there is only one event type in the sequence)
-      names(out) <- c("dyadID","actor1","actor2")
-    }
+  
+  # check for duplicates in dyadID
+  length_orig <- length(dyadID)
+  dyadID <- unique(dyadID)
+  if(length_orig > length(dyadID)){
+    warning("'dyadID' contains ID's that are repeated more than once. Such ID's will be processed once")
   }
-  else if(length(dyadID)>1){
-    # the output will be a data.frame
 
-    # check for duplicates in dyadID
-    length_orig <- length(dyadID)
-    dyadID <- unique(dyadID)
-    if(length_orig > length(dyadID)){
-      warning("'dyadID' contains ID's that are repeated more than once. Such ID's will be processed once")
-    }
-
-    # apply function remify:::getDyadComposition()
-    dict_loc <- attr(x,"dictionary")
-    if(attr(x,"with_type")){ # output with 'type' column
-      actor1_name <- actor2_name <- type_name <- rep(NA, length=length(dyadID))
-      for(d in 1:length(dyadID)){
-        if((dyadID[d] < 1) | (dyadID[d] > x$D)){
-          stop(paste("'dyadID' must range between 1 and ",x$D,", given that the size of the largest risk set is ",x$D,sep=""))
-        }
-        dyad_composition_loc <- remify:::getDyadComposition(d = dyadID[d]-1, C = x$C, N = x$N, D = x$D)
-        actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
-        actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
-        type_name[d] <- dict_loc$types$typeName[dyad_composition_loc[3]+1]
-        rm(dyad_composition_loc)
+  # apply function remify:::getDyadComposition()
+  dict_loc <- attr(x,"dictionary")
+  if(attr(x,"with_type")){ # output with 'type' column
+    actor1_name <- actor2_name <- type_name <- rep(NA, length=length(dyadID))
+    for(d in 1:length(dyadID)){
+      if((dyadID[d] < 1) | (dyadID[d] > x$D)){
+        stop(paste("'dyadID' must range between 1 and ",x$D,", given that the size of the largest risk set is ",x$D,sep=""))
       }
-      out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name, type = type_name)  
-      rm(actor1_name,actor2_name,type_name)   
+      dyad_composition_loc <- remify:::getDyadComposition(d = dyadID[d]-1, C = x$C, N = x$N, D = x$D)
+      actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
+      actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
+      type_name[d] <- dict_loc$types$typeName[dyad_composition_loc[3]+1]
+      rm(dyad_composition_loc)
     }
-    else{ # output without 'type' column (for sequences with one or none event type)
-      actor1_name <- actor2_name <- rep(NA, length=length(dyadID))
-      for(d in 1:length(dyadID)){
-        if((dyadID[d] < 1) | (dyadID[d] > x$D)){
-          stop(paste("'dyadID' must range between 1 and ",x$D,", givent that the size of the largest risk set is ",x$D,sep=""))
-        }
-        dyad_composition_loc <- remify:::getDyadComposition(d = dyadID[d]-1, C = x$C, N = x$N, D = x$D)
-        actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
-        actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
-        rm(dyad_composition_loc)
-      }
-      out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name)  
-      rm(actor1_name,actor2_name)     
-    }
+    out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name, type = type_name)  
+    rm(actor1_name,actor2_name,type_name)   
   }
+  else{ # output without 'type' column (for sequences with one or none event type)
+    actor1_name <- actor2_name <- rep(NA, length=length(dyadID))
+    for(d in 1:length(dyadID)){
+      if((dyadID[d] < 1) | (dyadID[d] > x$D)){
+        stop(paste("'dyadID' must range between 1 and ",x$D,", givent that the size of the largest risk set is ",x$D,sep=""))
+      }
+      dyad_composition_loc <- remify:::getDyadComposition(d = dyadID[d]-1, C = 1, N = x$N, D = x$D)
+      actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
+      actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
+      rm(dyad_composition_loc)
+    }
+    out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name)  
+    rm(actor1_name,actor2_name)     
+  }
+
   return(out)
 }
 
@@ -580,11 +533,6 @@ x <- .GlobalEnv$edgelist_reh
 # [[current status of the method]] this function ONLY works for single event sequences inside the reh object (two-mode and multiple sequences network)
 
 # checks on input arguments
-
-# class of input 'x' must be 'remify'
-if(!inherits(x,"remify")){
-  stop("the input 'x' must be an object of class 'remify'")
-}
 
 # check on captions supplied by the user
 

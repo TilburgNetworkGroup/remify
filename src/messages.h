@@ -18,7 +18,7 @@ std::string warningMessage(int cond){
                   message = "\nWarning: the `time` variable is not sorted. Sorting will be forced.\n";
                   break;
             case 1:
-                  message = "\nWarning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing\n";
+                  message = "\nWarning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.\n";
                   break;
             case 2:
                   message = "\nWarning: value supplied as `origin` is greater or equal than the first time point. `origin` is then automatically set either to one day/second before the first time point or to 0.\n";
@@ -39,7 +39,7 @@ std::string errorMessage(int cond){
                   message = "time vector in each element of the list 'omit_dyad' must be sorted so that elements indicate respectively start and stop time when the riskset changed";
                   break;
             case 1:
-                  message = "[[TO REMOVE]]self-events are not yet supported";
+                  message = "empty message [[remove if no new errors have to be added]]";
                   break; 
             case 2:
                   message = "time vector in each element of the list 'omit_dyad' must be of length 2: start and stop time when the riskset changed";
