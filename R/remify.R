@@ -510,7 +510,7 @@ getDyad.remify <- function(x, dyadID) {
 
 #' @title plot.remify
 #' @rdname plot.remify
-#' @description plot visualization.
+#' @description plot visualization in base R graphics package
 #' @param x is a \code{remify} object.
 #' @param which one or more numbers between 1 and 4. Explain the numbers: (1) plots this, (2) plots that, (3) plots this and (4) plot that.
 #' @param caption list of titles for each plot.
@@ -528,7 +528,8 @@ plot.remify <- function(x,
                     ...){
   
 # [[temporary code]]
-x <- .GlobalEnv$edgelist_reh 
+x <- edgelist_reh
+dict <- attr(x,"dictionary")
 
 # [[current status of the method]] this function ONLY works for single event sequences inside the reh object (two-mode and multiple sequences network)
 
@@ -550,13 +551,13 @@ if(attr(x,"model") == "tie"){
   # X-axis = measurement unit of the waiting time (understand it from the 'remify' object)
   dev.hold()
   time_unit <- NULL
-  time_unit <- attr(x$intereventTime,"unit")
+  time_unit <- attr(x$intereventTime,"unit") # add attribute to x$intereventTime object based on the time scale (default is secodns if time is timestamp, or days if it is a Date )
   hist(x = x$intereventTime, 
      breaks = 40,
      angle = 45, 
      col = "lavender", 
      border = "darkgray",
-     main = paste("Distribution of the waiting times (t[m] - t[m-1]) ",collapse=""),
+     main = paste("Distribution of the inter-event times",collapse=""),
      xlab = ifelse(!is.null(time_unit),paste("waiting time (",time_unit,")",sep="", collapse=""),paste("waiting time")))
   dev.flush()
 
@@ -566,8 +567,12 @@ if(attr(x,"model") == "tie"){
   # calculating frequencies
   # ... actor1
   actor1_freq <- table(x$edgelist$actor1_ID)
+  names_actor1 <- rep(NA,length(actor1_freq))
+  for(n in 1:length(actor1_freq)) names_actor1[n] <- dict$actors$actorName[as.integer(names(actor1_freq)[n])]
   # ... actor2
   actor2_freq <- table(x$edgelist$actor2_ID)
+  names_actor2 <- rep(NA,length(actor2_freq))
+  for(n in 1:length(actor2_freq)) names_actor2[n] <- dict$actors$actorName[as.integer(names(actor2_freq)[n])]
   # ... dyad with coords (sorted from large to small frequency values) only observed dyads are included (some actors may be excluded from the plot)
   # [[??]] Maybe reorder the ACTORS depending on their 'activity'. --> this could be diffcult becaus we have to chose which between actor1 and actor2
   dyad_freq <- sort(table(paste(x$edgelist$actor1_ID,x$edgelist$actor2_ID,sep="_")),decreasing=TRUE) # reordering dyads based on their frequency
@@ -582,32 +587,40 @@ if(attr(x,"model") == "tie"){
   egrid <- egrid[,2:1]
   X_out <- data.frame(row = egrid[,1],col = egrid[,2], fill = 0)  
   for(d in 1:dim(X)[1]){
-    row_index <- which((X_out$row == X[d,1]) & (X_out$col == X[d,1]))
+    row_index <- which((X_out$row == X[d,1]) & (X_out$col == X[d,2]))
     X_out$fill[row_index] <- X[d,3]
   }
-  X_out$fill <- X_out$fill/max(X_out$fill)
-  xlab="actor2"
-  ylab="actor1"
-  layout_matrix <- matrix(c(2,0,1,3), ncol=2, byrow=TRUE)
+  #X_out$fill <- X_out$fill/max(X_out$fill) # rescaling if possible (it doesn't work with terrain.colors(12))
+  layout_matrix <- matrix(c(2,0,1,3), ncol=2, byrow=TRUE) # 0 can become 4 for a legend of the colors
   layout(layout_matrix, widths=c(4/5,1/5), heights=c(1/5,4/5))
   top = max(c(actor1_freq, actor2_freq))
-  par(mar=c(3,3,1,1))
-  # tile plot
-  #plot(1:x$N,1:x$N,type="n",axes=FALSE)
+  par(oma=c(0,0,0,0))
+  par(mar=c(4,4,1,1))
   plot.new()
   plot.window(xlim=c(1,x$N),ylim=c(1,x$N),asp=1)
-  with(X_out,rect(col-0.5,row-0.5,col+0.5,row+0.5,col=terrain.colors(12)[fill],border="gray"))
-  #[[to remove]]with(X,text(col-0.5,row-0.5,val,font=2,cex=2))
+  with(X_out,{
+  # tile plot
+  rect(col-0.5,row-0.5,col+0.5,row+0.5,col=hcl.colors(n=max(dyad_freq)+1,palette="PuBu")[fill],border="gray95") #terrain.colors(9)[fill] hcl.colors(n = 9)
+  # actor names
+  text(x = c(1:x$N), y = 0, labels = names_actor2, srt = 90, pos = 1, xpd = TRUE,  adj = 1) # offset = 0.5,
+  text(x = 0, y = c(1:x$N), labels = names_actor1, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5)) # offset = -1.4,
+  # axes names
+  mtext(text  = "actor2", side=1, line=1, outer=TRUE, adj=0, 
+    at=floor(x$N/2))
+  mtext(text = "actor1", side=2, line=1, outer=TRUE, adj=0, 
+    at=floor(x$N/2))
+  })
   # histograms
-  par(mar=c(0,3,1,1))
-  barplot(unname(table(x$edgelist$actor2_ID)), axes=FALSE, ylim=c(0, top), space=0, names.arg= NULL,border="darkgray",col="lavender")
-  par(mar=c(3,0,1,1))
-  barplot(unname(table(x$edgelist$actor1_ID)), axes=FALSE, xlim=c(0, top), space=0, , names.arg = NULL, horiz=TRUE,border="darkgray",col="lavender")
-  par(oma=c(3,3,0,0))
-  mtext(xlab, side=1, line=1, outer=TRUE, adj=0, 
-    at=floor(x$N/2))
-  mtext(ylab, side=2, line=1, outer=TRUE, adj=0, 
-    at=floor(x$N/2))
+  par(mar=c(0,4,1,1))
+  plot(1:x$N, type = 'n', xlim = range(c(1,x$N)), ylim = c(0,top),axes=FALSE,frame.plot=FALSE,xlab="",ylab="in-degree")
+  segments(x0=seq(1.75,x$N-0.75,length=x$N),y0=0,y1=unname(table(x$edgelist$actor2_ID)),lwd=10,col="cadetblue3")
+  axis(side=2)
+  #barplot(unname(table(x$edgelist$actor2_ID)), axes=FALSE, ylim=c(0, top), space=0, names.arg= NULL,border="darkgray",col="lavender",add=TRUE,asp=1/max(actor2_freq))
+  par(mar=c(4,0,1,1))
+  plot(1:x$N, type = 'n', xlim = range(c(0,top)), ylim = c(1,x$N),axes=FALSE,frame.plot=FALSE,xlab="out-degree",ylab="")
+  segments(x0=0,y0=c(1:x$N),x1=unname(table(x$edgelist$actor2_ID)),lwd=10,col="cadetblue3")
+  axis(side=1)
+  #barplot(unname(table(x$edgelist$actor1_ID)), axes=FALSE, xlim=c(0, top), space=0, , names.arg = NULL, horiz=TRUE,border="darkgray",col="lavender")
   dev.flush()
   # [[3]] observed dyad/potential per interval of the time or "number of active actors / number of actors"
   dev.hold()

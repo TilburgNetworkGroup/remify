@@ -127,7 +127,7 @@ Whether the model of interest is tie-oriented or actor-oriented, the argument `m
 
 ### Running the example
 ```{r}
-edgelist_reh <- reh(edgelist = randomREH$edgelist,
+edgelist_reh <- remify(edgelist = randomREH$edgelist,
                     actors = randomREH$actors,
                     types = randomREH$types, 
                     directed = TRUE, # events are directed

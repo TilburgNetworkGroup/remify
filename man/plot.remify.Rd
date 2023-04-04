@@ -24,5 +24,5 @@
 \item{...}{other arguments.}
 }
 \description{
-plot visualization.
+plot visualization in base R graphics package
 }
