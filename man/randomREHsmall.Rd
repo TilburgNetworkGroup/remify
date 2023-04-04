@@ -37,7 +37,7 @@ randomREHsmall$types
 
 
 # run the preprocessing function reh() by supplying the loaded objects.
-small_edgelist_reh <- reh(edgelist = randomREHsmall$edgelist,
+small_edgelist_reh <- remify(edgelist = randomREHsmall$edgelist,
                     actors = randomREHsmall$actors,
                     directed = TRUE,
                     ordinal = FALSE,

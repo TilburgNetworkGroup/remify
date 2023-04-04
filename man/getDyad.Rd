@@ -12,7 +12,7 @@ getDyad(x, dyadID)
 \arguments{
 \item{x}{a \code{remify} object.}
 
-\item{getDyad}{a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).}
+\item{dyadID}{a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).}
 }
 \description{
 A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).

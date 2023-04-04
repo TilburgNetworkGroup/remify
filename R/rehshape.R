@@ -35,10 +35,10 @@ rehshape <- function(data, output_format = c("remify","relevent")){
         }
         else{
           if(attr(data,"with_type")){ # if the remify object is processed for actor-oriented modeling, then we have to find the dyad ID ([[IMPROVEMENT!!]] this step can be run on a Rcpp function with parallelization)
-            for(m in 1:data$M) eventlist[m,1] <- remify:::getDyadIndex(actor1 = data$edgelist$actor1[m]-1,actor2 = data$edgelist$actor2[m]-1,type = data$edgelist$type[m]-1,N = data$N, directed = attr(data,"directed"))
+            for(m in 1:data$M) eventlist[m,1] <- getDyadIndex(actor1 = data$edgelist$actor1[m]-1,actor2 = data$edgelist$actor2[m]-1,type = data$edgelist$type[m]-1,N = data$N, directed = attr(data,"directed"))
           }
           else{
-            for(m in 1:data$M) eventlist[m,1] <- remify:::getDyadIndex(actor1 = data$edgelist$actor1[m]-1,actor2 = data$edgelist$actor2[m]-1,type = 0,N = data$N, directed = attr(data,"directed"))
+            for(m in 1:data$M) eventlist[m,1] <- getDyadIndex(actor1 = data$edgelist$actor1[m]-1,actor2 = data$edgelist$actor2[m]-1,type = 0,N = data$N, directed = attr(data,"directed"))
           }
         }
         eventlist[,2] <- as.numeric(data$edgelist$time)
@@ -129,7 +129,7 @@ rehshape <- function(data, output_format = c("remify","relevent")){
         receiver_new <- as.numeric(dict_loc$actors$actorName[which(dict_loc$actors$actorID == receiver_old)])-1
         type_new <- as.numeric(dict_loc$types$typeName[which(dict_loc$types$typeID == type_old)])-1
 
-        position_new <- remify:::getDyadIndex(actor1=sender_new,actor2=receiver_new,type=type_new,N=out$N,directed=attr(out,"directed"))+1 
+        position_new <- getDyadIndex(actor1=sender_new,actor2=receiver_new,type=type_new,N=out$N,directed=attr(out,"directed"))+1 
         position_rearranged <- c(position_rearranged,position_new)
       }
       converted_omit_dyad$riskset <- converted_omit_dyad$riskset[,position_rearranged]

@@ -8,6 +8,7 @@
 #'
 #' @docType package
 #' @useDynLib remify
+#' @import grDevices graphics
 #' @importFrom Rcpp sourceCpp
 #' @name remify
 NULL

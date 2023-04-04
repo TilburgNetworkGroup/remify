@@ -432,7 +432,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
     }
   }
   # finding dyad ID
-  dyad_id <- remify:::getDyadIndex(actor1 = actor1_id-1,
+  dyad_id <- getDyadIndex(actor1 = actor1_id-1,
                                     actor2 = actor2_id-1,
                                     type = type_id-1,
                                     N = x$N,
@@ -447,7 +447,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
 #' @title getDyad
 #' @description A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).
 #' @param x a \code{remify} object.
-#' @param getDyad a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).
+#' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).
 #' @export
 getDyad <- function(x, dyadID){
   UseMethod("getDyad")
@@ -470,7 +470,7 @@ getDyad.remify <- function(x, dyadID) {
     warning("'dyadID' contains ID's that are repeated more than once. Such ID's will be processed once")
   }
 
-  # apply function remify:::getDyadComposition()
+  # apply function getDyadComposition()
   dict_loc <- attr(x,"dictionary")
   if(attr(x,"with_type")){ # output with 'type' column
     actor1_name <- actor2_name <- type_name <- rep(NA, length=length(dyadID))
@@ -478,7 +478,7 @@ getDyad.remify <- function(x, dyadID) {
       if((dyadID[d] < 1) | (dyadID[d] > x$D)){
         stop(paste("'dyadID' must range between 1 and ",x$D,", given that the size of the largest risk set is ",x$D,sep=""))
       }
-      dyad_composition_loc <- remify:::getDyadComposition(d = dyadID[d]-1, C = x$C, N = x$N, D = x$D)
+      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, C = x$C, N = x$N, D = x$D)
       actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
       actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
       type_name[d] <- dict_loc$types$typeName[dyad_composition_loc[3]+1]
@@ -493,7 +493,7 @@ getDyad.remify <- function(x, dyadID) {
       if((dyadID[d] < 1) | (dyadID[d] > x$D)){
         stop(paste("'dyadID' must range between 1 and ",x$D,", givent that the size of the largest risk set is ",x$D,sep=""))
       }
-      dyad_composition_loc <- remify:::getDyadComposition(d = dyadID[d]-1, C = 1, N = x$N, D = x$D)
+      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, C = 1, N = x$N, D = x$D)
       actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
       actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
       rm(dyad_composition_loc)
@@ -528,10 +528,10 @@ plot.remify <- function(x,
                     ...){
   
 # [[temporary code]]
-x <- edgelist_reh
+#x <- edgelist_reh
 dict <- attr(x,"dictionary")
 
-# [[current status of the method]] this function ONLY works for single event sequences inside the reh object (two-mode and multiple sequences network)
+# [[current status of the method: not working]] this function ONLY works for single event sequences inside the reh object (two-mode and multiple sequences network)
 
 # checks on input arguments
 

@@ -43,7 +43,7 @@
 #' head(randomREH$omit_dyad[[1]]$time) # (printing out only the first 10 time points)
 #' 
 #' # run the preprocessing function reh() by supplying the loaded objects.
-#' edgelist_reh <- reh(edgelist = randomREH$edgelist,
+#' edgelist_reh <- remify(edgelist = randomREH$edgelist,
 #'                     actors = randomREH$actors,
 #'                     types = randomREH$types, 
 #'                     directed = TRUE,
@@ -97,7 +97,7 @@
 #'
 #' 
 #' # run the preprocessing function reh() by supplying the loaded objects.
-#' small_edgelist_reh <- reh(edgelist = randomREHsmall$edgelist,
+#' small_edgelist_reh <- remify(edgelist = randomREHsmall$edgelist,
 #'                     actors = randomREHsmall$actors,
 #'                     directed = TRUE,
 #'                     ordinal = FALSE,
