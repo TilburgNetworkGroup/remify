@@ -5,7 +5,10 @@ package: remify
 date: ""
 output: 
   rmarkdown::html_document:
-    theme: bootstrap
+    theme: spacelab
+    highlight: pygments
+    code_folding: show
+    css: "remify-theme.css"
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Process a Relational Event History}
@@ -15,9 +18,7 @@ vignette: >
 
 <i>This vignette explains aim, input, output, attributes and methods of the function <tt>remify::remify()</tt>.</i>
 
-
 # {.tabset .tabset-fade .tabset-pills}
-
 
 ## Aim
 The objective of <tt>remify::remify()</tt> is to process raw relational event data provided by the user along with other inputs that characterize them (actors' names, event types' names, starting time point of the event sequence, set of interactions to be excluded from the risk set at specific time points, etc.).
