@@ -132,7 +132,12 @@ test_that("methods for a 'remify' object", {
   "'typeID' must be numeric or integer.",
   fixed = TRUE)
   expect_identical(suppressWarnings(getTypeName(x = out,typeID = c(1,2,3,out$C+10))),c("competition","conflict","cooperation"))
-
+  
+  ### when no types are available
+  out_no_event_types <- remify::remify(edgelist=reh_loc$edgelist[,1:3], model="tie")
+  expect_error(getTypeName(x = out_no_event_types, typeID = 1),
+  "'remify' object has no event types",
+  fixed = TRUE)
 
   ## (3) method getActorID()
   expect_true(is.integer(getActorID(x = out,actorName = c("Maya","Derek","Megan"))))
@@ -166,6 +171,12 @@ test_that("methods for a 'remify' object", {
     fixed = TRUE
   )
   expect_identical(suppressWarnings(getTypeID(x = out,typeName = c("cooperation","conflict",as.character(rnorm(1,mean=1))))),as.integer(c(3,2)))
+
+  ### when no event types are available
+  out_no_event_types <- remify::remify(edgelist=randomREH$edgelist[,1:3], model="tie")
+  expect_error(getTypeID(x = out_no_event_types, typeName="type1"),
+  "'remify' object has no event types",
+  fixed = TRUE)
 
   # test for  getDyadComposition() function
   expect_no_error(remify:::getDyadComposition(d=249,C=3,N=10,D=270))

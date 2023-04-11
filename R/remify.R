@@ -300,9 +300,12 @@ getTypeName <- function(x, typeID = NULL){
 #' @method getTypeName remify
 #' @export
 getTypeName.remify <- function(x, typeID = NULL) {
+  if(is.null(x$C)){
+    stop("'remify' object has no event types")
+  }
   names <- NULL
   if(is.null(typeID)) stop("provide at least one typeID.")
-  else{ 
+  else{
     if(!is.numeric(typeID)){
       stop("'typeID' must be numeric or integer.")
     }
@@ -317,6 +320,70 @@ getTypeName.remify <- function(x, typeID = NULL) {
     }
   }
   return(names)
+}
+
+#######################################################################################
+#######################################################################################
+
+#' @title getDyad
+#' @description A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).
+#' @param x a \code{remify} object.
+#' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).
+#' @export
+getDyad <- function(x, dyadID){
+  UseMethod("getDyad")
+}
+
+#' @describeIn getDyad return dyad composition in actor1, actor2 and type from one (or more) dyad ID
+#' @method getDyad remify
+#' @export
+getDyad.remify <- function(x, dyadID) {
+  if(!is.numeric(dyadID) & !is.integer(dyadID)){
+    stop("'dyadID' must be a numeric (or integer) vector")
+  }
+  out <- NULL
+  dyadID <- as.integer(dyadID) # if the ID supplied is 124.8, the ID considered will be 124
+  
+  # check for duplicates in dyadID
+  length_orig <- length(dyadID)
+  dyadID <- unique(dyadID)
+  if(length_orig > length(dyadID)){
+    warning("'dyadID' contains ID's that are repeated more than once. Such ID's will be processed once")
+  }
+
+  # apply function getDyadComposition()
+  dict_loc <- attr(x,"dictionary")
+  if(attr(x,"with_type")){ # output with 'type' column
+    actor1_name <- actor2_name <- type_name <- rep(NA, length=length(dyadID))
+    for(d in 1:length(dyadID)){
+      if((dyadID[d] < 1) | (dyadID[d] > x$D)){
+        stop(paste("'dyadID' must range between 1 and ",x$D,", given that the size of the largest risk set is ",x$D,sep=""))
+      }
+      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, C = x$C, N = x$N, D = x$D)
+      actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
+      actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
+      type_name[d] <- dict_loc$types$typeName[dyad_composition_loc[3]+1]
+      rm(dyad_composition_loc)
+    }
+    out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name, type = type_name)  
+    rm(actor1_name,actor2_name,type_name)   
+  }
+  else{ # output without 'type' column (for sequences with one or none event type)
+    actor1_name <- actor2_name <- rep(NA, length=length(dyadID))
+    for(d in 1:length(dyadID)){
+      if((dyadID[d] < 1) | (dyadID[d] > x$D)){
+        stop(paste("'dyadID' must range between 1 and ",x$D,", givent that the size of the largest risk set is ",x$D,sep=""))
+      }
+      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, C = 1, N = x$N, D = x$D)
+      actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
+      actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
+      rm(dyad_composition_loc)
+    }
+    out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name)  
+    rm(actor1_name,actor2_name)     
+  }
+
+  return(out)
 }
 
 #######################################################################################
@@ -366,9 +433,12 @@ getTypeID <- function(x, typeName = NULL){
 #' @method getTypeID remify
 #' @export
 getTypeID.remify <- function(x, typeName = NULL) {
+  if(is.null(x$C)){
+    stop("'remify' object has no event types")
+  }
   IDs <- NULL
   if(is.null(typeName)) stop("provide at least one typeName.")
-  else{ 
+  else{
     typeName <- as.character(typeName)
     types <- attr(x, "dictionary")$types
     which_type <- sapply(typeName, function(y) which(types$typeName == y))
@@ -439,70 +509,6 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
                                     directed = attr(x,"directed"))+1 
 
   return(dyad_id)
-}
-
-#######################################################################################
-#######################################################################################
-
-#' @title getDyad
-#' @description A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).
-#' @param x a \code{remify} object.
-#' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).
-#' @export
-getDyad <- function(x, dyadID){
-  UseMethod("getDyad")
-}
-
-#' @describeIn getDyad return dyad composition in actor1, actor2 and type from one (or more) dyad ID
-#' @method getDyad remify
-#' @export
-getDyad.remify <- function(x, dyadID) {
-  if(!is.numeric(dyadID) & !is.integer(dyadID)){
-    stop("'dyadID' must be a numeric (or integer) vector")
-  }
-  out <- NULL
-  dyadID <- as.integer(dyadID) # if the ID supplied is 124.8, the ID considered will be 124
-  
-  # check for duplicates in dyadID
-  length_orig <- length(dyadID)
-  dyadID <- unique(dyadID)
-  if(length_orig > length(dyadID)){
-    warning("'dyadID' contains ID's that are repeated more than once. Such ID's will be processed once")
-  }
-
-  # apply function getDyadComposition()
-  dict_loc <- attr(x,"dictionary")
-  if(attr(x,"with_type")){ # output with 'type' column
-    actor1_name <- actor2_name <- type_name <- rep(NA, length=length(dyadID))
-    for(d in 1:length(dyadID)){
-      if((dyadID[d] < 1) | (dyadID[d] > x$D)){
-        stop(paste("'dyadID' must range between 1 and ",x$D,", given that the size of the largest risk set is ",x$D,sep=""))
-      }
-      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, C = x$C, N = x$N, D = x$D)
-      actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
-      actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
-      type_name[d] <- dict_loc$types$typeName[dyad_composition_loc[3]+1]
-      rm(dyad_composition_loc)
-    }
-    out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name, type = type_name)  
-    rm(actor1_name,actor2_name,type_name)   
-  }
-  else{ # output without 'type' column (for sequences with one or none event type)
-    actor1_name <- actor2_name <- rep(NA, length=length(dyadID))
-    for(d in 1:length(dyadID)){
-      if((dyadID[d] < 1) | (dyadID[d] > x$D)){
-        stop(paste("'dyadID' must range between 1 and ",x$D,", givent that the size of the largest risk set is ",x$D,sep=""))
-      }
-      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, C = 1, N = x$N, D = x$D)
-      actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
-      actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
-      rm(dyad_composition_loc)
-    }
-    out <- data.frame(dyadID = dyadID, actor1 = actor1_name, actor2 = actor2_name)  
-    rm(actor1_name,actor2_name)     
-  }
-
-  return(out)
 }
 
 #######################################################################################
@@ -581,49 +587,95 @@ if(attr(x,"model") == "tie"){
     X[d,3] <- as.integer(dyad_freq[d])
     X[d,1:2] <- as.integer(unlist(strsplit(x = names(dyad_freq[d]),  split = "_")))
   }
-  actors_observed <- X[,1:2]
+  actors_observed <- X[,1:2] # we focus our attention only on actors that interacted either as a sender or receiver
   N_obs <- length(unique(as.vector(actors_observed)))
   egrid <- expand.grid(1:N_obs,1:N_obs)
   egrid <- egrid[,2:1]
-  X_out <- data.frame(row = egrid[,1],col = egrid[,2], fill = 0)  
+  X_out <- data.frame(row = egrid[,1],col = egrid[,2], fill = NA)  
   for(d in 1:dim(X)[1]){
     row_index <- which((X_out$row == X[d,1]) & (X_out$col == X[d,2]))
     X_out$fill[row_index] <- X[d,3]
   }
   #X_out$fill <- X_out$fill/max(X_out$fill) # rescaling if possible (it doesn't work with terrain.colors(12))
-  layout_matrix <- matrix(c(2,0,1,3), ncol=2, byrow=TRUE) # 0 can become 4 for a legend of the colors
+
+  # ... setting up axes measures
+  max_freq_actor2 = max(unname(table(x$edgelist$actor2_ID)))+50 
+  min_freq_actor2 = min(unname(table(x$edgelist$actor2_ID)))-50 
+  max_freq_actor1 = max(unname(table(x$edgelist$actor1_ID)))+50 
+  min_freq_actor1 = min(unname(table(x$edgelist$actor1_ID)))-50 
+
+  # ... creating layout
+  layout_matrix <- matrix(c(3,2,1,4), ncol=2, byrow=TRUE) # 0 can become 4 for a legend of the colors
   layout(layout_matrix, widths=c(4/5,1/5), heights=c(1/5,4/5))
-  top = max(c(actor1_freq, actor2_freq))
-  par(oma=c(0,0,0,0))
-  par(mar=c(4,4,1,1))
+  # ... starting plotting
+  par(oma=c(2,2,2,2))
+  par(mar=c(6,6,1,1))
+  par(mgp=c(6,1,0))
+
+
+  # [1] tile plot
   plot.new()
-  plot.window(xlim=c(1,x$N),ylim=c(1,x$N),asp=1)
+  plot.window(xlim=c(1,x$N),ylim=c(1,x$N))
   with(X_out,{
-  # tile plot
-  rect(col-0.5,row-0.5,col+0.5,row+0.5,col=hcl.colors(n=max(dyad_freq)+1,palette="PuBu")[fill],border="gray95") #terrain.colors(9)[fill] hcl.colors(n = 9)
+  rect(col-0.5,row-0.5,col+0.5,row+0.5,col=hcl.colors(n=max(unique(sort(fill))),palette="BuPu")[fill],border="#ffffff") 
+  segments(x0=c(1:x$N)+0.5,y0=c(1:x$N)-0.5,x1=c(1:x$N)-0.5,y1=c(1:x$N)+0.5,col="gray")
+  segments(x0=0.5,y0=0.5,x1=(x$N+0.5),y1=(x$N+0.5),col="gray")
+  #hcl.pals() returns a list of names
   # actor names
-  text(x = c(1:x$N), y = 0, labels = names_actor2, srt = 90, pos = 1, xpd = TRUE,  adj = 1) # offset = 0.5,
-  text(x = 0, y = c(1:x$N), labels = names_actor1, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5)) # offset = -1.4,
-  # axes names
-  mtext(text  = "actor2", side=1, line=1, outer=TRUE, adj=0, 
-    at=floor(x$N/2))
-  mtext(text = "actor1", side=2, line=1, outer=TRUE, adj=0, 
-    at=floor(x$N/2))
+  text(x = c(1:x$N), y = 0, labels = names_actor2, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,0), offset = 1.5) 
+  text(x = 0, y = c(1:x$N), labels = names_actor1, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = -0.5)
+  # axes names 
+  mtext(text  = "actor2", side=1, line=5, outer=FALSE, adj=0, at=floor(x$N/2))
+  mtext(text = "actor1", side=2, line=5, outer=FALSE, adj=1, at=floor(x$N/2))
   })
-  # histograms
-  par(mar=c(0,4,1,1))
-  plot(1:x$N, type = 'n', xlim = range(c(1,x$N)), ylim = c(0,top),axes=FALSE,frame.plot=FALSE,xlab="",ylab="in-degree")
-  segments(x0=seq(1.75,x$N-0.75,length=x$N),y0=0,y1=unname(table(x$edgelist$actor2_ID)),lwd=10,col="cadetblue3")
+
+
+  # [2] legend of tie plot
+  par(mar=c(0,0,1,1))
+  plot(0, 0, type="n", xlim = c(0, 5), ylim = c(0, 7),
+      axes = FALSE, xlab = "", ylab = "")   
+  # consider only 3 observed colors
+  colors_legend <- unique(sort(X_out$fill))
+  # colors' legend
+  rect(xleft = 2, ybottom = seq(0,5,length=max(colors_legend)), xright = 3, ytop = seq(1.25,6.25,length=max(colors_legend)),col = hcl.colors(n=max(colors_legend),palette="BuPu")[1:max(colors_legend)], border = NA)
+  # borders and ticks
+  rect(xleft=2,ybottom=0,xright=3,ytop=6.25)
+  segments(x0=c(2,2.8),y0=rep(seq(0,6.25,length=3)[2],2),x1=c(2.2,3))
+  text(x = rep(3.2,3) , y = seq(0.1,6.25,length=3), labels = c(1,floor(median(colors_legend)),max(colors_legend)), adj = c(0,0.5))
+  text(x = 2.5, y = 6.6, labels = "events",adj =c(0.5,0),cex=1.25)
+
+
+  # [3] line plots in-degree
+  par(mar=c(0,6,1,1))
+  plot(x=1:x$N, type = 'n', xlim = c(1,x$N), ylim = c(min_freq_actor2,max_freq_actor2),axes=FALSE,frame.plot=FALSE,xlab="",ylab="")
+  title(ylab="in-degree", line = 5)
+  abline(v=seq(1,x$N,by=1),col = "gray", lty = "dotted", lwd = par("lwd"))
+  segments(x0=seq(1,x$N,by=1),y0=0,y1=as.vector(unname(table(x$edgelist$actor2_ID))),lwd=2,col="cadetblue3")
+  points(x=seq(1,x$N,by=1),y=as.vector(unname(table(x$edgelist$actor2_ID))),type="p",pch=19,cex=1,col="cadetblue3")
   axis(side=2)
+  # y-axis name
   #barplot(unname(table(x$edgelist$actor2_ID)), axes=FALSE, ylim=c(0, top), space=0, names.arg= NULL,border="darkgray",col="lavender",add=TRUE,asp=1/max(actor2_freq))
-  par(mar=c(4,0,1,1))
-  plot(1:x$N, type = 'n', xlim = range(c(0,top)), ylim = c(1,x$N),axes=FALSE,frame.plot=FALSE,xlab="out-degree",ylab="")
-  segments(x0=0,y0=c(1:x$N),x1=unname(table(x$edgelist$actor2_ID)),lwd=10,col="cadetblue3")
+
+
+  # [4] line plots out-degree
+  par(mar=c(6,0,1,1))
+  plot(x = seq(min_freq_actor1,max_freq_actor1,length=x$N), y = 1:x$N, type = 'n', xlim = c(min_freq_actor1,max_freq_actor1), ylim = c(1,x$N),axes=FALSE,frame.plot=FALSE,xlab="",ylab="")
+  title(xlab="out-degree", line = 5)
+  abline(h=seq(1,x$N,by=1),col = "gray", lty = "dotted", lwd = par("lwd"))
+  segments(x0=0,y0=seq(1,x$N,by=1),x1=as.vector(unname(table(x$edgelist$actor1_ID))),lwd=2,col="cadetblue3")
+  points(x=as.vector(unname(table(x$edgelist$actor1_ID))),y=seq(1,x$N,by=1),type="p",pch=19,cex=1,col="cadetblue3")
   axis(side=1)
   #barplot(unname(table(x$edgelist$actor1_ID)), axes=FALSE, xlim=c(0, top), space=0, , names.arg = NULL, horiz=TRUE,border="darkgray",col="lavender")
+  title(main="Activity plot",outer=TRUE)
   dev.flush()
+
+
   # [[3]] observed dyad/potential per interval of the time or "number of active actors / number of actors"
   dev.hold()
+  # [[IDEA]]
+  # two plots: 
+  #   ## [1] observed dyad/potential_dyads per interval of the time (event rate per time unit)
+  #   ## [2] "number of active actors / number of actors" (actor activity rate per time unit)
   n_intervals <-floor((as.numeric(x$edgelist$time[x$M])-as.numeric(x$edgelist$time[1]))/(60*60*24))  # but we could define an internal function get_intervals(time)
   time <- x$edgelist$time #as.Date(x$edgelist$time)
   time <- cut(as.numeric(time),breaks = n_intervals)

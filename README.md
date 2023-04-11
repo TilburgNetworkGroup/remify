@@ -15,10 +15,14 @@ The two main functions `remify()` and `rehshape()` perform respectively the proc
 
 	
 ## Installation
-Install the package in R using `devtools`:
+Install the package in R using `devtools` or `remotes`:
 
 ```
+# via `devtools`
 devtools::install_github(repo = "TilburgNetworkGroup/remify", build_vignettes = TRUE)
+
+# via `remotes`
+remotes::install_github(repo = "TilburgNetworkGroup/remify", build_vignettes = TRUE)
 ```
 
 ## Vignettes

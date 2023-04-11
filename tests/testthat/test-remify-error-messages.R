@@ -174,7 +174,7 @@ test_that("error messages from remify()", {
                     model = "tie"),
     "the class of column `time` in  `edgelist` must be one of the following types: numeric, integer, Date or POSIXct",
     fixed = TRUE
-  )
+  ) 
 
   # errors from Rcpp functions, handled via expect_output(print(tryCatch(expr,error=function(e) e)),"error message",fixed=TRUE)
   
