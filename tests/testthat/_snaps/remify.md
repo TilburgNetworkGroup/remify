@@ -10,7 +10,7 @@
       	> events = 9915
       	> actors = 20
       	> (event) types = 3
-      	> riskset = dynamic
+      	> riskset = manual
       	> directed = TRUE
       	> ordinal = FALSE
       	> weighted = FALSE
@@ -31,7 +31,7 @@
       	> events = 9915
       	> actors = 20
       	> (event) types = 3
-      	> riskset = dynamic
+      	> riskset = manual
       	> directed = TRUE
       	> ordinal = FALSE
       	> weighted = FALSE
@@ -52,7 +52,7 @@
       	> events = 9915
       	> actors = 20
       	> (event) types = 3
-      	> riskset = dynamic
+      	> riskset = manual
       	> directed = TRUE
       	> ordinal = FALSE
       	> weighted = FALSE
@@ -73,7 +73,7 @@
       	> events = 9915
       	> actors = 20
       	> (event) types = 3
-      	> riskset = static
+      	> riskset = full
       	> directed = TRUE
       	> ordinal = FALSE
       	> weighted = FALSE

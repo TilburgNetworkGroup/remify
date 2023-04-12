@@ -127,7 +127,7 @@ remify <- function(edgelist,
     attr(str_out, "directed") <- directed
     attr(str_out, "ordinal") <- ordinal
     attr(str_out, "model") <- model # useful because tie and actor models have two different ways for handling changing risksets
-    attr(str_out, "riskset") <- ifelse(length(omit_dyad)>0,"dynamic","static")
+    attr(str_out, "riskset") <- ifelse(length(omit_dyad)>0,"manual","full")
     attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary)
     attr(str_out, "origin") <- out$edgelist$time[1]-out$intereventTime[1]
     attr(str_out, "dyad") <- out$dyad
@@ -224,19 +224,19 @@ dim.remify <- function(x){
 #######################################################################################
 #######################################################################################
 
-#' @title getDynamicRiskset
+#' @title getRiskset
 #' @description This function returns a matrix describing the possible risk set changes specified by the input `omit_dyad`. In such a matrix: value 1 refers to the dyads in the risk set, and 0 otherwise (dyads excluded from the risk set). All the possible risk set modifications are described by row, and the columns identify the dyads. Note: This matrix is the output given by processing the input `omit_dyad`, and the number of rows might be equal to or higher than the number of objects in `omit_dyad`. This might happen because more than one modification of the risk set defined in the input could overlap over time with others. 
 #' @param x a \code{remify} object.
 #' @export
-getDynamicRiskset <- function(x){
-  UseMethod("getDynamicRiskset")
+getRiskset <- function(x){
+  UseMethod("getRiskset")
 }
 
-#' @describeIn getDynamicRiskset dynamic riskset object
-#' @method getDynamicRiskset remify
+#' @describeIn getRiskset manual riskset object
+#' @method getRiskset remify
 #' @export
-getDynamicRiskset.remify <- function(x) {
-  if(attr(x, "riskset") == "dynamic"){
+getRiskset.remify <- function(x) {
+  if(attr(x, "riskset") == "manual"){
     if(attr(x,"model") == "tie"){
       return(list(riskset = x$omit_dyad$riskset))
       }
@@ -245,7 +245,7 @@ getDynamicRiskset.remify <- function(x) {
     }
   }
   else{
-    stop("risk set is not dynamic")
+    stop("risk set is not 'manual'")
   }
 }
 

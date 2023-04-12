@@ -425,8 +425,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
 
         // (1) Checking whether the origin is NULL or it is defined by the user (time variable is not yet sorted if needed, therefore we work with time_input.min() value) []
         if(min_time >= 0.0){
-            int force_sorting = 0; // 0 = No, 1 = Yes
-            int m_loc = 0;
+            arma::uword m_loc = 0;
             std::vector<double> intereventTime(input_time.size(),1.0);
             double origin;
             // (2) Check if the `time` variable is sorted
@@ -436,11 +435,10 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                     m_loc++;
                 }
                 else{
-                    force_sorting = 1; 
                     m_loc = intereventTime.size()+1; // the first occurrence of unsorted time the while will stop [saving time]
                 }
             }
-            // (2.1) Force the sorting of `time` if force_sorting = 1
+            // (2.1) Force the sorting of `time`
             if(!std::is_sorted(std::begin(input_time), std::end(input_time))){
                 Rcpp::Rcout << warningMessage(0); // warning message about the sorting operation
                 // reordering edgelist
@@ -1314,7 +1312,7 @@ Rcpp::List check_process(Rcpp::RObject time, Rcpp::RObject origin){
     Rcpp::List out = Rcpp::List::create(); // output list
 
     std::vector<double> out_diff = time_output;
-    for(int m = 0; m < time_output.size(); m++){
+    for(arma::uword m = 0; m < time_output.size(); m++){
     //    out_diff[m] = std::difftime(time_output[m],origin_output);
         out_diff[m] -= origin_output;
     }

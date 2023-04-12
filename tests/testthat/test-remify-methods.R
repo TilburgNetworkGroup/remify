@@ -32,7 +32,7 @@ test_that("methods for a 'remify' object", {
   expect_identical(as.numeric(dim(out)),c(out$M,out$N,out$D))
   expect_named(dim(out),c("events","actors","dyads"))
 
-  # method getDynamicRiskset()
+  # method getRiskset()
 
   ## (1) when model = "tie" and omit_dyad is supplied
   reh_loc <- randomREH
@@ -45,10 +45,10 @@ test_that("methods for a 'remify' object", {
                   omit_dyad = reh_loc$omit_dyad,
                   model = "tie")              
 
-  expect_identical(attr(out,"riskset"),"dynamic")
-  expect_true(is.list(getDynamicRiskset(out)))
-  expect_equal(length(getDynamicRiskset(out)),1)
-  expect_named(getDynamicRiskset(out),"riskset")
+  expect_identical(attr(out,"riskset"),"manual")
+  expect_true(is.list(getRiskset(out)))
+  expect_equal(length(getRiskset(out)),1)
+  expect_named(getRiskset(out),"riskset")
 
   ## (2) when model = "actor" and omit_dyad is supplied
   reh_loc <- randomREH
@@ -61,12 +61,12 @@ test_that("methods for a 'remify' object", {
                   omit_dyad = reh_loc$omit_dyad,
                   model = "actor")              
 
-  expect_identical(attr(out,"riskset"),"dynamic")
-  expect_true(is.list(getDynamicRiskset(out)))
-  expect_equal(length(getDynamicRiskset(out)),2)
-  expect_named(getDynamicRiskset(out),c("sender","dyad"))  
+  expect_identical(attr(out,"riskset"),"manual")
+  expect_true(is.list(getRiskset(out)))
+  expect_equal(length(getRiskset(out)),2)
+  expect_named(getRiskset(out),c("sender","dyad"))  
 
-  ## (3) error message when riskset is not dynamic
+  ## (3) error message when riskset is not manual
   reh_loc <- randomREH
   reh_loc$omit_dyad <- NULL
   out <- remify(edgelist = reh_loc$edgelist,
@@ -77,9 +77,9 @@ test_that("methods for a 'remify' object", {
                   origin = reh_loc$origin,
                   omit_dyad = reh_loc$omit_dyad,
                   model = "tie")
-  expect_identical(attr(out,"riskset"),"static")                
-  expect_error(getDynamicRiskset(out),
-  "risk set is not dynamic",
+  expect_identical(attr(out,"riskset"),"full")                
+  expect_error(getRiskset(out),
+  "risk set is not 'manual'",
   fixed = TRUE)
 
   

@@ -350,7 +350,7 @@ attr(edgelist_reh, "dyad")[1:10] # printing out only first 10 observed dyads
 
 ## Methods
 
-The available <b>methods</b> for a `remify` object are: `print`, `summary`, `dim`, `getDynamicRiskset`, `getActorName`, `getTypeName`, `getDyad`, `getActorID`, `getTypeID`, `getDyadID` and `plot`.
+The available <b>methods</b> for a `remify` object are: `print`, `summary`, `dim`, `getRiskset`, `getActorName`, `getTypeName`, `getDyad`, `getActorID`, `getTypeID`, `getDyadID` and `plot`.
 
 ------
 
@@ -372,12 +372,12 @@ dim(edgelist_reh)
 
 ------
 
-### <b><tt>getDynamicRiskset()</tt></b>
+### <b><tt>getRiskset()</tt></b>
 
-If `omit_dyad` is supplied to the processing function, `getDynamicRiskset(reh)` returns the processed dynamic risk set matrix (or the two dynamic risk sets if actor-oriented modeling) that are explained in the 'Output' section under the section about `omit_dyad`.
+If `omit_dyad` is supplied to the processing function, `getRiskset(reh)` returns the processed dynamic risk set matrix (or the two dynamic risk sets if actor-oriented modeling) that are explained in the 'Output' section under the section about `omit_dyad`.
 
 ```{r}
-getDynamicRiskset(x = edgelist_reh)$riskset[,1:10] # printing out the risk set modifications of only the first 10 columns (dyads). A total number of 2 modifications of the risk set are observed (by row)
+getRiskset(x = edgelist_reh)$riskset[,1:10] # printing out the risk set modifications of only the first 10 columns (dyads). A total number of 2 modifications of the risk set are observed (by row)
 ```
 ------
 
