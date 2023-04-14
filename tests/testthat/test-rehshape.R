@@ -29,6 +29,7 @@ test_that("rehshape", {
     ## tests on converted reh object ##
     to_relevent_obj$N <- 20
     to_relevent_obj$C <- 3
+    to_relevent_obj$directed <- TRUE
     to_remify_obj <- rehshape(data = to_relevent_obj, output_format = "remify") 
     expect_s3_class(to_remify_obj, "remify")
 

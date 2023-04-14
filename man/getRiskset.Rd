@@ -20,3 +20,16 @@ This function returns a matrix describing the possible risk set changes specifie
 \item \code{getRiskset(remify)}: manual riskset object
 
 }}
+\examples{
+
+# processing the random network 'randomREH'
+library(remify)
+data(randomREH)
+reh <- remify(edgelist = randomREH$edgelist,
+              model = "tie",
+              omit_dyad = randomREH$omit_dyad)
+
+# structure of the processed risk set
+str(getRiskset(reh))
+
+}

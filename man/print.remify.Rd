@@ -7,10 +7,22 @@
 \method{print}{remify}(x, ...)
 }
 \arguments{
-\item{x}{is a \code{remify} object.}
+\item{x}{a \code{remify} object.}
 
-\item{...}{other arguments.}
+\item{...}{further arguments.}
 }
 \description{
 print a summary of the event history.
+}
+\examples{
+ 
+# processing the random network 'randomREHsmall'
+library(remify)
+data(randomREHsmall)
+reh <- remify(edgelist = randomREHsmall$edgelist,
+              model = "tie")
+
+# printing a summary of the processed 'remify' object
+print(reh)
+
 }

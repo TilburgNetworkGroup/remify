@@ -5,10 +5,6 @@ remifyCpp <- function(input_edgelist, actors, types, directed, ordinal, origin, 
     .Call('_remify_remifyCpp', PACKAGE = 'remify', input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model)
 }
 
-check_process <- function(time, origin) {
-    .Call('_remify_check_process', PACKAGE = 'remify', time, origin)
-}
-
 getDyadIndex <- function(actor1, actor2, type, N, directed) {
     .Call('_remify_getDyadIndex', PACKAGE = 'remify', actor1, actor2, type, N, directed)
 }

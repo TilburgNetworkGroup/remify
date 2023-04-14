@@ -22,3 +22,16 @@ A function that given a vector of one or more dyad ID's returns the correspondin
 \item \code{getDyad(remify)}: return dyad composition in actor1, actor2 and type from one (or more) dyad ID
 
 }}
+\examples{
+
+# processing the random network 'randomREH'
+library(remify)
+data(randomREH)
+reh <- remify(edgelist = randomREH$edgelist,
+              model = "tie",
+              omit_dyad = randomREH$omit_dyad)
+
+# find dyad composition (names of actor1, actor2 and type) from the dyad ID
+getDyad(x = reh, dyadID = c(450,239,900))
+
+}

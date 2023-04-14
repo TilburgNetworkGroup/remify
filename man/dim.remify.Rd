@@ -12,3 +12,15 @@
 \description{
 A function that returns the dimension of the temporal network.
 }
+\examples{
+
+# processing the random network 'randomREHsmall'
+library(remify)
+data(randomREHsmall)
+reh <- remify(edgelist = randomREHsmall$edgelist,
+              model = "tie")
+
+# dimensions of the processed 'remify' object
+dim(reh)
+
+}

@@ -24,5 +24,5 @@
 \item{...}{other arguments.}
 }
 \description{
-plot visualization in base R graphics package
+visual descriptive analysis of relational event network data
 }

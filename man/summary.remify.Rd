@@ -14,3 +14,15 @@
 \description{
 A function that returns a summary of the event history.
 }
+\examples{
+
+# processing the random network 'randomREHsmall'
+library(remify)
+data(randomREHsmall)
+reh <- remify(edgelist = randomREHsmall$edgelist,
+              model = "tie")
+
+# printing a summary of the processed 'remify' object
+summary(reh)
+
+}

@@ -2,16 +2,15 @@
 #'
 #' @description A function that processes raw relational event history data and returns a S3 object of class 'remify' which is used as input in other functions inside \code{remverse}.
 #'
-#' @param edgelist an object of class \code{\link[base]{data.frame}} characterizing the relational event history sorted by 
-#' time with columns named `time`, `actor1`, `actor2` and optionally `type` and 
-#' `weight`.  
-#' @param actors character vector of actors' names that may be observed interacting in the network. If \code{NULL}, actors' names will be taken from the input edgelist.
-#' @param types character vector of event types that may occur in the network. If \code{NULL}, type names will be taken from the input edgelist.
-#' @param directed logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).
-#' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}).
-#' @param origin time point since when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
-#' @param omit_dyad list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).
+#' @param edgelist the relational event history. An object of class \code{\link[base]{data.frame}} with columns named `time`, `actor1`, `actor2`. (optional columns are `type` and 
+#' `weight`)  
+#' @param directed logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})
+#' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}). (default value is \code{FALSE})
 #' @param model can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.
+#' @param actors [\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.
+#' @param types [\emph{optional}] character vector of event types that may occur in the network. If \code{NULL} (default), types' names will be taken from the input edgelist.
+#' @param origin [\emph{optional}] starting time point of the observaton period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}.
+#' @param omit_dyad [\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).
 #'
 #' @return  'remify' S3 object 
 #'
@@ -20,14 +19,99 @@
 #' For more details about the \code{omit_dyad} argument, inputs, outputs, attributes and methods of \code{remify::remify()}, see \code{vignette("remify")}. 
 #'
 #' @export
+#' 
+#' @examples
+#' 
+#' # load package and random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#' 
+#' # first events in the sequence
+#' head(randomREH$edgelist)
+#' 
+#' # actor's names
+#' randomREH$actors
+#' 
+#' # event type's names
+#' randomREH$types
+#' 
+#' # start time of the study (origin)
+#' randomREH$origin
+#' 
+#' # list of changes of the risk set: each one is a list of:
+#' # 'time' (indicating the time window where to apply the risk set reduction)
+#' # 'dyad' (a data.frame describing the dyads to remove from the risk set 
+#' # during the time window specified in 'time')
+#' str(randomREH$omit_dyad)
+#' 
+#' # -------------------------------------- #
+#' #  processing for tie-oriented modeling  #
+#' # -------------------------------------- #
+#' 
+#' tie_randomREH <- remify(edgelist = randomREH$edgelist,
+#'        directed = TRUE,
+#'        ordinal = FALSE,
+#'        model = "tie",
+#'        actors = randomREH$actors,
+#'        types = randomREH$types,
+#'        origin = randomREH$origin,
+#'        omit_dyad = randomREH$omit_dyad)
+#' 
+#' # summary
+#' summary(tie_randomREH)
+#' 
+#' # dimensions of the processed network
+#' dim(tie_randomREH)
+#' 
+#' # Which ID is assigned to the actors with names "Francesca" and "Kayla"?
+#' getActorID(x = tie_randomREH, actorName = c("Francesca","Kayla"))
+#' 
+#' # Which ID is assigned to the event type "conflict"?
+#' getTypeID(x = tie_randomREH, typeName = "conflict")
+#' 
+#' # Find dyad composition (names of actor1, actor2 and type) from the dyad ID: c(1,380,760,1140)
+#' getDyad(x = tie_randomREH, dyadID = c(1,380,760,1140))
+#' 
+#' # visualize descriptive measures of relational event data
+#' # (1) distribution of waiting times
+#' # (2) activity plot
+#' # (3) dyad and actor (activity) rate
+#' plot(x = tie_randomREH)
+#' 
+#' # -------------------------------------- #
+#' # processing for actor-oriented modeling #
+#' # -------------------------------------- #
+#' 
+#' # loading network 'randomREHsmall'
+#' data(randomREHsmall)
+#' 
+#' # processing small random network
+#' actor_randomREH <- remify(edgelist = randomREHsmall$edgelist,
+#'        directed = TRUE,
+#'        ordinal = FALSE,
+#'        model = "actor",
+#'        actors = randomREHsmall$actors,
+#'        origin = randomREHsmall$origin)
+#'        
+#' # summary
+#' summary(actor_randomREH)
+#' 
+#' # dimensions of the processed network
+#' dim(actor_randomREH)
+#' 
+#' # ------------------------------------ #
+#' # for more information about remify()  #
+#' # check: vignette(package="remify")    #
+#' # ------------------------------------ #
+#'  
 remify <- function(edgelist,
-                actors = NULL,
-                types = NULL,
                 directed = TRUE,
                 ordinal = FALSE,
+                model = c("tie","actor"),
+                actors = NULL,
+                types = NULL,
                 origin = NULL,
-                omit_dyad = NULL,
-                model = c("tie","actor") #,
+                omit_dyad = NULL #,
                 #[[to work on]] timeunit = c("second","minute","hour","day","week") this input will process the intervent time to different time unit
                 ){
     
@@ -150,6 +234,18 @@ remify <- function(edgelist,
 #' @param ... other arguments.
 #' @method summary remify
 #' @export
+#' 
+#' @examples 
+#'
+#' # processing the random network 'randomREHsmall'
+#' library(remify)
+#' data(randomREHsmall)
+#' reh <- remify(edgelist = randomREHsmall$edgelist,
+#'               model = "tie")
+#' 
+#' # printing a summary of the processed 'remify' object
+#' summary(reh)
+#' 
 summary.remify <- function(object,...){
   title <- "Relational Event Network"
   model <- paste("(processed for ",attr(object,"model"),"-oriented modeling):",sep="")
@@ -191,10 +287,22 @@ summary.remify <- function(object,...){
 #' @title print.remify
 #' @rdname print.remify
 #' @description print a summary of the event history.
-#' @param x is a \code{remify} object.
-#' @param ... other arguments.
+#' @param x a \code{remify} object.
+#' @param ... further arguments.
 #' @method print remify
 #' @export
+#' 
+#' @examples 
+#'  
+#' # processing the random network 'randomREHsmall'
+#' library(remify)
+#' data(randomREHsmall)
+#' reh <- remify(edgelist = randomREHsmall$edgelist,
+#'               model = "tie")
+#' 
+#' # printing a summary of the processed 'remify' object
+#' print(reh)
+#' 
 print.remify <- function(x,...){
   summary(object=x,...)
 }
@@ -208,6 +316,18 @@ print.remify <- function(x,...){
 #' @param x a \code{remify} object.
 #' @method dim remify
 #' @export
+#' 
+#' @examples 
+#' 
+#' # processing the random network 'randomREHsmall'
+#' library(remify)
+#' data(randomREHsmall)
+#' reh <- remify(edgelist = randomREHsmall$edgelist,
+#'               model = "tie")
+#' 
+#' # dimensions of the processed 'remify' object
+#' dim(reh)
+#' 
 dim.remify <- function(x){
   dimensions <- NULL
   if(attr(x,"with_type")){
@@ -228,6 +348,19 @@ dim.remify <- function(x){
 #' @description This function returns a matrix describing the possible risk set changes specified by the input `omit_dyad`. In such a matrix: value 1 refers to the dyads in the risk set, and 0 otherwise (dyads excluded from the risk set). All the possible risk set modifications are described by row, and the columns identify the dyads. Note: This matrix is the output given by processing the input `omit_dyad`, and the number of rows might be equal to or higher than the number of objects in `omit_dyad`. This might happen because more than one modification of the risk set defined in the input could overlap over time with others. 
 #' @param x a \code{remify} object.
 #' @export
+#' 
+#' @examples 
+#' 
+#' # processing the random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#' reh <- remify(edgelist = randomREH$edgelist,
+#'               model = "tie",
+#'               omit_dyad = randomREH$omit_dyad)
+#' 
+#' # structure of the processed risk set
+#' str(getRiskset(reh))
+#' 
 getRiskset <- function(x){
   UseMethod("getRiskset")
 }
@@ -257,6 +390,19 @@ getRiskset.remify <- function(x) {
 #' @param x a \code{remify} object.
 #' @param actorID a vector of actor ID's. The ID value can range between \code{1} and \code{N} (number of actors in the network).
 #' @export
+#' 
+#' @examples 
+#' 
+#' # processing the random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#' reh <- remify(edgelist = randomREH$edgelist,
+#'               model = "tie",
+#'               omit_dyad = randomREH$omit_dyad)
+#' 
+#' # find actor name from actor ID
+#' getActorName(x = reh, actorID = c(1,2,8,12))
+#' 
 getActorName <- function(x, actorID = NULL){
   UseMethod("getActorName")
 }
@@ -292,6 +438,19 @@ getActorName.remify <- function(x, actorID = NULL) {
 #' @param x a \code{remify} object.
 #' @param typeID a vector of type ID's. The ID value can range between \code{1} and \code{C} (number of event types in the network).
 #' @export
+#' 
+#' @examples 
+#' 
+#' # processing the random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#' reh <- remify(edgelist = randomREH$edgelist,
+#'               model = "tie",
+#'               omit_dyad = randomREH$omit_dyad)
+#' 
+#' # find type name from type ID
+#' getTypeName(x = reh, typeID = c(1,3))
+#' 
 getTypeName <- function(x, typeID = NULL){
   UseMethod("getTypeName")
 }
@@ -330,6 +489,19 @@ getTypeName.remify <- function(x, typeID = NULL) {
 #' @param x a \code{remify} object.
 #' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).
 #' @export
+#' 
+#' @examples 
+#' 
+#' # processing the random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#' reh <- remify(edgelist = randomREH$edgelist,
+#'               model = "tie",
+#'               omit_dyad = randomREH$omit_dyad)
+#' 
+#' # find dyad composition (names of actor1, actor2 and type) from the dyad ID
+#' getDyad(x = reh, dyadID = c(450,239,900))
+#' 
 getDyad <- function(x, dyadID){
   UseMethod("getDyad")
 }
@@ -394,6 +566,19 @@ getDyad.remify <- function(x, dyadID) {
 #' @param x a \code{remify} object.
 #' @param actorName a vector of actor names. The same names in the input edgelist.
 #' @export
+#' 
+#' @examples 
+#' 
+#' # processing the random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#' reh <- remify(edgelist = randomREH$edgelist,
+#'               model = "tie",
+#'               omit_dyad = randomREH$omit_dyad)
+#' 
+#' # find actor ID from the actor name
+#' getActorID(x = reh, actorName = c("Francesca","Kayla"))
+#' 
 getActorID <- function(x, actorName = NULL){
   UseMethod("getActorID")
 }
@@ -425,6 +610,19 @@ getActorID.remify <- function(x, actorName = NULL) {
 #' @param x a \code{remify} object.
 #' @param typeName a vector of type names. The same names in the input edgelist.
 #' @export
+#' 
+#' @examples 
+#' 
+#' # processing the random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#' reh <- remify(edgelist = randomREH$edgelist,
+#'               model = "tie",
+#'               omit_dyad = randomREH$omit_dyad)
+#' 
+#' # find type ID from the type name
+#' getTypeID(x = reh, typeName = c("conflict","cooperation"))
+#' 
 getTypeID <- function(x, typeName = NULL){
   UseMethod("getTypeID")
 }
@@ -460,6 +658,19 @@ getTypeID.remify <- function(x, typeName = NULL) {
 #' @param actor2 [character] name of actor2.
 #' @param type [character] name of type.
 #' @export
+#' 
+#' @examples 
+#' 
+#' # processing the random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#' reh <- remify(edgelist = randomREH$edgelist,
+#'               model = "tie",
+#'               omit_dyad = randomREH$omit_dyad)
+#' 
+#' # find dyad ID from dyad composition (names of actor1, actor2 and type)
+#' getDyadID(x = reh, actor1 = "Francesca", actor2 = "Kayla", type = "conflict")
+#' 
 getDyadID <- function(x, actor1, actor2, type){
   UseMethod("getDyadID")
 }
@@ -516,7 +727,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
 
 #' @title plot.remify
 #' @rdname plot.remify
-#' @description plot visualization in base R graphics package
+#' @description visual descriptive analysis of relational event network data
 #' @param x is a \code{remify} object.
 #' @param which one or more numbers between 1 and 4. Explain the numbers: (1) plots this, (2) plots that, (3) plots this and (4) plot that.
 #' @param caption list of titles for each plot.
@@ -524,6 +735,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
 #' @param ... other arguments.
 #' @method plot remify
 #' @export
+#' 
 plot.remify <- function(x,
                     which = c(1:4),
                     caption = list("Title 1",

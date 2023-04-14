@@ -32,12 +32,12 @@ data(randomREHsmall) # data
 
 # processing the edgelist 
 reh <- remify(edgelist = randomREHsmall$edgelist,
-                          actors = randomREHsmall$actors,
                           directed = TRUE, # events are directed
                           ordinal = FALSE, # model with waiting times
+                          model = "tie", # tie-oriented modeling   
+                          actors = randomREHsmall$actors,
                           origin = randomREHsmall$origin,
-                          omit_dyad = NULL,
-                          model = "tie") # tie-oriented modeling     
+                          omit_dyad = NULL)
 
 summary(reh)                                
 ```

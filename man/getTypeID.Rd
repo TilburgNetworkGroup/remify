@@ -22,3 +22,16 @@ A function that given a vector of type names returns the corresponding vector of
 \item \code{getTypeID(remify)}: return type's ID from type's name
 
 }}
+\examples{
+
+# processing the random network 'randomREH'
+library(remify)
+data(randomREH)
+reh <- remify(edgelist = randomREH$edgelist,
+              model = "tie",
+              omit_dyad = randomREH$omit_dyad)
+
+# find type ID from the type name
+getTypeID(x = reh, typeName = c("conflict","cooperation"))
+
+}

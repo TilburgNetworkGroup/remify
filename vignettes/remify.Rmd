@@ -133,13 +133,14 @@ Whether the model of interest is tie-oriented or actor-oriented, the argument `m
 ### Running the example
 ```{r}
 edgelist_reh <- remify(edgelist = randomREH$edgelist,
-                    actors = randomREH$actors,
-                    types = randomREH$types, 
                     directed = TRUE, # events are directed
                     ordinal = FALSE, # model with waiting times
+                    model = "tie", # tie-oriented modeling
+                    actors = randomREH$actors,
+                    types = randomREH$types, 
                     origin = randomREH$origin,
-                    omit_dyad = randomREH$omit_dyad,
-                    model = "tie") # tie-oriented modeling
+                    omit_dyad = randomREH$omit_dyad)
+                    
 ```
 
 ## Output

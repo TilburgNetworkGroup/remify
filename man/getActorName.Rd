@@ -22,3 +22,16 @@ A function that given a vector of actor ID's returns the corresponding vector of
 \item \code{getActorName(remify)}: return actor's name from actor's ID
 
 }}
+\examples{
+
+# processing the random network 'randomREH'
+library(remify)
+data(randomREH)
+reh <- remify(edgelist = randomREH$edgelist,
+              model = "tie",
+              omit_dyad = randomREH$omit_dyad)
+
+# find actor name from actor ID
+getActorName(x = reh, actorID = c(1,2,8,12))
+
+}

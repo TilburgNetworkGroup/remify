@@ -26,3 +26,16 @@ A function that given a vector of names as to actor1, actor2 and type returns th
 \item \code{getDyadID(remify)}: return dyad's ID from dyad's composition
 
 }}
+\examples{
+
+# processing the random network 'randomREH'
+library(remify)
+data(randomREH)
+reh <- remify(edgelist = randomREH$edgelist,
+              model = "tie",
+              omit_dyad = randomREH$omit_dyad)
+
+# find dyad ID from dyad composition (names of actor1, actor2 and type)
+getDyadID(x = reh, actor1 = "Francesca", actor2 = "Kayla", type = "conflict")
+
+}

@@ -32,18 +32,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// check_process
-Rcpp::List check_process(Rcpp::RObject time, Rcpp::RObject origin);
-RcppExport SEXP _remify_check_process(SEXP timeSEXP, SEXP originSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::RObject >::type time(timeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
-    rcpp_result_gen = Rcpp::wrap(check_process(time, origin));
-    return rcpp_result_gen;
-END_RCPP
-}
 // getDyadIndex
 int getDyadIndex(double actor1, double actor2, double type, int N, bool directed);
 static SEXP _remify_getDyadIndex_try(SEXP actor1SEXP, SEXP actor2SEXP, SEXP typeSEXP, SEXP NSEXP, SEXP directedSEXP) {
@@ -140,7 +128,6 @@ RcppExport SEXP _remify_RcppExport_registerCCallable() {
 
 static const R_CallMethodDef CallEntries[] = {
     {"_remify_remifyCpp", (DL_FUNC) &_remify_remifyCpp, 8},
-    {"_remify_check_process", (DL_FUNC) &_remify_check_process, 2},
     {"_remify_getDyadIndex", (DL_FUNC) &_remify_getDyadIndex, 5},
     {"_remify_getDyadComposition", (DL_FUNC) &_remify_getDyadComposition, 4},
     {"_remify_RcppExport_registerCCallable", (DL_FUNC) &_remify_RcppExport_registerCCallable, 0},

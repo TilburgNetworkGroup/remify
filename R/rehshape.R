@@ -3,11 +3,31 @@
 #'
 #' @description A function that transforms a \code{remify} object into one of the possible formats that suit external packages, and vice versa. The function can convert, at the moment, the data structure from an object of class \code{remify} to a data structure required by the function \code{relevent::rem()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2023) (and vice versa).
 #'
-#' @param data an object of either class 'remify' (see function \code{remify::remify()}) or class 'relevent'. The class 'relevent' is an artificial class object that contains a list of objects named after the argument names of the function \code{relevent::rem()}. For instance, if one wants to convert an object of structure 'relevent' we need it to contain: 'eventlist' (mandatory), 'supplist' (optional), 'timing'(mandatory). If the object 'timing' is \code{NULL}, the output object will assume an \code{"interval"} timing. The 'supplist' object can be left uspecified (\code{NULL}). If a 'remify' object is converted to a 'relevent' object, then the output will contain the same argument useful for running the \code{relevent::rem()} function.
+#' @param data an object of either class 'remify' (see function \code{remify::remify()}) or class 'relevent'. The class 'relevent' is an artificial class object that contains a list of objects named after the argument names of the function \code{relevent::rem()}. For instance, if one wants to convert an object of structure 'relevent' we need it to contain: 'eventlist' (mandatory), 'supplist' (optional), 'timing'(mandatory). Additional objects must be: 'N' the number of actors, 'C' the number of event types, 'directed' TRUE/FALSE if ties are directed or not. If the object 'timing' is \code{NULL}, the output object will assume an \code{"ordinal"} timing. The 'supplist' object can be left uspecified (\code{NULL}). If a 'remify' object is converted to a 'relevent' object, then the output will contain the same argument useful for running the \code{relevent::rem()} function.
 #' @param output_format a character indicating the output format which the input data has to be converted to. It can assume two values: "remify" , "relevent"
 #'
 #' @return  an object of class specified in the \code{output_format} argument 
 #' @export
+#' 
+#' @examples 
+#' 
+#' # processing the random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#' reh <- remify(edgelist = randomREH$edgelist,
+#'               model = "tie",
+#'               omit_dyad = randomREH$omit_dyad)
+#' 
+#' # convert 'remify' object to output_format = "relevent"
+#' relevent_obj <- rehshape(data = reh, output_format = "relevent")
+#' 
+#' # convert 'relevent' object to output_format = "remify"
+#' relevent_obj$N <- reh$N # number of actors
+#' relevent_obj$C <- reh$C # number of event types
+#' relevent_obj$directed <- attr(reh,"directed") # directed (TRUE) / undirected (FALSE) network
+#' 
+#' remify_obj <- rehshape(data = relevent_obj, output_format = "remify")
+#' 
 rehshape <- function(data, output_format = c("remify","relevent")){
 
     output_format <- match.arg(output_format)
@@ -110,13 +130,14 @@ rehshape <- function(data, output_format = c("remify","relevent")){
 
       # create 'remify' class object
       out <- remify::remify(edgelist = edgelist_orig,
+                          directed = data$directed, 
+                          ordinal = FALSE, 
+                          model = "tie",
                           actors = as.character(1:data$N),
                           types = as.character(1:data$C), 
-                          directed = TRUE, 
-                          ordinal = FALSE, 
                           origin = 0,
-                          omit_dyad = NULL, # set to NULL but added later
-                          model = "tie")
+                          omit_dyad = NULL) # set to NULL but added later
+                          
       # we have to reorder the columns of converted_omit_dyad
       dict_loc <- attr(out,"dictionary")
       position_rearranged <- NULL
