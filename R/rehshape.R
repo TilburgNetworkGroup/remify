@@ -21,12 +21,16 @@
 #' # convert 'remify' object to output_format = "relevent"
 #' relevent_obj <- rehshape(data = reh, output_format = "relevent")
 #' 
+#' str(relevent_obj) 
+#' 
 #' # convert 'relevent' object to output_format = "remify"
 #' relevent_obj$N <- reh$N # number of actors
 #' relevent_obj$C <- reh$C # number of event types
 #' relevent_obj$directed <- attr(reh,"directed") # directed (TRUE) / undirected (FALSE) network
 #' 
 #' remify_obj <- rehshape(data = relevent_obj, output_format = "remify")
+#' 
+#' summary(remify_obj)
 #' 
 rehshape <- function(data, output_format = c("remify","relevent")){
 

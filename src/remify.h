@@ -54,58 +54,49 @@ int getDyadIndex(double actor1, double actor2, double type, int N, bool directed
     return dyad;
 }
 
-// title getDyadComposition (only for directed networks)
+// title getDyadComposition
 //
-// param d id of the dyad
-// param C number of event types
+// param d id of the dyad (value ranging from 0 to D-1)
 // param N number of actors
-// param D number of dyads
+// param directed dyads are directed  (TRUE) or not (FALSE)
 //
-// return dyad index according to the combination of id's of actor1/actor2/type
+// return dyad composition as actor1, actor2, type
 // [[Rcpp::export]]
-Rcpp::IntegerVector getDyadComposition(int d, int C, int N, int D) {
-  Rcpp::IntegerVector composition(3);
-  // Note :
+Rcpp::IntegerVector getDyadComposition(int d, int N, bool directed) {
+
+  // Note on the internal routine getDyadComposition:
   // (1) this function assumes that all the possible dyads are in the stats object
   // (2) this function is not coded to account for reduced (that omits dyads) arrays of stats
-  // (3) this function works only for directed netwroks
-  double r = d; // this will be finally the receiver
-  r += 1;
-  int sender,receiver,type = -999;
-  double c = 1, s = 1;
-  while(c<=C){
-    if((r/D)<=(c/C)){
-      type = (c-1);
-      break;
-    }
-    c += 1;
+  // (3) this function works (at the moment) only with directed netwroks
+  Rcpp::IntegerVector composition(3);
+  arma::mat actors_id(N,1);
+  actors_id.col(0) = arma::linspace(0,N-1,N);
+  int actor1,actor2,type;
+  if(directed){ // if the dyadic events are directed
+    // 1. get event type
+    type = d/(N*(N-1)); //floor
+    // 2. get actor1_actor2 with type = 0
+    int dyad_notype = d - (type*N*(N-1)); // dyad ID that ranges between 0 and N*(N-1)
+    // 3. get actor1
+    actor1 = dyad_notype/(N-1.0); //floor // actor ID that ranges between 0 and N-1
+    // 4. get actor2
+    int which_actor2 = dyad_notype-(actor1)*(N-1.0);
+    actors_id.shed_row(actor1);
+    actor2 = actors_id[which_actor2];
+    // save dyad composition
+    composition = {actor1,actor2,type};
+  }
+  else{ // if the dyadic events are not directed (therefore the order of the actors involved in a dyadic event is actor1>actor2)
+    //[... code here ...]
   }
 
-  //if(type == (-999)){
-  //  Rcpp::Rcout << "error \n"; //errorMessage(0); //adjust error message
-  //}
-
-  r -= N*(N-1)*type;
-
-  while(s<=N){
-    if((r/(N*(N-1)))<=(s/N)){
-      sender = (s-1);
-      break;
-    }
-    s += 1;
-  }
-
-  //if(sender == (-999)){
-  //  Rcpp::Rcout << "error \n"; //errorMessage(0); //adjust error message
-  //}
-
-  arma::mat receiver_vec(N,1);
-  receiver_vec.col(0) = arma::linspace(0,N-1,N);
-  receiver_vec.shed_row(sender);
-  r -= (N-1)*sender;
-  receiver = receiver_vec[r-1]; // if either type or sender are not found, the function will stop earlier
-  composition = {sender,receiver,type};
   return composition;
+
+  // Add errors and checks? No, because:
+  // This function is not intended to be used by the final user.
+  // Adding further checks (warnings or errors on number of event types, C, or maximum number of dyads, D) 
+  // would cause an increase of the computational time required by the C++ algorithms in which
+  // the function getDyadComposition() is called multiple times
 }
 
 #endif 

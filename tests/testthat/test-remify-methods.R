@@ -179,8 +179,8 @@ test_that("methods for a 'remify' object", {
   fixed = TRUE)
 
   # test for  getDyadComposition() function
-  expect_no_error(remify:::getDyadComposition(d=249,C=3,N=10,D=270))
-  expect_equal(remify:::getDyadComposition(d=249,C=3,N=10,D=270),c(7,6,2))
+  expect_no_error(remify:::getDyadComposition(d=250,N=10,directed=TRUE))
+  expect_equal(remify:::getDyadComposition(d=250,N=10,directed=TRUE),c(7,8,2))
 
   # method getDyad()
   expect_true(is.data.frame(getDyad(x = out,dyadID = c(1))))

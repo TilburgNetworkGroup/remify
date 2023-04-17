@@ -71,23 +71,22 @@ RcppExport SEXP _remify_getDyadIndex(SEXP actor1SEXP, SEXP actor2SEXP, SEXP type
     return rcpp_result_gen;
 }
 // getDyadComposition
-Rcpp::IntegerVector getDyadComposition(int d, int C, int N, int D);
-static SEXP _remify_getDyadComposition_try(SEXP dSEXP, SEXP CSEXP, SEXP NSEXP, SEXP DSEXP) {
+Rcpp::IntegerVector getDyadComposition(int d, int N, bool directed);
+static SEXP _remify_getDyadComposition_try(SEXP dSEXP, SEXP NSEXP, SEXP directedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< int >::type d(dSEXP);
-    Rcpp::traits::input_parameter< int >::type C(CSEXP);
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< int >::type D(DSEXP);
-    rcpp_result_gen = Rcpp::wrap(getDyadComposition(d, C, N, D));
+    Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
+    rcpp_result_gen = Rcpp::wrap(getDyadComposition(d, N, directed));
     return rcpp_result_gen;
 END_RCPP_RETURN_ERROR
 }
-RcppExport SEXP _remify_getDyadComposition(SEXP dSEXP, SEXP CSEXP, SEXP NSEXP, SEXP DSEXP) {
+RcppExport SEXP _remify_getDyadComposition(SEXP dSEXP, SEXP NSEXP, SEXP directedSEXP) {
     SEXP rcpp_result_gen;
     {
         Rcpp::RNGScope rcpp_rngScope_gen;
-        rcpp_result_gen = PROTECT(_remify_getDyadComposition_try(dSEXP, CSEXP, NSEXP, DSEXP));
+        rcpp_result_gen = PROTECT(_remify_getDyadComposition_try(dSEXP, NSEXP, directedSEXP));
     }
     Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
     if (rcpp_isInterrupt_gen) {
@@ -113,7 +112,7 @@ static int _remify_RcppExport_validate(const char* sig) {
     static std::set<std::string> signatures;
     if (signatures.empty()) {
         signatures.insert("int(*getDyadIndex)(double,double,double,int,bool)");
-        signatures.insert("Rcpp::IntegerVector(*getDyadComposition)(int,int,int,int)");
+        signatures.insert("Rcpp::IntegerVector(*getDyadComposition)(int,int,bool)");
     }
     return signatures.find(sig) != signatures.end();
 }
@@ -129,7 +128,7 @@ RcppExport SEXP _remify_RcppExport_registerCCallable() {
 static const R_CallMethodDef CallEntries[] = {
     {"_remify_remifyCpp", (DL_FUNC) &_remify_remifyCpp, 8},
     {"_remify_getDyadIndex", (DL_FUNC) &_remify_getDyadIndex, 5},
-    {"_remify_getDyadComposition", (DL_FUNC) &_remify_getDyadComposition, 4},
+    {"_remify_getDyadComposition", (DL_FUNC) &_remify_getDyadComposition, 3},
     {"_remify_RcppExport_registerCCallable", (DL_FUNC) &_remify_RcppExport_registerCCallable, 0},
     {NULL, NULL, 0}
 };

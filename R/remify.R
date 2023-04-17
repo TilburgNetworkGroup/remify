@@ -531,7 +531,7 @@ getDyad.remify <- function(x, dyadID) {
       if((dyadID[d] < 1) | (dyadID[d] > x$D)){
         stop(paste("'dyadID' must range between 1 and ",x$D,", given that the size of the largest risk set is ",x$D,sep=""))
       }
-      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, C = x$C, N = x$N, D = x$D)
+      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, N = x$N, directed = attr(x,"directed"))
       actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
       actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
       type_name[d] <- dict_loc$types$typeName[dyad_composition_loc[3]+1]
@@ -546,7 +546,7 @@ getDyad.remify <- function(x, dyadID) {
       if((dyadID[d] < 1) | (dyadID[d] > x$D)){
         stop(paste("'dyadID' must range between 1 and ",x$D,", givent that the size of the largest risk set is ",x$D,sep=""))
       }
-      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, C = 1, N = x$N, D = x$D)
+      dyad_composition_loc <- getDyadComposition(d = dyadID[d]-1, N = x$N, directed = attr(x,"directed"))
       actor1_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[1]+1]
       actor2_name[d] <- dict_loc$actors$actorName[dyad_composition_loc[2]+1]
       rm(dyad_composition_loc)
