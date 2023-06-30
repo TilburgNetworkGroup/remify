@@ -246,8 +246,10 @@ remify <- function(edgelist,
 
     if(riskset == "active"){
       str_out$D <- out$omit_dyad$D_active
-      attr(str_out, "dyadIDactive") <- out$omit_dyad$dyadIDactive 
-      out$omit_dyad <- NULL
+      if(model == "tie"){
+        attr(str_out, "dyadIDactive") <- out$omit_dyad$dyadIDactive 
+        out$omit_dyad <- NULL
+      }
     }                   
     str_out$omit_dyad <- out$omit_dyad
 
