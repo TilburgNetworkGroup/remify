@@ -33,6 +33,7 @@ library(remify)
 data(randomREH)
 reh <- remify(edgelist = randomREH$edgelist,
               model = "tie",
+              riskset = "manual",
               omit_dyad = randomREH$omit_dyad)
 
 # find dyad ID from dyad composition (names of actor1, actor2 and type)

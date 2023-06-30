@@ -29,6 +29,7 @@ library(remify)
 data(randomREH)
 reh <- remify(edgelist = randomREH$edgelist,
               model = "tie",
+              riskset = "manual",
               omit_dyad = randomREH$omit_dyad)
 
 # find type ID from the type name

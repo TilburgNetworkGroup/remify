@@ -8,8 +8,8 @@
 ## A package for pre-processing the structure of REH data
 
 The aim of the `remify` package is twofold:
- * processing REH data and arranging them in a new structure (`remify`) that is used by the packages in `remverse`;
- * transforming REH data from other formats or other sources to a `remify` structure (or vice versa).
+ * processing REH data and arranging them in a new structure (`remify`) that is used by the packages in [`remverse`](https://github.com/TilburgNetworkGroup/remverse);
+ * transforming REH data from a `remify` structure to other formats used in other R packages.
  
 The two main functions `remify()` and `rehshape()` perform respectively the processing and the conversion of the REH data.
 
@@ -28,9 +28,9 @@ remotes::install_github(repo = "TilburgNetworkGroup/remify", build_vignettes = T
 ## Vignettes
 In order to provide a thorough explanation over the two main functions, both of them have a vignette where inputs, outputs, attributes and methods are described in detail.
 
-(_Note_: currently only the vignette for `remify()` is available)
 
 List all the vignettes available with the installed version of `remify`
+
 ```
 vignette(package = "remify") 
 ```

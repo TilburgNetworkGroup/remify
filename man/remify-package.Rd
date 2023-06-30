@@ -4,9 +4,9 @@
 \name{remify-package}
 \alias{remify-package}
 \alias{_PACKAGE}
-\title{remify: Processing and transforming REH to formats suitable for the remverse packages and more}
+\title{remify: Processing and transforming relational event history data}
 \description{
-This package aims to process, transform a relational event history to other formats suitable for the remverse and other packages.
+This package aims to process relational event history data and transform them into a format suitable for the remverse packages and more.
 }
 \seealso{
 Useful links:

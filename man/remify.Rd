@@ -11,13 +11,15 @@ remify(
   model = c("tie", "actor"),
   actors = NULL,
   types = NULL,
+  riskset = c("full", "active", "manual"),
   origin = NULL,
-  omit_dyad = NULL
+  omit_dyad = NULL,
+  ncores = 1L
 )
 }
 \arguments{
-\item{edgelist}{the relational event history. An object of class \code{\link[base]{data.frame}} with columns named `time`, `actor1`, `actor2`. (optional columns are `type` and 
-`weight`)}
+\item{edgelist}{the relational event history. An object of class \code{\link[base]{data.frame}} with first three columns corresponding to time, and actors forming the dyad. The first three columns will be re-named "time", "actor1", "actor2" (where, for directed networks, "actor1" corresponds to the sender and "actor2" to the receiver of the relational event). Optional columns that can be supplied are: `type` and 
+`weight`. If one or both exist in \code{edgelist}, they have to be named accordingly.}
 
 \item{directed}{logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})}
 
@@ -29,9 +31,13 @@ remify(
 
 \item{types}{[\emph{optional}] character vector of event types that may occur in the network. If \code{NULL} (default), types' names will be taken from the input edgelist.}
 
+\item{riskset}{[\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user.}
+
 \item{origin}{[\emph{optional}] starting time point of the observaton period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}.}
 
 \item{omit_dyad}{[\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).}
+
+\item{ncores}{[\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).}
 }
 \value{
 'remify' S3 object
@@ -78,6 +84,7 @@ tie_randomREH <- remify(edgelist = randomREH$edgelist,
        model = "tie",
        actors = randomREH$actors,
        types = randomREH$types,
+       riskset = "manual",
        origin = randomREH$origin,
        omit_dyad = randomREH$omit_dyad)
 
@@ -97,10 +104,7 @@ getTypeID(x = tie_randomREH, typeName = "conflict")
 getDyad(x = tie_randomREH, dyadID = c(1,380,760,1140))
 
 # visualize descriptive measures of relational event data
-# (1) distribution of waiting times
-# (2) activity plot
-# (3) dyad and actor (activity) rate
-plot(x = tie_randomREH)
+# plot(x = tie_randomREH)
 
 # -------------------------------------- #
 # processing for actor-oriented modeling #

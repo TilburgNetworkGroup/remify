@@ -27,6 +27,7 @@ library(remify)
 data(randomREH)
 reh <- remify(edgelist = randomREH$edgelist,
               model = "tie",
+              riskset = "manual",
               omit_dyad = randomREH$omit_dyad)
 
 # structure of the processed risk set

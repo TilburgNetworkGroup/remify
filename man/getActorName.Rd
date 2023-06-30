@@ -29,6 +29,7 @@ library(remify)
 data(randomREH)
 reh <- remify(edgelist = randomREH$edgelist,
               model = "tie",
+              riskset = "manual",
               omit_dyad = randomREH$omit_dyad)
 
 # find actor name from actor ID

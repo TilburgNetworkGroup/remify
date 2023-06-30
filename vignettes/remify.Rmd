@@ -15,16 +15,19 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+---
 
-<i>This vignette explains aim, input, output, attributes and methods of the function <tt>remify::remify()</tt>.</i>
+<i>This vignette explains aim, input, output, attributes and methods of the function `<tt>`remify::remify()`.</i>
+
+---
 
 # {.tabset .tabset-fade .tabset-pills}
 
 ## Aim
-The objective of <tt>remify::remify()</tt> is to process raw relational event data provided by the user along with other inputs that characterize them (actors' names, event types' names, starting time point of the event sequence, set of interactions to be excluded from the risk set at specific time points, etc.).
+The objective of <tt>remify::remify()</tt> is to process raw relational event sequences supplied by the user along with other inputs that characterize the data (actors' names, event types' names, starting time point of the event sequence, set of interactions to be excluded from the risk set at specific time points, etc.).
 The internal routines will transform the structure of the input event sequence into a new one where actors and event types will have assigned unique (numerical) IDs. Furthermore, the function will provide other objects that will be required by all of the packages in [<tt>remverse</tt>](https://github.com/TilburgNetworkGroup/remverse).
 
-As example, the `randomREH` data from the same package will be used (documentation available via `?randomREH`).
+As example, we will use the data `randomREH` (documentation available via `?randomREH`).
 
 ```{r}
 library(remify) # loading library
@@ -37,19 +40,37 @@ names(randomREH) # objects inside the list 'randomREH'
 
 
 
-## Input
+## Input {.tabset .tabset-pills}
 
-<b>Input</b> arguments that can be supplied to `remify()` are: `edgelist`, `actors`, `types`, `directed`, `ordinal`, `origin`, `omit_dyad` and `model`. 
+<b>Input</b> arguments that can be supplied to `remify()` are: `edgelist`,`directed`, `ordinal`,`model`, `actors`, `types`, `riskset`, `origin`, `omit_dyad` and `ncores`. 
 
 ------
 
 ### <b><tt>edgelist</tt></b>
 
-The edgelist must be a `data.frame` with column names `[time,actor1,actor2,type,weight]` (<i>Note</i>: it is not necessary to supply a column for `type` or `weight` but if they are included in the input edgelist, columns must be named `type` and `weight`, whereas it is compulsory to supply `[time,actor1,actor2]` and use such names for the columns).
+The edgelist must be a `data.frame` with three mandatory columns: the time of the interaction in the first column, and the two actors forming the dyad in the second and third column. The naming of the first three columns is not required but the order must be `[time,actor1,actor2]`. For directed networks, the second column of the edgelist will be the column of the sender and the third column will be the one of the receiver. For undirected network, the order of second and third column is ignored. Optional columns that can be supplied are `type` and `weight` and they have to be named accordingly. However, type and weight must be defined after the third column.
 
 ```{r}
 head(randomREH$edgelist)
 ```  
+------
+
+### <b><tt>directed</tt></b>
+
+It is a logical `TRUE`/`FALSE` value, indicating whether events are directed (`TRUE`) or not (`FALSE`). If `FALSE`, dyads will be sorted according to their names by following an alphanumeric order (e.g. `[actor1,actor2] = ["Colton","Alexander"]` will become `[actor1,actor2] = ["Alexander","Colton"]`).
+
+------
+
+### <b><tt>ordinal</tt></b>
+It is a logical `TRUE`/`FALSE` value, indicating whether only the order of events matters in the model (when `TRUE`) or also the waiting times between event must be taken into account (when `FALSE`).
+Based on the value of this argument, the processing of the time variable is carried out differently and the `remstimate` package will use either the _ordinal_ (if `ordinal` is `TRUE`) or the _interval_ (if `ordinal` is `FALSE`) time likelihood. 
+
+------
+
+
+### <b><tt>model</tt></b>
+Whether the model of interest is tie-oriented or actor-oriented, the argument `model` can be specified either as `"tie"` or as `"actor"`. In the case of an actor-oriented model with changing risk set, the output will consist of two risk sets: senders' and dyads' risk sets. For a tie-oriented modeling with changing risk set the output object will contain only the riskset of the dyads. If no dynamic risk set is defined (`omit_dyad = NULL`), the argument `model` won't affect the output object.
+
 ------
 
 ### <b><tt>actors</tt></b>
@@ -73,20 +94,13 @@ randomREH$types
 
 ------
 
-### <b><tt>directed</tt></b>
-
-It is a logical `TRUE`/`FALSE` value, indicating whether events are directed (`TRUE`) or not (`FALSE`). If `FALSE`, dyads will be sorted according to their names by following an alphanumerical order (e.g. `[actor1,actor2] = ["Colton","Alexander"]` will become `[actor1,actor2] = ["Alexander","Colton"]`).
-
-------
-
-### <b><tt>ordinal</tt></b>
-It is a logical `TRUE`/`FALSE` value, indicating whether only the order of events matters in the model (when `TRUE`) or also the waiting times between event must be taken into account (when `FALSE`).
-Based on the value of this argument, the processing of the time variable is carried out differently and the `remstimate` package will use either the _ordinal_ (if `ordinal` is `TRUE`) or the _interval_ (if `ordinal` is `FALSE`) time likelihood. 
+### <b><tt>riskset</tt></b>
+The `riskset` argument specifies the type of risk set that should be used for the input data. It can assume three different values: `"full"`, `"active"` and `"manual"` (with `"full"` being the default value). The risk set is `"full"`, if all the possible dyadic interactions given the number of actors in the network should be considered at risk throughout the event sequence. The risk set is `"active"`, if it is only made of only the observed dyadic interactions and it assumed that they are the only dyads at risk for the entire event sequence. Finally, the risk set is `"manual"`, if it has a time-varying structure, that is, when one or more actors should be excluded from the network until a specific time point because the join the network later, or vice versa, when one or more actors should be excluded from the risk set from a time point and on because they leave the network before the end of the sequence. In other words, a manual risk set is defined whenever one or more dyadic interactions cannot occur during one or more timespans. If the `riskset` argument is `"manual"`, then the user should supply a list object with the risk set modifications to the `omit_dyad` argument.
 
 ------
 
 ### <b><tt>origin</tt></b>
-If the initial time point $t_0$ is known it can be specified by the argument `origin` and it must have the same class of the `time` column in the input `edgelist`. In the case such field is left unspecified (`NULL`), it is set by default to one day/second/time unit earlier than $t_1$ (time of the first observed event), for instance, when the waiting time is measured in seconds then $t_0 = t_1 - 1sec$ , when the waiting time is measured in minutes then $t_0 = t_1 - 1min$ and so forth. In the `randomREH` data a $t_0$ is provided.
+The initial time ($t_0$) of an event sequence is the time at which the network of actors starts being observed and any event occurring from that time point and on is annotated. This information is not always known and it depends on the study design. If the $t_0$ of an event sequence is known, it can be specified by the argument `origin` and it must have the same class of the `time` column in the input `edgelist`. If the argument is left unspecified (`NULL`), it will be set by default to one time unit earlier than $t_1$ (time of the first observed event). For instance, when the waiting time is measured in seconds then $t_0 = t_1 - 1sec$ , when the waiting time is measured in days then $t_0 = t_1 - 1day$ and so forth. In the `randomREH` data a $t_0$ is provided.
 
 ```{r}
 randomREH$origin
@@ -95,11 +109,11 @@ randomREH$origin
 ------
 
 ### <b><tt>omit_dyad</tt></b>
-This argument is useful when certain dyads must be removed from the risk set in specific time windows (e.g. an actor drops out of the network, specific groups of actors cannot interact anymore starting from some time point). Therefore, the processing of such information makes the risk set suit better to the real data.
-`omit_dyad` consists of a list of lists. Each list refers to one risk set modification and must have two objects: a `data.frame` called `dyad`, where dyads to be remove are specified by row in the format `actor1, actor2, type`, and `time` which is a vector of two values defining the first and last time point of the time window in which such dyads couldn't occur.
+This argument is required when `riskset="manual"`, therefore one or more dyads must be omitted from the risk set for specific time windows (e.g. an actor drops out of the network, specific groups of actors cannot interact anymore starting from some time point). 
+The `omit_dyad` input is a list of lists. Each list refers to one risk set modification and must have two objects: a `data.frame` called `dyad`, where dyads to be remove are specified by row in the format `actor1, actor2, type`, and `time` which is a vector of two values defining the first and last time point of the time window in which such dyads couldn't occur.
 Consider the example on the `randomREH` data. For instance, we want to modify (shrink) the risk set according to two changes that apply on different time intervals:
 
-1. an event type `conflict` that was no more feasible since a specific time point until the end of the observation period.
+1. an event type `conflict` that cannot be observed since a specific time point until the end of the observation period.
 
 ```{r}
 randomREH$omit_dyad[[1]]$time # start and stop time point defining the time window of interest
@@ -108,7 +122,7 @@ randomREH$omit_dyad[[1]]$time # start and stop time point defining the time wind
 randomREH$omit_dyad[[1]]$dyad # dyads to be removed from the time points defined by the interval in `time`
 ```
 
-2. two actors `Michaela` and `Zackary` that couldn't interact with anybody else after a specific time point until the last observed time point.
+2. two actors `Michaela` and `Zackary` that cannot interact with anybody else after a specific time point until the last observed time point.
 
 
 ```{r}
@@ -118,15 +132,13 @@ randomREH$omit_dyad[[2]]$time # start and stop time point defining the time wind
 randomREH$omit_dyad[[2]]$dyad # dyads to be removed from the time points defined by the interval in `time`
 ```
 
-The object `dyad` will give instructions such that the function will remove from the risk set at the indicated time windows all the events where: (1) type is `conflict`, (2) `Michaela` and ``Zackary` are senders or receivers.
+The object `dyad` will give instructions such that the function will remove from the risk set at the indicated time windows all the events where: (1) type is `conflict`, (2) `Michaela` and ``Zackary` are senders or receivers of a relational event.
 
 The `<NA>` values mean that all the actors/types are considered in that field. Indeed, in the first change where we needed to remove all the events where `conflict` was the type, we did it by leaving both `actor1` and `actor2` unspecified `<NA>`. 
 Therefore, every time one field among (`actor1`,`actor2`,`type`) is left undefined, the omission from the risk set applies to all the possible values of that field.
 
-------
+Furthermore, the internal routines in `remify::remify()`, given the dyads specified via the `omit_dyad` input, always operate a _shrinkage_ of the risk set starting from the "full" risk set (all the possible dyads given the number of actors and information about directed/undirected events). Therefore, the dyads described in the `omit_dyad` list must be based on the observed set of actors (actors from the event sequence) and on the input vector of actors (supplied via the argument `actors`). If the user wants to _add_ a set of actors to the risk set for a specific timespan, this can be done by: first making sure that the names of such actors are found either in the input `edgelist` or specified in the input `actors`, then the user can define an `omit_dyad` object that specifies the time window(s) in which that set of actors is not at risk, so that they are at risk only during a desired time window.
 
-### <b><tt>model</tt></b>
-Whether the model of interest is tie-oriented or actor-oriented, the argument `model` can be filled with either `"tie"` or `"actor"`.In the case of an actor-oriented model with changing risk set, the output will consist in two risk sets: senders' and dyads' risk sets. If no dynamic risk set is defined (`omit_dyad = NULL`), the argument `model` won't affect the output object.
 
 ------
 
@@ -138,6 +150,7 @@ edgelist_reh <- remify(edgelist = randomREH$edgelist,
                     model = "tie", # tie-oriented modeling
                     actors = randomREH$actors,
                     types = randomREH$types, 
+                    riskset = "manual",
                     origin = randomREH$origin,
                     omit_dyad = randomREH$omit_dyad)
                     
@@ -154,7 +167,7 @@ names(edgelist_reh)
 ------
 
 ### <b><tt>M</tt></b>
-`M` is the number of observed relational events.
+`M` is the number of observed time points. If there are events occurring at the same time point, then the time point will count only once. If all events occurred at different time points, then `M` will correspond also to the number of events.
 
 ```{r}
 edgelist_reh$M
@@ -172,7 +185,7 @@ edgelist_reh$N
 ------
 
 ### <b><tt>C</tt></b>
-`C` is the number of event types (also referred as the sentiment of the event) that could be observed in the network. If no event types are present in the network or only one event type is defined, then the output in `C` will be `NULL`
+`C` is the number of event types (also referred as the sentiment of the event) that could be observed in the network. If no event types are present in the network or only one event type is defined, then the output object `C` will be `NULL`.
 
 ```{r}
 edgelist_reh$C
@@ -183,10 +196,10 @@ edgelist_reh$C
 ### <b><tt>D</tt></b>
 `D` is the number of possible dyads throughout the network considering also the event types. Therefore:
 
-  * if the network is <i>directed</i>, then $D = N(N-1)C$;
-  * if the network is <i>undirected</i>, then $D = (N(N-1)/2)C$.
+  * if the network is <i>directed</i>, then $D = N*(N-1)*C$;
+  * if the network is <i>undirected</i>, then $D = (N*(N-1)/2)*C$.
 
-In other terms, it represents the largest observable size of the risk set.
+In other terms, it represents the largest observable size of the risk set (`"full"` risk set).
 
 ```{r}
 edgelist_reh$D
@@ -194,7 +207,7 @@ edgelist_reh$D
 
 ------
 
-### <b><tt>IntereventTime</tt></b>
+### <b><tt>intereventTime</tt></b>
 `intereventTime` is a numeric vector of waiting times between two subsequent events, that is:
 $$\begin{bmatrix} t_1 - t_0 \\ t_2 - t_1 \\ \cdots \\ t_M - t_{M-1} \end{bmatrix}$$
 
@@ -202,10 +215,12 @@ $$\begin{bmatrix} t_1 - t_0 \\ t_2 - t_1 \\ \cdots \\ t_M - t_{M-1} \end{bmatrix
 head(edgelist_reh$intereventTime)
 ```
 
+The vector of waiting times is available only if the sequence is processed for interval likelihood (`ordinal = FALSE`). In the case of ordinal likelihood, `intereventTime` is NULL.
+
 ------
 
 ### <b><tt>edgelist</tt></b>
-`edgelist` is a `data.frame` and consists of the converted input edgelist, with columns `[time,actor1_ID,actor2_ID,type_ID,weight]` where the inputs `actor1`, `actor2` and `type` are converted into IDs. If `type` or `weight` are not supplied as input, then the output edgelist will not incude them columns.
+`edgelist` is a `data.frame` and consists in the converted input edgelist, with columns `[time,actor1_ID,actor2_ID,type_ID,weight]` where actors and types supplied in the input edgelist are converted into IDs. If `type` or `weight` are not supplied as input, then the output edgelist will not incude their columns.
 
 ```{r}
 head(edgelist_reh$edgelist)
@@ -215,9 +230,9 @@ head(edgelist_reh$edgelist)
 
 ### <b><tt>omit_dyad</tt></b>
 
-If `omit_dyad` is supplied to the processing function, then the `remify()` output object will contain the processed list under the same name. In the case of tie-oriented modeling, the list consists of two objects: a vector named `time` and a matrix named `riskset`.
+When `riskset = "manual"`, `omit_dyad` must be supplied to the processing function, then the output object will contain the processed list under the same name. In the case of tie-oriented modeling, the list consists of two objects: a vector named `time` and a matrix named `riskset`.
 
-- `riskset` is a 1/0's matrix where all the possible risk set modifications are described by row, and the columns identify the dyads ($D$ columns). The number of rows depends on the number of risk set modifications occurring in the event sequence, thus it remains variable.
+- `riskset` is a 1/0's matrix where all the possible risk set modifications are described by row, and the columns identify the dyads ($D$ columns). The number of rows depends on the number of risk set modifications occurring in the event sequence, thus it remains variable (and it is not necessarly the same as the number of risk set modifications declared with the input `omit_dyad`, because they can also occur on no/partially/totally overlapping time windows that are processed internally).
 
 - `time` is a vector of row indices that for each time point indicates which modification of the risk set (row index in the matrix `riskset`) is observed.
 
@@ -232,7 +247,7 @@ edgelist_reh$omit_dyad$time[1:10] # printing out the first 10 time points. We ca
 ```
 
 In the case of actor-oriented modeling with changing risk set, the `omit_dyad` output list consists of three objects: a vector named `time` (same vector as explained above) and two risk set matrices (`senderRiskset` and `riskset`), one for the sender and one for the dyads. Both risk set matrices follow the same structure as the matrix `riskset` in the tie-oriented modeling.
-Whenever `omit_dyad` is not supplied to `reh()` then its output in the `remify` object will be an empty list.
+Whenever `omit_dyad` is not supplied to `remify()` then its output in the `remify` object will be empty.
 
 
 ## Attributes
@@ -310,7 +325,7 @@ attr(edgelist_reh, "model")
 ------
 
 ### <b><tt>riskset</tt></b>
-`riskset` describes the type of risk set that resulted from the processing of the data. If `omit_dyad` is provided, this means that the risk set is going to change for certain time windows and then `riskset = "dynamic"`. Otherwise, when `omit_dyad = NULL`, the risk set is assumed to be the largest observable one (of dimensions $D$) and it maintains the same structure during the whole observation period (`riskset = "static"`).  
+`riskset` returns the type of risk set that was chosen in the processing of the data. Possible values are: `"full"`, `"manual"` and `"active"`.
 
 ```{r}
 attr(edgelist_reh, "riskset")
@@ -321,19 +336,19 @@ attr(edgelist_reh, "riskset")
 ### <b><tt>dictionary</tt></b>
 `dictionary` is a list of two `data.frame`'s: `actors` and `types`.
 
-  - `actors` has two columns: the first with actor names (`actorName`) sorted according to their alphanumerical order, the second with their corresponding ID's (`actorID`), ranging in $\left\lbrace 1,\ldots,N \right\rbrace$;
-  - `types` has two columns: the first with type names (`typeName`) sorted according to their alphanumerical order, the second with their corresponding ID's (`typeID`), ranging in $\left\lbrace 1,\ldots,C \right\rbrace$; 
+  - `actors` has two columns: the first with actor names (`actorName`) sorted according to their alphanumerical order, the second with their corresponding ID's (`actorID`), ranging from $1$ to $N$ (with $N$ being the number of actors);
+  - `types` has two columns: the first with type names (`typeName`) sorted according to their alphanumerical order, the second with their corresponding ID's (`typeID`), ranging from $1$ to $C$ (with $C$ being the number of event types);
 
 ```{r}
 attr(edgelist_reh, "dictionary")
 ```
 
-For more details about how the ID is assigned to actors and types, see `vignette("riskset","remify")`
+For more details about how the ID is assigned to actors and types, see `utils::vignette(topic = "riskset", package = "remify")`
 
 ------
 
 ### <b><tt>origin</tt></b>
-`origin` is the input argument already discussed in section 'Input'.
+`origin` is the value of the input argument with the same name.
 
 ```{r}
 str(attr(edgelist_reh, "origin")) # printing out only the str() of the attribute since the data.frame `value` is large
@@ -342,12 +357,20 @@ str(attr(edgelist_reh, "origin")) # printing out only the str() of the attribute
 ------
 
 ### <b><tt>dyad</tt></b>
-`dyad` is the vector of IDs as to the observed dyads. The IDs range between 1 and `D` (`edgelist_reh$D`). This attribute is empty if `model = "actor"`. For more details about how the ID is assigned to a specific triple of `[actor1,actor2,type]`, see `vignette("riskset","remify")`.
+`dyad` is the vector of IDs as to the observed dyads. The IDs range between 1 and `D` (`edgelist_reh$D`). This attribute is empty if `model = "actor"`. For more details about how the ID is assigned to a specific triple of `[actor1,actor2,type]`, see `vignette(topic = "riskset", package = "remify")`.
 
 ```{r}
 attr(edgelist_reh, "dyad")[1:10] # printing out only first 10 observed dyads
 ```
 
+------
+
+### <b><tt>ncores</tt></b>
+`ncores` is the number of threads used in the parallelization of internal routines in `remify::remify()`.
+
+```{r}
+attr(edgelist_reh, "ncores")
+```
 
 ## Methods
 
@@ -356,16 +379,16 @@ The available <b>methods</b> for a `remify` object are: `print`, `summary`, `dim
 ------
 
 ### <b><tt>print() and summary()</tt></b>
-Both `print(reh)` and `summary(reh)` print out a brief summary of the relational network data.
+Both `print()` and `summary()` print out a brief summary of the relational network data.
 
 ```{r}
-summary(edgelist_reh) # same output as `print(reh)` or just `reh`
+summary(edgelist_reh) # same output as `print(edgelist_reh)` or just `edgelist_reh`
 ```
 
 ------
 
 ### <b><tt>dim()</tt></b>
-`dim(reh)` returns some useful dimensions characterizing the network, such as: number of events, number of actors, number of event types (omitted in the case of network with one or no event types), number of dyads. 
+`dim()` returns some useful dimensions characterizing the network, such as: number of events, number of actors, number of event types (omitted in the case of networks with one or no event types), largest number of possible dyads given the number of actors ($N$). 
 
 ```{r}
 dim(edgelist_reh)
@@ -375,7 +398,7 @@ dim(edgelist_reh)
 
 ### <b><tt>getRiskset()</tt></b>
 
-If `omit_dyad` is supplied to the processing function, `getRiskset(reh)` returns the processed dynamic risk set matrix (or the two dynamic risk sets if actor-oriented modeling) that are explained in the 'Output' section under the section about `omit_dyad`.
+If risk set is `"active"` or `"manual"`, then `getRiskset()` returns the processed risk set matrix (or the two dynamic risk sets if actor-oriented modeling) that are explained in the 'Output' section.
 
 ```{r}
 getRiskset(x = edgelist_reh)$riskset[,1:10] # printing out the risk set modifications of only the first 10 columns (dyads). A total number of 2 modifications of the risk set are observed (by row)
@@ -438,11 +461,11 @@ The method can work with only one input dyad of the form [`actor1`,`actor2`,`typ
 
 ------
 
-### <b><tt>plot()</tt></b> _$\cdot$ not fully working yet $\cdot$_
-`plot(x,...)` returns a sequence of three plots:
+### <b><tt>plot()</tt></b>
+`plot()` returns a sequence of three plots:
 
 1. distribution of the waiting times
-2. activity plot (tile plot on dyad count, with marginal in-degree and out-degree distribution of actors)
+2. activity plot (tile plot on dyad count, with marginal in-degree and out-degree distribution of actors, if a directed network)
 3. descriptive dyad and actor activity rate per time unit specified by the user (also calculated per event type, if type is present)
 
 

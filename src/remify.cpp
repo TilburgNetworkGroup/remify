@@ -5,11 +5,17 @@
 #include <map>
 #include <iterator>
 #include <string>
-#include <algorithm> 
-#include "remify.h"
+#include <algorithm>
 #include "messages.h"
+#include "../inst/include/remify/remify.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
+// /////////////////////////////////////////////////////////////////////////////////
+// //////////(BEGIN)             remify C++ functions              (BEGIN)//////////
+// /////////////////////////////////////////////////////////////////////////////////
 
 // @title rearrangeDataFrame
 //
@@ -57,6 +63,67 @@ Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, std::vector<std::size_t> i
     return x;
 }
 
+
+// @title getOmitDyadActiveRiskSet
+//
+// @details function that returns a boolean vector of true/false describing events at risk/not at riks an an "active" risk set
+//
+// @param model string "tie" or "actor" (tie-oriented modeling or actor-oriented modeling)
+// @param actor1 vector of actor1 names observed per event
+// @param actor2 vector of actor2 names observed per event
+// @param type vector of event types (optional)
+// @param D number of dyads
+// @param N number of actors
+// @param directed , is the network directed (TRUE) or not (FALSE)?
+// @param ncores number of cores used in the parallelization 
+//
+// @return vector of true false 
+//
+Rcpp::List getOmitDyadActiveRiskSet(std::string model,
+                                        arma::uvec actor1, 
+                                        arma::uvec actor2, 
+                                        arma::uvec type,
+                                        int D,
+                                        int N,
+                                        bool directed = true,
+                                        int ncores = 1) {
+                         
+    
+    arma::uword M = actor1.size();
+    arma::uword m;
+    arma::umat riskset(1,D); // (output) row matrix of 0's (0 means that the dyad cannot occur)
+
+    #ifdef _OPENMP
+    omp_set_dynamic(0);         // disabling dynamic teams
+    omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+    #pragma omp parallel for private(m) shared(M,riskset,actor1,actor2,type,N,directed)  
+    #endif
+    for(m = 0; m < M; m++){
+        int dyad_m = remify::getDyadIndex(actor1(m)-1,actor2(m)-1,type(m)-1,N,directed);
+        if(riskset(0,dyad_m) == 0){
+            riskset(0,dyad_m) = 1; // it has to be included so we assign 1
+        }
+    }
+ 
+    arma::vec which_time(M,arma::fill::zeros);
+
+    Rcpp::List out = Rcpp::List::create(Rcpp::Named("time") = which_time,Rcpp::Named("riskset") = riskset); // to add later: Rcpp::Named("time") = which_time, 
+    if((model == "actor") && (directed == true)){
+        arma::umat riskset_sender(1,N); 
+        // parallelize here ? (ncores is set up already)
+        arma::uvec which_sender = arma::unique(actor1);
+        arma::urowvec vec_ones(which_sender.n_elem,arma::fill::ones);
+        riskset_sender.cols(which_sender-1) = vec_ones;
+        out["risksetSender"] = riskset_sender;
+    }
+    else if((model == "actor") && (directed == false)){
+        Rcpp::stop(errorMessage(4));
+    }    
+
+    return out;
+}
+
+
 // @title getRisksetSender
 //
 // @param which_dyad is list of matrices where each matrix defines by row [actor1,actor2,type] to be removed from the riskset. Each matrix as a whole will finally produce a vector (length = D) of 1/0 with 0's for dyads that have to be excluded from the riskset
@@ -64,7 +131,7 @@ Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, std::vector<std::size_t> i
 // @param D number of dyads
 // @param N number of actors
 //
-// @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
+// @return utility matrix per row 0 if the event could not happen, 1 if the event could happen
 Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
                                         int C,
                                         int D, 
@@ -73,7 +140,7 @@ Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
     int j,c;
     arma::uword Z = which_dyad.size();
     Rcpp::IntegerMatrix riskset(Z,N);
-    riskset.fill((N-1)*C);
+    riskset.fill(1); 
     auto is_na = [](int &k) {k = (k == -1);}; 
     for(z = 0; z < Z; z++){
         Rcpp::IntegerMatrix which_dyad_z = which_dyad[z];
@@ -93,7 +160,7 @@ Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
                 if(!actor1_na(d) && !actor2_na(d)){ // when [X,Y,NA]
                     for(c = 0; c < C; c++){  // for all the event types
                         if(actor1_z(d) != actor2_z(d)){
-                            riskset(z,actor1_z(d)) -= 1; 
+                            riskset(z,actor1_z(d)) = 0; 
                         }
                     }   
                 }
@@ -102,7 +169,7 @@ Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
                         for(c = 0; c < C; c++){  // for all the event types
                             for(j = 0; j < N; j++){ // for all the receivers excluding the self-edge
                                 if(j != actor1_z(d)){
-                                    riskset(z,actor1_z(d)) -= 1; 
+                                    riskset(z,actor1_z(d)) = 0; 
                                 }
                             }  
                         }
@@ -111,13 +178,13 @@ Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
             }
             else{ // when [?,?,C] (type is defined)       
                 if(!actor1_na(d) && !actor2_na(d)){ // when [X,Y,C]
-                    riskset(z,actor1_z(d)) -= 1; 
+                    riskset(z,actor1_z(d)) = 0; 
                 }
                 else{
                     if(!actor1_na(d)){ // when [X,NA,C]          
                         for(j = 0; j < N; j++){ // for all the receivers excluding the self-edges
                             if(j != actor1_z(d)){
-                                riskset(z,actor1_z(d)) -= 1; 
+                                riskset(z,actor1_z(d)) = 0; 
                             }  
                         }
                     }
@@ -125,8 +192,6 @@ Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
             }
         }
     }
-    auto is_gtzero = [](int &k) {k = (k > 0);}; // we set k>0 (instead of == 0) because there can be negative integers due to the multiple definition of the same dyad (this should not happen when the user defines dyads to omit in a clean way)
-    std::for_each(riskset.begin(),riskset.end(),is_gtzero); 
     return riskset;
 }
 
@@ -140,7 +205,7 @@ Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
 // @param N number of actors
 // @param directed bool if the netwrok is directed, then directed ==  TRUE, FALSE otherwise
 //
-// @return utility matrix per row 0 if the event could happen but didn't, 1 if the event happend, -1 if the event couldn't occur
+// @return risk set matrix by row 0 if it cannot happen, 1 if it has to be included in the risk set
 Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad, 
                                 int C, 
                                 int D, 
@@ -172,7 +237,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad,
                     int dyad_z_d;
                     for(c = 0; c < C; c++){  // for all the event types
                         if(actor1_z(d) != actor2_z(d)){
-                            dyad_z_d = getDyadIndex(actor1_z(d),actor2_z(d),c,N,directed);
+                            dyad_z_d = remify::getDyadIndex(actor1_z(d),actor2_z(d),c,N,directed);
                             riskset(z,dyad_z_d) = 0; 
                         }
                     }   
@@ -183,7 +248,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad,
                         for(c = 0; c < C; c++){  // for all the event types
                             for(j = 0; j < N; j++){ // for all the receivers excluding the self-edge
                                 if(j != actor1_z(d)){
-                                    dyad_z_d = getDyadIndex(actor1_z(d),j,c,N,directed);
+                                    dyad_z_d = remify::getDyadIndex(actor1_z(d),j,c,N,directed);
                                     riskset(z,dyad_z_d) = 0;
                                 }
                             }  
@@ -194,7 +259,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad,
                         for(c = 0; c < C; c++){  // for all the event types
                             for(i = 0; i < N; i++){ // for all the senders excluding the self-edge
                                 if(i != actor2_z(d)){
-                                    dyad_z_d = getDyadIndex(i,actor2_z(d),c,N,directed);
+                                    dyad_z_d = remify::getDyadIndex(i,actor2_z(d),c,N,directed);
                                     riskset(z,dyad_z_d) = 0;
                                 }
                             }  
@@ -208,7 +273,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad,
                     for(i = 0; i < N; i++){
                         for(j = 0; j < N; j++){ // for all the actors excluding the self-edges
                             if(i != j){
-                                dyad_z_d = getDyadIndex(i,j,type_z(d),N,directed);
+                                dyad_z_d = remify::getDyadIndex(i,j,type_z(d),N,directed);
                                 riskset(z,dyad_z_d) = 0;
                             }
                         }  
@@ -216,7 +281,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad,
                 }
                 else{    
                     if(!actor1_na(d) && !actor2_na(d)){ // when [X,Y,C]
-                        int dyad_z_d = getDyadIndex(actor1_z(d),actor2_z(d),type_z(d),N,directed);
+                        int dyad_z_d = remify::getDyadIndex(actor1_z(d),actor2_z(d),type_z(d),N,directed);
                         riskset(z,dyad_z_d) = 0;
                     }
                     else{
@@ -224,7 +289,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad,
                             int dyad_z_d;
                             for(j = 0; j < N; j++){ // for all the receivers excluding the self-edges
                                 if(j != actor1_z(d)){
-                                    dyad_z_d = getDyadIndex(actor1_z(d),j,type_z(d),N,directed);
+                                    dyad_z_d = remify::getDyadIndex(actor1_z(d),j,type_z(d),N,directed);
                                     riskset(z,dyad_z_d) = 0;
                                 }  
                             }
@@ -233,7 +298,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad,
                             int dyad_z_d;
                             for(i = 0; i < N; i++){ // for all the receivers excluding the self-edges
                                 if(i != actor2_z(d)){
-                                    dyad_z_d = getDyadIndex(i,actor2_z(d),type_z(d),N,directed);
+                                    dyad_z_d = remify::getDyadIndex(i,actor2_z(d),type_z(d),N,directed);
                                     riskset(z,dyad_z_d) = 0; 
                                 }  
                             }
@@ -393,6 +458,8 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
 // @param weighted true/false if the network is weighted (true) or not (false)
 // @param ordinal true/false whether to consider the order or the waiting time between events in the network 
 // @param C number of event types, 1 is the minimum
+// @param active true/false whther the risk set process is the active one (true) or not (false) - default is true
+// @param ncores number of threads to use in the parallelization (default is 1)
 //
 // @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
 Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist, 
@@ -406,7 +473,9 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                             std::string model, 
                             bool weighted, 
                             bool ordinal,
-                            int C)
+                            int C,
+                            bool active = false,
+                            int ncores = 1)
 {
     // for loop iterators
     arma::uword m,r,z,d,R,Z_r,D_r,D_rr;
@@ -542,6 +611,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
             // allocating memory for actor1, actor2, type and dyad (dyad is used also for the actor-oriented code as helper for the exclusion of self-events)
             std::vector<int> convertedType_ID(M,0);
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+                #ifdef _OPENMP
+                omp_set_dynamic(0);         // disabling dynamic teams
+                omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+                #pragma omp parallel for private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,N,directed,dyad,weight,time_loc)         
+                #endif       
                 for(m = 0; m < M; m++){ 
                     // m-th event in the edgelist input:
                     if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
@@ -558,7 +632,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                         convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c));
 
                         // getting dyad index
-                        dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D    
+                        dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D    
                     }
                     else{ // m-th event is a self-loop 
                         dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -574,6 +648,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                 out["dyad"] = dyad; 
             } 
             else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+                #ifdef _OPENMP
+                omp_set_dynamic(0);         // disabling dynamic teams
+                omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+                #pragma omp parallel for private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,dyad,weight,time_loc)    
+                #endif
                 for(m = 0; m < M; m++){ //loop without calculating the dyad
                     // m-th event in the edgelist input:
                     if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
@@ -654,6 +733,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
         }
         else{
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+                #ifdef _OPENMP
+                omp_set_dynamic(0);         // disabling dynamic teams
+                omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+                #pragma omp parallel for private(m) shared(M,stringActor1,stringActor2,actorName,actorID,convertedActor1_ID,convertedActor2_ID,N,directed,dyad,weight,time_loc) 
+                #endif
                 for(m = 0; m < M; m++){ 
                     // m-th event in the edgelist input:
                     if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
@@ -666,7 +750,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                         convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
 
                         // getting dyad index
-                        dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D    
+                        dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D    
                     }
                     else{ // m-th event is a self-loop 
                         dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -682,6 +766,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                 out["dyad"] = dyad; 
             } 
             else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+                #ifdef _OPENMP
+                omp_set_dynamic(0);         // disabling dynamic teams
+                omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+                #pragma omp parallel for private(m) shared(M,stringActor1,stringActor2,actorName,actorID,convertedActor1_ID,convertedActor2_ID,dyad,weight,time_loc) 
+                #endif
                 for(m = 0; m < M; m++){ //loop without calculating the dyad
                     // m-th event in the edgelist input:
                     if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
@@ -759,6 +848,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
             std::for_each(typeID.begin(), typeID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to C-1
             std::vector<int> convertedType_ID(M,0);
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+                #ifdef _OPENMP
+                omp_set_dynamic(0);         // disabling dynamic teams
+                omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+                #pragma omp parallel for private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,N,directed,dyad,time_loc)  
+                #endif
                 for(m = 0; m < M; m++){ 
                     // m-th event in the edgelist input:
                     if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
@@ -775,7 +869,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                         convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c));
 
                         // getting dyad index
-                        dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D    
+                        dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D    
                     }
                     else{ // m-th event is a self-loop 
                         dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -790,6 +884,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                 out["dyad"] = dyad; 
             } 
             else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+                #ifdef _OPENMP
+                omp_set_dynamic(0);         // disabling dynamic teams
+                omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+                #pragma omp parallel for private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,dyad,time_loc)  
+                #endif
                 for(m = 0; m < M; m++){ //loop without calculating the dyad
                     // m-th event in the edgelist input:
                     if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
@@ -863,6 +962,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
         }
         else{
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
+                #ifdef _OPENMP
+                omp_set_dynamic(0);         // disabling dynamic teams
+                omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+                #pragma omp parallel for private(m) shared(M,stringActor1,stringActor2,actorName,actorID,convertedActor1_ID,convertedActor2_ID,N,directed,dyad,time_loc)  
+                #endif
                 for(m = 0; m < M; m++){ 
                     // m-th event in the edgelist input:
                     if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
@@ -875,7 +979,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                         convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
 
                         // getting dyad index
-                        dyad[m] = getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D    
+                        dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D    
                     }
                     else{ // m-th event is a self-loop 
                         dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -890,6 +994,11 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                 out["dyad"] = dyad; 
             } 
             else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
+                #ifdef _OPENMP
+                omp_set_dynamic(0);         // disabling dynamic teams
+                omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+                #pragma omp parallel for private(m) shared(M,stringActor1,stringActor2,actorName,actorID,convertedActor1_ID,convertedActor2_ID,dyad,time_loc)  
+                #endif
                 for(m = 0; m < M; m++){ //loop without calculating the dyad
                     // m-th event in the edgelist input:
                     if(stringActor1[m].compare(stringActor2[m]) != 0){ // when actor1 is different than actor2
@@ -1013,7 +1122,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                 // [[Rcpp::stop]] if one of the times provided in the input is not found, stop the function
                 Rcpp::stop(errorMessage(3));
             }
-
+            
             convertedOmitDyad_time.push_back(timeID_r);
 
             // (2) converting `dyad` DataFrame according to the dictionaries of actors and types
@@ -1138,9 +1247,17 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
         out["omit_dyad"] = outOmitDyad;
 
     }
-    else{ // If the input list `omit_dyad` is NULL, then return a NULL value
-        out["omit_dyad"] = R_NilValue;
+    else if(active){ // If the input list `omit_dyad` is NULL and active=true, then compute the "active" risk set
+        arma::uvec type_loc(M,arma::fill::ones);
+        if(C>1){
+            type_loc = Rcpp::as<arma::uvec>(convertedEdgelist["type_ID"]);
         }
+        Rcpp::List outOmitDyad = getOmitDyadActiveRiskSet(model,convertedEdgelist["actor1_ID"],convertedEdgelist["actor2_ID"],type_loc,D,N,directed,ncores);
+        out["omit_dyad"] = outOmitDyad;
+    }
+    else{  // if the algorithm reaches here, the the risk set is "static" and the function returns a NULL value
+      out["omit_dyad"] = R_NilValue;
+    }
                                                  
     return out;
 }
@@ -1162,6 +1279,8 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
 // @param origin time point since which when events could occur (default is \code{NULL}). If it is defined, it must have the same class of the time column in the input edgelist.
 // @param omit_dyad list of lists of two elements: `time`, that is a vector of the time points which to omit dyads from, `dyad`, which is a \code{"\link[base]{data.frame}"} where dyads to be omitted are supplied.
 // @param model "tie" or "actor" oriented model
+// @param active true/false whther the risk set process is the active one (true) or not (false) - default is true
+// @param ncores number of threads to use in the parallelization (default is 1)
 //
 // @return list of objects with processed raw data.
 //
@@ -1173,7 +1292,9 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
                   bool ordinal,
                   Rcpp::RObject origin,
                   Rcpp::List omit_dyad,
-                  std::string model){
+                  std::string model,
+                  bool active = false,
+                  int ncores = 1){
 
     // Allocating memory for some variables and the output list
     arma::uword N,C,D; // number of dyads which depends on the directed input value 
@@ -1181,7 +1302,6 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
 
     // cloning some input objects
     Rcpp::DataFrame edgelist = Rcpp::clone(input_edgelist);
-
 
     // START of the processing
 
@@ -1217,16 +1337,34 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
     Rcpp::StringVector actor2 = edgelist["actor2"]; // actor2/receiver
 
     //StringVector of actor1 and actor2 
-    Rcpp::StringVector actor1_and_actor2(actor1.length()+actor2.length());
-    actor1_and_actor2[Rcpp::Range(0,(actor1.length()-1))] = actor1;
-    actor1_and_actor2[Rcpp::Range(actor1.length(),(actor1_and_actor2.length()-1))] = actor2;
+    //Rcpp::StringVector actor1_and_actor2(actor1.length()+actor2.length());
+    //actor1_and_actor2[Rcpp::Range(0,(actor1.length()-1))] = actor1;
+    //actor1_and_actor2[Rcpp::Range(actor1.length(),(actor1_and_actor2.length()-1))] = actor2;
+    //if(!Rf_isNull(actors)){
+    //    Rcpp::StringVector actors_vector = Rcpp::as<Rcpp::StringVector>(actors);
+        //arma::uword N_loc = actors_vector.length();
+
+        //for(arma::uword n = 0; n < N_loc; n++){
+    //        actor1_and_actor2.push_back(actors_vector[n]);
+        //} 
+    //}
+
+    //StringVector of actor1 and actor2 
+    arma::uword actors_vector_length = 0;
+    Rcpp::StringVector actors_vector;
     if(!Rf_isNull(actors)){
-        Rcpp::StringVector actors_vector = Rcpp::as<Rcpp::StringVector>(actors);
-        arma::uword N_loc = actors_vector.length();
-        for(arma::uword n = 0; n < N_loc; n++){
-            actor1_and_actor2.push_back(actors_vector[n]);
-        } 
-    } 
+        actors_vector = Rcpp::as<Rcpp::StringVector>(actors);
+        actors_vector_length = actors_vector.length();
+    }
+
+    Rcpp::StringVector actor1_and_actor2(actor1.length()+actor2.length()+actors_vector_length);
+    actor1_and_actor2[Rcpp::Range(0,(actor1.length()-1))] = actor1;
+    actor1_and_actor2[Rcpp::Range(actor1.length(),(actor1.length()+actor2.length()-1))] = actor2;
+
+    if(!Rf_isNull(actors)){
+        actor1_and_actor2[Rcpp::Range(actor1.length()+actor2.length(),(actor1_and_actor2.length()-1))] = actors_vector;
+    }
+
     // Finding unique strings in actor1_and_actor2 
     Rcpp::StringVector actorName = Rcpp::unique(actor1_and_actor2);
     actorName.sort(); // sorting actors
@@ -1236,22 +1374,36 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
     // Finding unique strings in event types 
     Rcpp::StringVector typeName;
     if(out["with_type"]){
-        Rcpp::StringVector vector_of_types = edgelist["type"];
+        Rcpp::StringVector type = edgelist["type"];
+        arma::uword types_vector_length = 0;
+        Rcpp::StringVector types_vector;
+
         if(!Rf_isNull(types)){
-            Rcpp::StringVector types_vector = Rcpp::as<Rcpp::StringVector>(types);
-            arma::uword C_loc = types_vector.length();
-            for(arma::uword c = 0; c < C_loc; c++){
-                vector_of_types.push_back(types_vector[c]);
-            } 
+            types_vector = Rcpp::as<Rcpp::StringVector>(types);
+            types_vector_length = types_vector.length();
         }
+
+        Rcpp::StringVector vector_of_types(type.length()+types_vector_length);
+        vector_of_types[Rcpp::Range(0,type.length()-1)] = type;
+
+        if(!Rf_isNull(types)){
+            vector_of_types[Rcpp::Range(type.length(),vector_of_types.length()-1)] = types_vector;
+        }
+
         typeName = Rcpp::unique(vector_of_types);
         typeName.sort(); // sorting types
         C = typeName.length();  
         out["C"] = C;
+        if(C == 1){
+            out["C"] = R_NilValue;;
+        }
     } 
     else{
         C = 1;
         out["C"] = R_NilValue;
+    }
+    if(C == 1){
+        out["with_type"] = false;
     }
     
     // How many (possible) dyads? if `directed` N*(N-1), N*(N-1)/2 otherwise
@@ -1274,9 +1426,8 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
         out["typesDictionary"] = typesDictionary;
     }
 
-   
     // Processing time variable, converting input edgelist and omit_dyad list according to the new id's for both actors and event types
-    Rcpp::List convertedInput = convertInputREH(edgelist,origin,actorsDictionary,typesDictionary,M,out["D"],directed,omit_dyad,model,out["weighted"],ordinal,C);
+    Rcpp::List convertedInput = convertInputREH(edgelist,origin,actorsDictionary,typesDictionary,M,out["D"],directed,omit_dyad,model,out["weighted"],ordinal,C,active,ncores);
     out["dyad"] = convertedInput["dyad"];
     out["edgelist"] = convertedInput["edgelist"];
     out["M"] = convertedInput["M"]; // if there are self-loops the number of events decreases
@@ -1286,3 +1437,176 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
     // END of the processing and returning output
     return out;
 }
+
+
+
+// @title getEventsComposition
+//
+// @details this function can be seen as a wrapper of the function remify::getDyadComposition (in the header remify.h) and it returns the composition in the form of [actor1_ID,actor2_ID,(type_ID)] given a vector of dyads' ID (only suited for remify objects) supplied as input
+//
+// @param dyads vector of dyads' ID ranging from 1 to D 
+// @param N number of actors in the network (from the remify object)
+// @param D maximum number of dyads (from the remify object))
+// @param directed directed network (TRUE), or undirected network (FALSE) - from the remify object
+// @param ncores number of cores used in the parallelization of the procedure
+//
+// @return \code{data.frame} whose columns are rearranged according to the input index
+// [[Rcpp::export]]
+Rcpp::IntegerMatrix getEventsComposition(arma::vec dyads, 
+                                int N, 
+                                int D,
+                                bool directed,
+                                int ncores) {
+    arma::uword d;
+    arma::uword length_dyads = dyads.n_elem;
+    Rcpp::IntegerMatrix out(length_dyads,3);
+    bool undefined_dyads = false;
+
+    #ifdef _OPENMP
+    omp_set_dynamic(0);         // disabling dynamic teams
+    omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+    #pragma omp parallel for private(d) shared(length_dyads,D,out,N,directed)
+    #endif
+    for(d = 0; d < length_dyads; d++){
+        if((dyads(d) < 1) | (dyads(d) > D)){
+            undefined_dyads = true;
+        }
+        else{
+            out(d,Rcpp::_) = remify::getDyadComposition(dyads(d)-1, N,directed)+1;
+        }
+    }
+
+    if(undefined_dyads){
+        Rcpp::stop(errorMessage(1));
+    }
+
+    return out;
+}
+
+
+// @title getDyadIndex_cpp
+//
+// @details this function is a wrapper to the function getDyadID in the header remify.h
+//
+// @param actor1 id of actor1 (ranging between 1 and N)
+// @param actor2 id of actor2 (ranging between 1 and N)
+// @param type id of type (ranging between 1 and C)
+// @param N number of actors in the network
+// @param directed directed network (TRUE), undirected network (FALSE)
+//
+// @return dyad ID according to remify::remify() ranging between 1 and D
+//
+// [[Rcpp::export]]
+int getDyadIndex_cpp(double actor1, double actor2, double type, int N, bool directed){
+    return remify::getDyadIndex(actor1-1,actor2-1,type-1,N,directed)+1;
+}
+
+
+
+// /////////////////////////////////////////////////////////////////////////////////
+// ////////////(END)             remify C++ functions              (END)////////////
+// /////////////////////////////////////////////////////////////////////////////////
+
+
+// /////////////////////////////////////////////////////////////////////////////////
+// /////////(BEGIN)             rehshape C++ functions              (BEGIN)/////////
+// /////////////////////////////////////////////////////////////////////////////////
+
+// @title remify2relventrem
+//
+// @details more details can be found at the following documentation: \link[remify]{reh}.
+// 
+// @param actor1
+// @param actor2
+// @param type
+// @param dyad
+// @param M
+// @param N
+// @param D
+// @param with_type
+// @param directed
+// @param model
+// @param omit_dyad
+// @param ncores
+//
+// @return list of objects with processed raw data.
+//
+// [[Rcpp::export]]
+Rcpp::List remify2relventrem(arma::vec actor1,
+                            arma::vec actor2,
+                            arma::vec type,
+                            arma::vec dyad,
+                            arma::uword M,
+                            arma::uword N,
+                            arma::uword D,
+                            bool with_type,
+                            bool directed,
+                            std::string model,
+                            Rcpp::List omit_dyad,
+                            int ncores = 1){
+
+    arma::uword m;
+    Rcpp::List out = Rcpp::List::create(); // output list
+    // (1) processing the edgelist
+    Rcpp::DataFrame eventlist;
+    //eventlist <- matrix(NA,nrow=data$M,ncol=2)
+    if(model == "tie"){
+        eventlist = Rcpp::DataFrame::create(Rcpp::Named("dyad") = dyad);
+        out["eventlist"] = eventlist;
+    }   
+    else{
+        arma::vec dyad_loc(M);
+        if(with_type){ // if the remify object is processed for actor-oriented modeling, then we have to find the dyad ID 
+            #ifdef _OPENMP
+            omp_set_dynamic(0);         // disabling dynamic teams
+            omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+            #pragma omp parallel for private(m) shared(M,actor1,actor2,type,dyad_loc)
+            #endif
+            for(m = 0; m < M; m++){
+                dyad_loc(m) = remify::getDyadIndex(actor1(m),actor2(m),type(m),N,directed)+1;
+            }
+        }
+        else{
+            #ifdef _OPENMP
+            omp_set_dynamic(0);         // disabling dynamic teams
+            omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+            #pragma omp parallel for private(m) shared(M,actor1,actor2,dyad_loc)
+            #endif
+            for(m = 0; m < M; m++){
+                dyad_loc(m) = remify::getDyadIndex(actor1(m),actor2(m),0,N,directed)+1;
+            }
+        }
+        eventlist = Rcpp::DataFrame::create(Rcpp::Named("dyad") = dyad_loc );
+        out["eventlist"] = eventlist;
+    }
+    
+
+    // (2) converting omit_dyad output object to the 'supplist' argument in relevent::rem()
+    arma::umat supplist(M,D,arma::fill::ones);
+    if(omit_dyad.size()>1){
+        
+        // add parallelization here
+        arma::vec omit_dyad_time = Rcpp::as<arma::vec>(omit_dyad["time"]);
+        arma::umat omit_dyad_riskset = Rcpp::as<arma::umat>(omit_dyad["riskset"]);
+
+        #ifdef _OPENMP
+        omp_set_dynamic(0);         // disabling dynamic teams
+        omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+        #pragma omp parallel for private(m) shared(M,omit_dyad_time,omit_dyad_riskset,supplist)
+        #endif
+        for(m = 0; m < M; m++){
+        if(omit_dyad_time(m)!=(-1)){
+            supplist.row(m) = omit_dyad_riskset.row(omit_dyad_time(m));
+        }
+        }
+    }
+    out["supplist"] = supplist;
+
+
+    // return processed eventlist and supplist
+    return out;
+}
+
+// /////////////////////////////////////////////////////////////////////////////////
+// ///////////(END)             rehshape C++ functions              (END)///////////
+// /////////////////////////////////////////////////////////////////////////////////

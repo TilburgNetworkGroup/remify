@@ -17,14 +17,69 @@ vignette: >
 
 ---
 
-This vignette explains:
-
--  input and output structure of the function <tt>remify::rehshape</tt>
--  usage of the function with an example on a dataset (_randomREH_)
--  limitaton of the current remify version and future developments
+<i> This vignette explains input arguments, output structure and usage of the function `remify::rehshape()`. </i>
 
 ---
 
+### Aim
 
+`remify::rehshape() ` transforms a `remify` object into another object with a structure that is suitable to external packages. The function can return the data inputs required by the functions:
 
+-  `relevent::rem()` 
+-  `relevent::rem.dyad()` 
 
+Both functions are available inside the [relevent](https://CRAN.R-project.org/package=relevent) package (Butts C., 2023).
+
+---
+
+### Inputs
+
+The input arguments of `remify::rehshape()` are:
+
+ - `data`, the processed relational event history (S3 object of class `remify`)
+ - `output_format`, a character value that indicates to which output format the input `data` should be converted. This argument can assume two values: `"relevent-rem"` , `"relevent-rem.dyad"` (default is `"relevent-rem"`)
+ - `ncores`, number of threads used to parallelize internal routines (default is `1L`)
+ - `optional_arguments`, vector of arguments names from `relevent::rem` or `relevent::rem.dyad()` that the user might want to process and have in the output object of rehshape (e.g., the pre-computed structures required by `relevent::rem.dyad()`, such as `acl`, `cumideg`, etc.) - _this feature will be available in a future version of remify_ -
+
+---
+
+### Outputs
+The output structure of the function is different according to the chosen `output_format`:
+
+- If `output_format = "relevent-rem"`, then the output is an S3 object of class `relevent-rem`, which contains: 
+  - `eventlist`, a matrix of two columns: observed dyads in the first column, vector of time in the second column
+  - `supplist`, a logical matrix of dimensions [rows = number of events, columns = number of dyads]. The matrix indicates at each time point (by row) whether each dyad was at risk (`TRUE`), or not (`FALSE`)
+  - `timing`, is a character that can assume two values: `"interval"` (which uses the inter-event time in the model), or `"ordinal"` (which only considers the event order in the model)
+
+- If `output_format = "relevent-rem.dyad"`, then the output is an S3 object of class `relevent-rem.dyad`, which contains: 
+  - `edgelist`, a matrix of three columns: the time (or order) of the events in the first column, the sender and the receiver of the relational event, respectively, in the second and third column
+  - `n`, is the number of actors in the relational event network (senders and receivers)
+  - `ordinal`, is a logical (`TRUE`/`FALSE`) value which indicates whether the likelihood should be 'ordinal' (`TRUE`) or 'interval' (`FALSE`)
+
+---
+
+### Usage
+To explain the usage of the function `remify::rehshape()`, we consider the example edgelist available with the data `randomREH`. First, we process the edgelist with `remify::remify()`.
+```{r}
+library(remify)
+data(randomREH) 
+reh_remify <- remify::remify(edgelist = randomREH$edgelist, model = "tie")
+reh_remify
+```
+
+Then, we can transform the `remify` object to any of the possible output formats:
+
+-  from `remify` to `relevent-rem`:
+```{r}
+reh_rem <- remify::rehshape(data = reh_remify, 
+                      output_format = c("relevent-rem"))
+names(reh_rem)                     
+```
+
+-  from `remify` to `relevent-rem.dyad`:
+```{r}
+reh_rem.dyad <- remify::rehshape(data = reh_remify, 
+                      output_format = c("relevent-rem.dyad"))
+names(reh_rem.dyad)                     
+```
+---
