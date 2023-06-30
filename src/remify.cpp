@@ -86,7 +86,8 @@ Rcpp::List getOmitDyadActiveRiskSet(std::string model,
                                         int D,
                                         int N,
                                         bool directed = true,
-                                        int ncores = 1) {
+                                        int ncores = 1
+                                        ) {
                          
     
     arma::uword M = actor1.size();
@@ -103,8 +104,11 @@ Rcpp::List getOmitDyadActiveRiskSet(std::string model,
         if(riskset(0,dyad_m) == 0){
             riskset(0,dyad_m) = 1; // it has to be included so we assign 1
         }
+
     }
- 
+    
+
+
     arma::vec which_time(M,arma::fill::zeros);
 
     Rcpp::List out = Rcpp::List::create(Rcpp::Named("time") = which_time,Rcpp::Named("riskset") = riskset); // to add later: Rcpp::Named("time") = which_time, 
@@ -119,6 +123,26 @@ Rcpp::List getOmitDyadActiveRiskSet(std::string model,
     else if((model == "actor") && (directed == false)){
         Rcpp::stop(errorMessage(4));
     }    
+
+    // finding active dyads
+    arma::uvec active_dyads = arma::find(riskset.row(0));
+    // saving number of active dyads
+    out["D_active"] = active_dyads.n_elem;
+
+    // finding vector fo dyadID for the active set of dyads 
+    arma::uvec dyadIDactive(M,arma::fill::zeros);
+    #ifdef _OPENMP
+    omp_set_dynamic(0);         // disabling dynamic teams
+    omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
+    #pragma omp parallel for private(m) shared(M,dyadIDactive,active_dyads,actor1,actor2,type,N,directed)  
+    #endif
+    for(m = 0; m < M; m++){
+        int dyad_m = remify::getDyadIndex(actor1(m)-1,actor2(m)-1,type(m)-1,N,directed);
+        arma::uvec find_dyad_m =  arma::find(active_dyads == dyad_m);
+        dyadIDactive(m) = find_dyad_m(0) + 1;
+    }
+    out["dyadIDactive"] = dyadIDactive;
+
 
     return out;
 }
@@ -1413,7 +1437,6 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
     else{
         D = ((N*(N-1))/2)*C;
     }
-    out["D"] = D; // number of dyads (this dimension is the largest possible and doesn't account for the dynamic riskset)
 
 
     // Creating a dictionary for actors and event types, that is like: 'string_name' = integer (IDentifier)
@@ -1427,7 +1450,9 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
     }
 
     // Processing time variable, converting input edgelist and omit_dyad list according to the new id's for both actors and event types
-    Rcpp::List convertedInput = convertInputREH(edgelist,origin,actorsDictionary,typesDictionary,M,out["D"],directed,omit_dyad,model,out["weighted"],ordinal,C,active,ncores);
+    Rcpp::List convertedInput = convertInputREH(edgelist,origin,actorsDictionary,typesDictionary,M,D,directed,omit_dyad,model,out["weighted"],ordinal,C,active,ncores);
+
+    out["D"] = D; // number of dyads (this dimension is the largest possible and doesn't account for the dynamic riskset)
     out["dyad"] = convertedInput["dyad"];
     out["edgelist"] = convertedInput["edgelist"];
     out["M"] = convertedInput["M"]; // if there are self-loops the number of events decreases

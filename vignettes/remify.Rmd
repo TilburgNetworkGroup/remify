@@ -21,7 +21,9 @@ vignette: >
 
 ---
 
+
 # {.tabset .tabset-fade .tabset-pills}
+
 
 ## Aim
 The objective of <tt>remify::remify()</tt> is to process raw relational event sequences supplied by the user along with other inputs that characterize the data (actors' names, event types' names, starting time point of the event sequence, set of interactions to be excluded from the risk set at specific time points, etc.).
@@ -39,8 +41,7 @@ names(randomREH) # objects inside the list 'randomREH'
 ---
 
 
-
-## Input {.tabset .tabset-pills}
+## Input
 
 <b>Input</b> arguments that can be supplied to `remify()` are: `edgelist`,`directed`, `ordinal`,`model`, `actors`, `types`, `riskset`, `origin`, `omit_dyad` and `ncores`. 
 
@@ -194,12 +195,13 @@ edgelist_reh$C
 ------
 
 ### <b><tt>D</tt></b>
-`D` is the number of possible dyads throughout the network considering also the event types. Therefore:
+`D` is the number of dyads considering also the event types (if measured). The number of dyads changes based on the value of the `riskset` argument :
 
-  * if the network is <i>directed</i>, then $D = N*(N-1)*C$;
-  * if the network is <i>undirected</i>, then $D = (N*(N-1)/2)*C$.
+  - If `riskset =  "full"`
+    * and the network is <i>directed</i>, then $D = N*(N-1)*C$;
+    * and the network is <i>undirected</i>, then $D = (N*(N-1)/2)*C$.
+  - if `riskset = "active"`, then $D$ is the number of active dyads observed in the event history
 
-In other terms, it represents the largest observable size of the risk set (`"full"` risk set).
 
 ```{r}
 edgelist_reh$D
@@ -370,6 +372,15 @@ attr(edgelist_reh, "dyad")[1:10] # printing out only first 10 observed dyads
 
 ```{r}
 attr(edgelist_reh, "ncores")
+```
+
+------
+
+### <b><tt>dyadIDactive</tt></b>
+`dyadIDactive` is the vector of relational events that follows the dyadID's of the active set of dyads. This attribute is available only when `riskset = "active"`.
+
+```{r}
+attr(edgelist_reh, "dyadIDactive")
 ```
 
 ## Methods

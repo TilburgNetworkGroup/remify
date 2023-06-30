@@ -222,17 +222,17 @@ remify <- function(edgelist,
                     model = model,
                     active = active,
                     ncores = ncores)
-                    
+    
     str_out <- structure(list(M = out$M
                             ,N = out$N
                             ,C = out$C
                             ,D = out$D
                             ,intereventTime = out$intereventTime
                             ,edgelist = out$edgelist
-                            ,omit_dyad = out$omit_dyad
                             )
                             ,class="remify")
 
+    
     attr(str_out, "with_type") <- out$with_type
     attr(str_out, "weighted") <- out$weighted
     attr(str_out, "directed") <- directed
@@ -243,6 +243,13 @@ remify <- function(edgelist,
     attr(str_out, "origin") <- out$edgelist$time[1]-out$intereventTime[1]
     attr(str_out, "dyad") <- out$dyad
     attr(str_out, "ncores") <- ncores 
+
+    if(riskset == "active"){
+      str_out$D <- out$omit_dyad$D_active
+      attr(str_out, "dyadIDactive") <- out$omit_dyad$dyadIDactive 
+      out$omit_dyad <- NULL
+    }                   
+    str_out$omit_dyad <- out$omit_dyad
 
     return(str_out)
 }

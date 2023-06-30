@@ -32,7 +32,7 @@ Both functions are available inside the [relevent](https://CRAN.R-project.org/pa
 
 ---
 
-### Inputs
+### Input
 
 The input arguments of `remify::rehshape()` are:
 
@@ -43,7 +43,7 @@ The input arguments of `remify::rehshape()` are:
 
 ---
 
-### Outputs
+### Output
 The output structure of the function is different according to the chosen `output_format`:
 
 - If `output_format = "relevent-rem"`, then the output is an S3 object of class `relevent-rem`, which contains: 
