@@ -194,14 +194,12 @@ edgelist_reh$C
 
 ------
 
-### <b><tt>D</tt></b>
-`D` is the number of dyads considering also the event types (if measured). The number of dyads changes based on the value of the `riskset` argument :
+### <b><tt>D</tt></b> and <b><tt>activeD</tt></b>
+`D` is the number of possible dyads considering the number of actors and also the number of event types (if measured). It represents the largest size of the risk set (full risk set size). The number of dyads `D` can change based on whether relational events are directed or undirected:
+    * if the network is <i>directed</i>, then $D = N*(N-1)*C$;
+    * if the network is <i>undirected</i>, then $D = (N*(N-1)/2)*C$.
 
-  - If `riskset =  "full"`
-    * and the network is <i>directed</i>, then $D = N*(N-1)*C$;
-    * and the network is <i>undirected</i>, then $D = (N*(N-1)/2)*C$.
-  - if `riskset = "active"`, then $D$ is the number of active dyads observed in the event history
-
+If the input argument `riskset` is `"active"`, then in the output object there will also be the number `activeD`, which is the size of the active risk set (active dyads observed in the event history).
 
 ```{r}
 edgelist_reh$D
@@ -399,7 +397,7 @@ summary(edgelist_reh) # same output as `print(edgelist_reh)` or just `edgelist_r
 ------
 
 ### <b><tt>dim()</tt></b>
-`dim()` returns some useful dimensions characterizing the network, such as: number of events, number of actors, number of event types (omitted in the case of networks with one or no event types), largest number of possible dyads given the number of actors ($N$). 
+`dim()` returns some useful dimensions characterizing the network, such as: number of events, number of actors, number of event types (omitted in the case of networks with one or no event types), largest number of possible dyads ($D$) and, finally, number of active dyads (`activeD`, showed only if `riskset = "active"`). 
 
 ```{r}
 dim(edgelist_reh)
@@ -436,11 +434,12 @@ getTypeName(x = edgelist_reh, typeID = c(1,3))
 ------
 
 ### <b><tt>getDyad()</tt></b>
-`getDyad(x, dyadID)`: by supplying one or more `dyadID`'s (between `1` and `edgelist_reh$D`) it returns a `data.frame` with the dyad composition as "actor1", "actor2" and "type" (if type is present).
+`getDyad(x, dyadID, active)`: by supplying one or more `dyadID`'s it returns a `data.frame` with the dyad composition as "actor1", "actor2" and "type" (if type is present). If `active = FALSE`, then the method expects that the vector `dyadID` consist of ID's of dyads from the full risk set (between `1` and `edgelist_reh$D`). If the risk set in the processed remify object is `"active"`, then it is also possible to get the dyad composition from the ID of the active dyads by declaring the argument `active = TRUE` and supplying the vector of ID's of the active dyads to `dyadID` (ranging between `1` and `edgelist_reh$activeD`).
 
 ```{r}
-getDyad(x = edgelist_reh, dyadID = c(1,10,100))
+getDyad(x = edgelist_reh, dyadID = c(1,10,100), active = FALSE)
 ```
+
 
 ------
 

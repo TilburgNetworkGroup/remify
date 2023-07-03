@@ -5,14 +5,16 @@
 \alias{getDyad.remify}
 \title{getDyad}
 \usage{
-getDyad(x, dyadID)
+getDyad(x, dyadID, active = FALSE)
 
-\method{getDyad}{remify}(x, dyadID)
+\method{getDyad}{remify}(x, dyadID, active = FALSE)
 }
 \arguments{
 \item{x}{a \code{remify} object.}
 
 \item{dyadID}{a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).}
+
+\item{active}{logical, whether to consider the input \code{dyadID} as a vector of ID's of active dyads (\code{active = TRUE}) or dyads from the full risk set (\code{active = FALSE})}
 }
 \description{
 A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).

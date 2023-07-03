@@ -244,8 +244,8 @@ remify <- function(edgelist,
     attr(str_out, "dyad") <- out$dyad
     attr(str_out, "ncores") <- ncores 
 
-    if(riskset == "active"){
-      str_out$D <- out$omit_dyad$D_active
+    if(active){
+      str_out$activeD <- out$omit_dyad$D_active
       if(model == "tie"){
         attr(str_out, "dyadIDactive") <- out$omit_dyad$dyadIDactive 
         out$omit_dyad <- NULL
@@ -289,6 +289,9 @@ summary.remify <- function(object,...){
   actors <- paste("\t> actors = ",object$N,sep="")
   types <- if(!attr(object,"with_type")) NULL else {paste("\t> (event) types = ",object$C,sep="")}
   riskset <- paste("\t> riskset = ",attr(object,"riskset"),sep="")
+  if(attr(object,"riskset")=="active"){
+    riskset <- c(riskset,paste("\t\t>> active dyads = ",object$activeD," (full risk set size =",object$D,")",sep=""))
+  }
   directed <- paste("\t> directed = ",attr(object,"directed"),sep="")
   ordinal <- paste("\t> ordinal = ",attr(object,"ordinal"),sep="")
   weighted <- paste("\t> weighted = ",attr(object,"weighted"),sep="")
@@ -373,6 +376,9 @@ dim.remify <- function(x){
   else{
     dimensions <- c(x$M, x$N, x$D)
     names(dimensions) <- c("events","actors","dyads") 
+  }
+  if(attr(x,"riskset")=="active"){
+    dimensions <- c(dimensions, "dyads(active)" = x$activeD)
   }
   return(dimensions)
 }
@@ -527,6 +533,7 @@ getTypeName.remify <- function(x, typeID = NULL) {
 #' @description A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).
 #' @param x a \code{remify} object.
 #' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).
+#' @param active logical, whether to consider the input \code{dyadID} as a vector of ID's of active dyads (\code{active = TRUE}) or dyads from the full risk set (\code{active = FALSE})
 #' @export
 #' 
 #' @examples 
@@ -542,14 +549,18 @@ getTypeName.remify <- function(x, typeID = NULL) {
 #' # find dyad composition (names of actor1, actor2 and type) from the dyad ID
 #' getDyad(x = reh, dyadID = c(450,239,900))
 #' 
-getDyad <- function(x, dyadID){
+getDyad <- function(x, dyadID, active = FALSE){
   UseMethod("getDyad")
 }
 
 #' @describeIn getDyad return dyad composition in actor1, actor2 and type from one (or more) dyad ID
 #' @method getDyad remify
 #' @export
-getDyad.remify <- function(x, dyadID) {
+getDyad.remify <- function(x, dyadID, active = FALSE) {
+
+  if(active & attr(x,"riskset") != "active"){
+    stop("'active' = TRUE works only for attr(x,'riskset') = 'active'")
+  }
   if(!is.numeric(dyadID) & !is.integer(dyadID)){
     stop("'dyadID' must be a numeric (or integer) vector")
   }
@@ -565,13 +576,23 @@ getDyad.remify <- function(x, dyadID) {
 
   # apply function getEventsComposition
   dict_loc <- attr(x,"dictionary")
-  composition <- getEventsComposition(dyads = dyadID, N = x$N, D = x$D,directed = attr(x,"directed"), ncores  = attr(x,"ncores"))
+  dyadID_full <- dyadID
+  if(active){
+    for(d in 1:length(dyadID)){
+      dyadID_full[d] <- attr(x,"dyad")[which(attr(x,"dyadIDactive")==dyadID[d])[1]]
+    }
+  }
+  composition <- getEventsComposition(dyads = dyadID_full, N = x$N, D = x$D,directed = attr(x,"directed"), ncores  = attr(x,"ncores"))
   if(attr(x,"with_type")){ # output with 'type' column
     out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]], type = dict_loc$types$typeName[composition[,3]])  
   }
   else{ # output without 'type' column (for sequences with one or none event type)
     out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]]) 
   }
+  if(active){
+    names(out)[1] <- "dyadIDactive"
+  }
+  
   rm(composition)
 
   return(out)
@@ -734,12 +755,20 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
       stop("'type' not found in the 'remify' object")
     }
   }
+
   # finding dyad ID
   dyad_id <- getDyadIndex_cpp(actor1 = actor1_id-1,
                                     actor2 = actor2_id-1,
                                     type = type_id-1,
                                     N = x$N,
                                     directed = attr(x,"directed"))
+  if((attr(x,"riskset") == "active") & (attr(x,"model")=="tie")){
+    select_loc <- which(attr(x,"dyad")==dyad_id)[1] # selecting first occurrence of dyad_id in attr(x,"dyad")
+    if(length(select_loc > 0)){
+      dyad_id <- c(dyad_id,ifelse(length(select_loc>0),attr(x,"dyadIDactive")[select_loc],NA))
+      names(dyad_id) <- c("dyadID","dyadIDactive")
+    }
+  }                                 
 
   return(dyad_id)
 }

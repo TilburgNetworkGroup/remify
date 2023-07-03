@@ -191,6 +191,9 @@ expect_identical(getDyad(x = out,dyadID = c(1))$type,c("competition"))
 expect_error(getDyad(x = out,dyadID = c("1")),
 "'dyadID' must be a numeric (or integer) vector",
 fixed = TRUE)
+expect_error(getDyad(x = out, dyadID = c(1), active = TRUE),
+"'active' = TRUE works only for attr(x,'riskset') = 'active'",
+fixed = TRUE)
 expect_warning(getDyad(x = out, dyadID = c(1,1,2)),
   "'dyadID' contains ID's that are repeated more than once. Such ID's will be processed once",
   fixed = TRUE
@@ -277,3 +280,21 @@ expect_silent(getDyadID(x = out, actor1 = "Alexander", actor2 = "Charles"))
 
 # [... code here ...]
 
+# test on methds with active risk set
+
+out <- remify(edgelist = reh_loc$edgelist,
+                actors = reh_loc$actors,
+                types = reh_loc$types, 
+                riskset = "active",
+                model = "tie")  
+
+expect_true(is.numeric(dim(out)))
+#expect_equal(length(dim(out)),5) # with types
+expect_identical(as.numeric(dim(out)),c(out$M,out$N,out$C,out$D,out$activeD))
+#expect_identical(names(dim(out)),c("events","actors","types","dyads","dyads(active)"))
+expect_silent(print(out))
+expect_silent(summary(out))
+# getDyad method                  
+expect_silent(getDyad(x = out, dyadID = c(1), active = TRUE))          
+# getDyadID method
+expect_silent(getDyadID(x = out, actor1 = "Alexander", actor2 = "Charles", type = "cooperation"))          
