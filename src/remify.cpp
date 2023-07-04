@@ -509,92 +509,9 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
     Rcpp::List out = Rcpp::List::create();
     Rcpp::DataFrame edgelist = input_edgelist;
    // edgelist = Rcpp::clone(input_edgelist); // this way we make a deep copy and the input edgelist won't be altered [[CHECK THIS!]]
-    Rcpp::DataFrame convertedEdgelist;
+    Rcpp::DataFrame convertedEdgelist;    
 
-    //[**1**] Processing time variable
-    if(!ordinal){
-        std::vector<double> input_time = Rcpp::as<std::vector<double>>(edgelist["time"]); // converting any time input to a double 
-        double min_time = *min_element(input_time.begin(), input_time.end()); 
-
-        // (1) Checking whether the origin is NULL or it is defined by the user (time variable is not yet sorted if needed, therefore we work with time_input.min() value) []
-        if(min_time >= 0.0){
-            arma::uword m_loc = 0;
-            std::vector<double> intereventTime(input_time.size(),1.0);
-            double origin;
-            // (2) Check if the `time` variable is sorted
-            while(m_loc < input_time.size()){ 
-                if(input_time[m_loc] <=  input_time[m_loc+1]){
-                    intereventTime[m_loc+1] = input_time[m_loc+1] - input_time[m_loc]; // compute the interevent time
-                    m_loc++;
-                }
-                else{
-                    m_loc = intereventTime.size()+1; // the first occurrence of unsorted time the while will stop [saving time]
-                }
-            }
-            // (2.1) Force the sorting of `time`
-            if(!std::is_sorted(std::begin(input_time), std::end(input_time))){
-                Rcpp::Rcout << warningMessage(0); // warning message about the sorting operation
-                // reordering edgelist
-                std::vector<std::size_t> sorted_time_order(input_time.size());
-                std::iota(std::begin(sorted_time_order), std::end(sorted_time_order), 0);
-                std::sort(std::begin(sorted_time_order), std::end(sorted_time_order),
-                        [&input_time](const auto & lhs, const auto & rhs)
-                        {
-                            return input_time[lhs] < input_time[rhs];
-                        }
-                );
-                edgelist = rearrangeDataFrame(edgelist,sorted_time_order); // overwriting 'edgelist' given the new order
-
-                // saving the new sorted time
-                input_time = Rcpp::as<std::vector<double>>(edgelist["time"]); // overwriting 'input time' given the new order
-                for(m_loc = 0; m_loc < (input_time.size()-1); m_loc++){ // compute the interevent time again std::adjacent_difference could be also used (CHECK)
-                    //std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // this still returns time_with_origin[0] [[CHECK!!!]]
-                    intereventTime[m_loc+1] = input_time[m_loc+1] - input_time[m_loc]; 
-                }
-            }
-
-            // processing input 'origin'
-            if(Rf_isNull(input_origin)){ // if origin input is NULL
-                origin = min_time - 1.0; // if in seconds event_0 will occur one second earlier than event_1, if in days it will be one day earlier
-                if(origin < 0) origin = 0.0; // if the supplied `time` is a vector of either integers or doubles, this case might be true and then t_0 = 0
-            }
-            else{ // otherwise store check the input value and store it
-                double origin_loc = Rcpp::as<double>(input_origin); 
-                if(origin_loc >= min_time){ // check if the supplied origin has the same value of the first time point (throw a warning and change the value in the same way when origin is NULL)
-                    Rcpp::Rcout << warningMessage(2); // the origin provided as input is a time value greater to at least one event, origin is now set to a different value 
-                    origin = min_time - 1.0; // setting the origin to a second/minute/hour/day earlier
-                    if(origin < 0) origin = 0.0; // setting the origin to zero (if the previous value generated a negative time)
-                }
-                else{
-                    origin = origin_loc;
-                }
-            }
-            intereventTime[0] = input_time[0] - origin;
-
-            out["intereventTime"] = intereventTime;
-        }
-        else{
-            Rcpp::stop(errorMessage(5)); // time variable can't be negative
-        }
-    }
-    else{
-        out["intereventTime"] = R_NilValue;
-    }
-
-    // this code chunk is only for the rescaling of the time variable to larger time units, e.g., seconds -> hours 
-    // ---
-    //if(Rcpp::is<Rcpp::DatetimeVector>(input_time)){ // if the input time is DatetimeVector
-        // ...
-    // }
-    //else if(Rcpp::is<Rcpp::DateVector>(input_time)){ // time is a Rcpp::DateVector
-        // ...
-    //}
-    // intereventTime *= scale;    
-    // ---
-
-    // process origin here (future version of remify)
-
-    //[**2**] Processing edgelist 
+    //[**1**] Processing edgelist 
     std::vector<double> time_loc = Rcpp::as<std::vector<double>>(edgelist["time"]); // converting time input to a double (if the time was not sorted, not it is because the edgelist is overwritten in case)
     //for(int m = 0) calculate here the time_diff as time - origin , so that we work an increase time variable (in whatever time scale seconds / hours etc) for the conversion of the time input
 
@@ -1091,9 +1008,90 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
         Rcpp::Rcout << warningMessage(1);
         // removing self-loops from the convertedEdgelist here
     }                                                                            
-    // Storing converted `edgelist` (without self-loops, if present)
+
+    //[**2**] Processing time variable
+    if(!ordinal){
+        std::vector<double> input_time = Rcpp::as<std::vector<double>>(convertedEdgelist["time"]); // converting any time input to a double 
+        double min_time = *min_element(input_time.begin(), input_time.end()); 
+
+        // (1) Checking whether the origin is NULL or it is defined by the user (time variable is not yet sorted if needed, therefore we work with time_input.min() value) []
+        if(min_time >= 0.0){
+            arma::uword m_loc = 0;
+            std::vector<double> intereventTime(input_time.size(),1.0);
+            double origin;
+            // (2) Check if the `time` variable is sorted
+            while(m_loc < input_time.size()){ 
+                if(input_time[m_loc] <=  input_time[m_loc+1]){
+                    intereventTime[m_loc+1] = input_time[m_loc+1] - input_time[m_loc]; // compute the interevent time
+                    m_loc++;
+                }
+                else{
+                    m_loc = intereventTime.size()+1; // the first occurrence of unsorted time the while will stop [saving time]
+                }
+            }
+            // (2.1) Force the sorting of `time`
+            if(!std::is_sorted(std::begin(input_time), std::end(input_time))){
+                Rcpp::Rcout << warningMessage(0); // warning message about the sorting operation
+                // reordering edgelist
+                std::vector<std::size_t> sorted_time_order(input_time.size());
+                std::iota(std::begin(sorted_time_order), std::end(sorted_time_order), 0);
+                std::sort(std::begin(sorted_time_order), std::end(sorted_time_order),
+                        [&input_time](const auto & lhs, const auto & rhs)
+                        {
+                            return input_time[lhs] < input_time[rhs];
+                        }
+                );
+                convertedEdgelist = rearrangeDataFrame(convertedEdgelist,sorted_time_order); // overwriting 'convertedEdgelist' given the new order
+
+                // saving the new sorted time
+                input_time = Rcpp::as<std::vector<double>>(convertedEdgelist["time"]); // overwriting 'input time' given the new order
+                for(m_loc = 0; m_loc < (input_time.size()-1); m_loc++){ // compute the interevent time again std::adjacent_difference could be also used (CHECK)
+                    //std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // this still returns time_with_origin[0] [[CHECK!!!]]
+                    intereventTime[m_loc+1] = input_time[m_loc+1] - input_time[m_loc]; 
+                }
+            }
+
+            // processing input 'origin'
+            if(Rf_isNull(input_origin)){ // if origin input is NULL
+                origin = min_time - 1.0; // if in seconds event_0 will occur one second earlier than event_1, if in days it will be one day earlier
+                if(origin < 0) origin = 0.0; // if the supplied `time` is a vector of either integers or doubles, this case might be true and then t_0 = 0
+            }
+            else{ // otherwise store check the input value and store it
+                double origin_loc = Rcpp::as<double>(input_origin); 
+                if(origin_loc >= min_time){ // check if the supplied origin has the same value of the first time point (throw a warning and change the value in the same way when origin is NULL)
+                    Rcpp::Rcout << warningMessage(2); // the origin provided as input is a time value greater to at least one event, origin is now set to a different value 
+                    origin = min_time - 1.0; // setting the origin to a second/minute/hour/day earlier
+                    if(origin < 0) origin = 0.0; // setting the origin to zero (if the previous value generated a negative time)
+                }
+                else{
+                    origin = origin_loc;
+                }
+            }
+            intereventTime[0] = input_time[0] - origin;
+
+            out["intereventTime"] = intereventTime;
+        }
+        else{
+            Rcpp::stop(errorMessage(5)); // time variable can't be negative
+        }
+    }
+    else{
+        out["intereventTime"] = R_NilValue;
+    }
+
+    // Storing converted `edgelist` (without self-loops, if present, and, reoreder if events are not sorted by their time of occurrence)
     out["edgelist"] = convertedEdgelist; 
 
+    // this code chunk is only for the rescaling of the time variable to larger time units, e.g., seconds -> hours 
+    // ---
+    //if(Rcpp::is<Rcpp::DatetimeVector>(input_time)){ // if the input time is DatetimeVector
+        // ...
+    // }
+    //else if(Rcpp::is<Rcpp::DateVector>(input_time)){ // time is a Rcpp::DateVector
+        // ...
+    //}
+    // intereventTime *= scale;    
+    // ---
 
     // [**3**] Converting `omit_dyad` list
     if(omit_dyad.length()>0){

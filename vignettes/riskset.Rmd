@@ -14,7 +14,7 @@ header-includes:
    - \usepackage{pgfplots}
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Define a dynamic risk set}
+  %\VignetteIndexEntry{Definition of full, active and manual risk set}
   %\VignetteEncoding{UTF-8}
 ---
 
