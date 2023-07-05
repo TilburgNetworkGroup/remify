@@ -512,8 +512,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
     Rcpp::DataFrame convertedEdgelist;    
 
     //[**1**] Processing edgelist 
-    std::vector<double> time_loc = Rcpp::as<std::vector<double>>(edgelist["time"]); // converting time input to a double (if the time was not sorted, not it is because the edgelist is overwritten in case)
-    //for(int m = 0) calculate here the time_diff as time - origin , so that we work an increase time variable (in whatever time scale seconds / hours etc) for the conversion of the time input
+    std::vector<double> time_loc = Rcpp::as<std::vector<double>>(edgelist["time"]); // converting time input to a double 
 
     // edgelist input actor1 and actor2 with dictionary
     std::vector<std::string> stringActor1 = Rcpp::as<std::vector<std::string>>(edgelist["actor1"]);
@@ -1079,7 +1078,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
         out["intereventTime"] = R_NilValue;
     }
 
-    // Storing converted `edgelist` (without self-loops, if present, and, reoreder if events are not sorted by their time of occurrence)
+    // Storing converted `edgelist` (without self-loops, if present, and, reoredered if events were not sorted by their time of occurrence)
     out["edgelist"] = convertedEdgelist; 
 
     // this code chunk is only for the rescaling of the time variable to larger time units, e.g., seconds -> hours 
