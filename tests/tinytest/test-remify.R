@@ -138,6 +138,22 @@ out <- remify(edgelist = reh_loc$edgelist,
                   model = "actor")
 expect_true(!is.null(out$omit_dyad))
 
+# test omit_dyad object with sequence with simultaneous events
+reh_loc <- randomREH
+reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
+reh_loc$origin <- as.Date(reh_loc$origin)-1
+reh_loc$omit_dyad[[1]]$time <- as.Date(reh_loc$omit_dyad[[1]]$time)
+reh_loc$omit_dyad[[2]]$time <- as.Date(reh_loc$omit_dyad[[1]]$time)
+out <- remify(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = reh_loc$types, 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = reh_loc$origin,
+                  omit_dyad = reh_loc$omit_dyad,
+                  model = "tie")
+
+
 # `time` in 'omit_dyad' defined as c(NA,NA)
 reh_loc <- randomREH
 reh_loc$omit_dyad[[1]]$time <- c(NA,NA)

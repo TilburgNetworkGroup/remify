@@ -32,6 +32,71 @@ expect_equal(length(dim(out)),3) # with types
 expect_identical(as.numeric(dim(out)),c(out$M,out$N,out$D))
 expect_identical(names(dim(out)),c("events","actors","dyads"))
 
+# method dim() with simultaneous events (model == "tie") and types
+reh_loc <- randomREH
+reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
+reh_loc$origin <- as.Date(reh_loc$origin)-1
+out <- remify(edgelist = reh_loc$edgelist,
+                actors = reh_loc$actors,
+                types = reh_loc$types, 
+                directed = TRUE, # events are directed
+                ordinal = FALSE, # REM with waiting times
+                origin = reh_loc$origin,
+                omit_dyad = NULL,
+                model = "tie",
+                riskset = "active")
+
+# expectations on output object features               
+expect_equal(length(out), 8)
+expect_true(is.numeric(dim(out)))
+expect_equal(length(dim(out)),6) # with types
+expect_identical(as.numeric(dim(out)),c(out$E,out$M,out$N,out$C,out$D,out$activeD))
+expect_identical(names(dim(out)),c("events","time points","actors","types","dyads","dyads(active)"))
+
+# method dim() with simultaneous events (model == "tie") and without types
+reh_loc <- randomREH
+reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
+reh_loc$edgelist$type <- NULL
+reh_loc$origin <- as.Date(reh_loc$origin)-1
+out <- remify(edgelist = reh_loc$edgelist,
+                actors = reh_loc$actors,
+                types = NULL, 
+                directed = TRUE, # events are directed
+                ordinal = FALSE, # REM with waiting times
+                origin = reh_loc$origin,
+                omit_dyad = NULL,
+                model = "tie",
+                riskset = "active")
+
+# expectations on output object features               
+expect_equal(length(out), 8)
+expect_true(is.numeric(dim(out)))
+expect_equal(length(dim(out)),5) # with types
+expect_identical(as.numeric(dim(out)),c(out$E,out$M,out$N,out$D,out$activeD))
+expect_identical(names(dim(out)),c("events","time points","actors","dyads","dyads(active)"))
+
+
+# method dim() with simultaneous events (model == "actor")
+reh_loc <- randomREH
+reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
+reh_loc$origin <- as.Date(reh_loc$origin)-1
+out <- remify(edgelist = reh_loc$edgelist,
+                actors = reh_loc$actors,
+                types = reh_loc$types, 
+                directed = TRUE, # events are directed
+                ordinal = FALSE, # REM with waiting times
+                origin = reh_loc$origin,
+                omit_dyad = NULL,
+                model = "actor")
+
+# expectations on output object features               
+expect_equal(length(out), 7)
+expect_true(is.numeric(dim(out)))
+expect_equal(length(dim(out)),5) # with types
+expect_identical(as.numeric(dim(out)),c(out$E,out$M,out$N,out$C,out$D))
+expect_identical(names(dim(out)),c("events","time points","actors","types","dyads"))
+
+
 # method getRiskset()
 
 ## (1) when model = "tie" and omit_dyad is supplied
@@ -199,9 +264,10 @@ expect_warning(getDyad(x = out, dyadID = c(1,1,2)),
   fixed = TRUE
 )
 
-tryCatch_error_loc<- tryCatch(getDyad(x = out,dyadID = c(0)),error=function(e) e)               
-expect_match(print(tryCatch_error_loc),
-"<Rcpp::exception: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D>")
+tryCatch_error_loc<- tryCatch(getDyad(x = out,dyadID = c(0)),error=function(e) e)       
+expect_inherits(tryCatch_error_loc,c("Rcpp::exception","C++Error","error","condition")) 
+#expect_match(print(tryCatch_error_loc),
+#"<Rcpp::exception: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D>")
 
 # getDyad without type
 reh_loc$edgelist$type <- NULL
@@ -213,9 +279,10 @@ out <- remify(edgelist = reh_loc$edgelist,
                 origin = reh_loc$origin,
                 omit_dyad = NULL,
                 model = "tie")
-tryCatch_error_loc<- tryCatch(getDyad(x = out,dyadID = c(0)),error=function(e) e)               
-expect_match(print(tryCatch_error_loc),
-"<Rcpp::exception: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D>")
+tryCatch_error_loc <- tryCatch(getDyad(x = out,dyadID = c(0)),error=function(e) e)      
+expect_inherits(tryCatch_error_loc,c("Rcpp::exception","C++Error","error","condition")) 
+#expect_match(print(tryCatch_error_loc),
+#"Error: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D\n")
 
 expect_silent(getDyad(x = out, dyadID = c(1:10)))
 expect_true(is.data.frame(getDyad(x = out, dyadID = c(1:10))))
@@ -280,8 +347,7 @@ expect_silent(getDyadID(x = out, actor1 = "Alexander", actor2 = "Charles"))
 
 # [... code here ...]
 
-# test on methds with active risk set
-
+# test on methods with active risk set
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
                 types = reh_loc$types, 

@@ -222,7 +222,7 @@ remify <- function(edgelist,
                     model = model,
                     active = active,
                     ncores = ncores)
-    
+
     str_out <- structure(list(M = out$M
                             ,N = out$N
                             ,C = out$C
@@ -244,6 +244,11 @@ remify <- function(edgelist,
     attr(str_out, "dyad") <- out$dyad
     attr(str_out, "ncores") <- ncores 
 
+    if(model == "actor"){
+      attr(str_out,"actor1") <- str_out$edgelist$actor1 
+      attr(str_out,"actor2") <- str_out$edgelist$actor2
+    }
+
     if(active){
       str_out$activeD <- out$omit_dyad$D_active
       if(model == "tie"){
@@ -252,8 +257,51 @@ remify <- function(edgelist,
       }
     }                   
     str_out$omit_dyad <- out$omit_dyad
+    out <- NULL 
+    
+    # modifying remify object to account for simultaneous events
+    rows_to_remove <- which(str_out$intereventTime == 0) # processing the co-occurrence of events
+    if(length(rows_to_remove) != 0){
+        str_out$intereventTime <- str_out$intereventTime[-rows_to_remove] # updating interevent time vector
+        if(!is.null(str_out$omit_dyad)){
+          str_out$omit_dyad$time <- str_out$omit_dyad$time[-rows_to_remove] # updating vector of risk set changes over time
+        }
+        str_out$E <- str_out$M # number of events
+        str_out$M <- length(str_out$intereventTime) # overwrite (lower) number of time points
+        time_unique <-unique(str_out$edgelist$time)
 
-    return(str_out)
+        # tie-oriented modeling
+        if(model == "tie"){
+          dyad <- list()
+          dyadIDactive <- list()
+          for(m in 1:length(time_unique)){
+              which_time_m <- which(str_out$edgelist$time == time_unique[m])
+              dyad[[m]] <- attr(str_out, "dyad")[which_time_m] - 1
+              if(active){
+                dyadIDactive[[m]] <- attr(str_out,"dyadIDactive")[which_time_m] - 1
+              }
+          }
+          attr(str_out,"dyad") <- dyad
+          if(active){
+            attr(str_out,"dyadIDactive") <- dyadIDactive
+          }
+        }
+
+        # actor-oriented modeling
+        if(model == "actor"){
+          actor1 <- list()
+          actor2 <- list()
+          for(m in 1:length(time_unique)){
+              which_time_m <- which(str_out$edgelist$time == time_unique[m])
+              actor1[[m]] <- str_out$edgelist$actor1[which_time_m] - 1
+              actor2[[m]] <- str_out$edgelist$actor2[which_time_m] - 1
+          }
+          attr(str_out,"actor1") <- actor1 
+          attr(str_out,"actor2") <- actor2
+        }
+    }
+
+  return(str_out)
 }
 
 
@@ -285,12 +333,17 @@ remify <- function(edgelist,
 summary.remify <- function(object,...){
   title <- "Relational Event Network"
   model <- paste("(processed for ",attr(object,"model"),"-oriented modeling):",sep="")
-  events <- paste("\t> events = ",object$M,sep="")
+  if(!is.null(object$E)){
+    events <- paste("\t> events = ",object$M,sep="")
+  }
+  else{
+    events <- paste("\t> events = ",object$E," (time points = ",object$M,")",sep="")
+  }
   actors <- paste("\t> actors = ",object$N,sep="")
   types <- if(!attr(object,"with_type")) NULL else {paste("\t> (event) types = ",object$C,sep="")}
   riskset <- paste("\t> riskset = ",attr(object,"riskset"),sep="")
   if(attr(object,"riskset")=="active"){
-    riskset <- c(riskset,paste("\t\t>> active dyads = ",object$activeD," (full risk set size =",object$D,")",sep=""))
+    riskset <- c(riskset,paste("\t\t>> active dyads = ",object$activeD," (full risk set size = ",object$D,")",sep=""))
   }
   directed <- paste("\t> directed = ",attr(object,"directed"),sep="")
   ordinal <- paste("\t> ordinal = ",attr(object,"ordinal"),sep="")
@@ -299,7 +352,7 @@ summary.remify <- function(object,...){
   time <- object$edgelist$time
   origin <- attr(object, "time")$origin
   if(!attr(object,"ordinal")){
-    time_length <- time[object$M] - attr(object,"origin")
+    time_length <- time[length(time)] - attr(object,"origin")
     time_length <- paste("\t> time length ~ ",round(time_length)," ",attr(time_length, "units"),sep="")
   }
   interevent_time <- NULL
@@ -369,13 +422,25 @@ print.remify <- function(x,...){
 #' 
 dim.remify <- function(x){
   dimensions <- NULL
-  if(attr(x,"with_type")){
-    dimensions <- c(x$M, x$N, x$C, x$D)
-    names(dimensions) <- c("events","actors","types","dyads")
+  if(is.null(x$E)){
+    if(attr(x,"with_type")){
+      dimensions <- c(x$M, x$N, x$C, x$D)
+      names(dimensions) <- c("events","actors","types","dyads")
+    }
+    else{
+      dimensions <- c(x$M, x$N, x$D)
+      names(dimensions) <- c("events","actors","dyads") 
+    }
   }
   else{
-    dimensions <- c(x$M, x$N, x$D)
-    names(dimensions) <- c("events","actors","dyads") 
+    if(attr(x,"with_type")){
+      dimensions <- c(x$E, x$M, x$N, x$C, x$D)
+      names(dimensions) <- c("events","time points","actors","types","dyads")
+    }
+    else{
+      dimensions <- c(x$E, x$M, x$N, x$D)
+      names(dimensions) <- c("events","time points","actors","dyads") 
+    } 
   }
   if(attr(x,"riskset")=="active"){
     dimensions <- c(dimensions, "dyads(active)" = x$activeD)
@@ -814,7 +879,7 @@ if(x$N > 50){
   actors_to_select <- as.numeric(names(actors_freq)[1:50])
   events_to_select <- which((x$edgelist$actor1_ID %in% actors_to_select) & (x$edgelist$actor2_ID %in% actors_to_select))
   x$edgelist <- x$edgelist[events_to_select,]
-  # x$M <- dim(x$edgelist)[1]
+  # x$M <- dim(x$edgelist)[1] pay attention on $M when simultaneous events are observed (!!)
   x$N <- 50
   x$D <- ifelse(attr(x,"directed"),x$N*(x$N-1),x$N*(x$N-1)/2)
   reduced <- TRUE
