@@ -276,9 +276,9 @@ remify <- function(edgelist,
           dyadIDactive <- list()
           for(m in 1:length(time_unique)){
               which_time_m <- which(str_out$edgelist$time == time_unique[m])
-              dyad[[m]] <- attr(str_out, "dyad")[which_time_m] - 1
+              dyad[[m]] <- attr(str_out, "dyad")[which_time_m]
               if(active){
-                dyadIDactive[[m]] <- attr(str_out,"dyadIDactive")[which_time_m] - 1
+                dyadIDactive[[m]] <- attr(str_out,"dyadIDactive")[which_time_m]
               }
           }
           attr(str_out,"dyad") <- dyad
@@ -293,8 +293,8 @@ remify <- function(edgelist,
           actor2 <- list()
           for(m in 1:length(time_unique)){
               which_time_m <- which(str_out$edgelist$time == time_unique[m])
-              actor1[[m]] <- str_out$edgelist$actor1[which_time_m] - 1
-              actor2[[m]] <- str_out$edgelist$actor2[which_time_m] - 1
+              actor1[[m]] <- str_out$edgelist$actor1[which_time_m]
+              actor2[[m]] <- str_out$edgelist$actor2[which_time_m]
           }
           attr(str_out,"actor1") <- actor1 
           attr(str_out,"actor2") <- actor2
