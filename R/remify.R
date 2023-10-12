@@ -333,7 +333,7 @@ remify <- function(edgelist,
 summary.remify <- function(object,...){
   title <- "Relational Event Network"
   model <- paste("(processed for ",attr(object,"model"),"-oriented modeling):",sep="")
-  if(!is.null(object$E)){
+  if(is.null(object$E)){
     events <- paste("\t> events = ",object$M,sep="")
   }
   else{
