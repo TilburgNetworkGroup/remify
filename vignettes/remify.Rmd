@@ -540,7 +540,7 @@ plot(x=edgelist_reh,which=4,n_intervals=13) # per time interval: number of event
 plot(x=edgelist_reh,which=5,n_intervals=13,igraph.edge.color="#cfcece",igraph.vertex.color="#7bbfef") # networks
 ```
 
-The plots above slightly vary for the case of undirected networks:
+The plots above slightly vary in the case of undirected networks:
 
 ```{r}
 edgelist_reh <- remify(edgelist = randomREH$edgelist,
