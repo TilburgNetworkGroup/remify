@@ -4,9 +4,9 @@
 \name{remify-package}
 \alias{remify-package}
 \alias{_PACKAGE}
-\title{remify: Processing and transforming relational event history data}
+\title{remify: Processing and Transforming Relational Event History Data}
 \description{
-This package aims to process relational event history data and transform them into a format suitable for the remverse packages and more.
+Tools to process relational event history data and to transform them into formats suitable for other packages. The primary objective of 'remify' is to convert event history data into a format that integrates with the remverse packages and is compatible with various analytical tools (e.g., computing network statistics, estimating tie-oriented or actor-oriented social network models). Second, it can also transform the data into formats compatible with other packages out of remverse. The package 'remify' processes the data for two types of temporal social network models: tie-oriented modeling framework (Butts, C., 2008, \doi{10.1111/j.1467-9531.2008.00203.x}) and actor-oriented modeling framework (Stadtfeld, C., & Block, P., 2017, \doi{10.15195/v4.a14}).
 }
 \seealso{
 Useful links:
@@ -25,6 +25,7 @@ Other contributors:
   \item Marlyne Meijerink-Bosman \email{m.l.meijerink@tilburguniversity.edu} [contributor]
   \item Diana Karimova \email{d.karimova@tilburguniversity.edu} [contributor]
   \item Fabio Generoso Vieira \email{f.v.generosovieira@tilburguniversity.edu} [contributor]
+  \item Mahdi Shafiee Kamalabad \email{m.shafieekamalabad@uu.nl} [contributor]
   \item Roger Leenders \email{r.t.a.j.leenders@tilburguniversity.edu} [contributor]
   \item Joris Mulder \email{j.mulder3@tilburguniversity.edu} [contributor]
 }

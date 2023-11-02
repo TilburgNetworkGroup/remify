@@ -60,10 +60,10 @@ rehshape <- function(data,
   if(output_format == "relevent-rem"){
     # (3) processing information about likelihood
     timing <- ifelse(attr(data,"ordinal"),"ordinal","interval")
-    dyad <- if(attr(data,"model") == "tie") attr(data,"dyad") else c(0) 
-    type <- if(attr(data,"with_type")) data$edgelist$type_ID-1 else c(0)
-    out <- remify2relventrem(actor1 = data$edgelist$actor1_ID-1,
-                          actor2 = data$edgelist$actor2_ID-1,
+    dyad <- if(attr(data,"model") == "tie") attr(data,"dyadID") else c(0) 
+    type <- if(attr(data,"with_type"))  attr(data,"typeID")-1 else c(0)
+    out <- remify2relventrem(actor1 = attr(data,"actor1ID")-1,
+                          actor2 = attr(data,"actor2ID")-1,
                           type = type,
                           dyad = dyad,
                           M = data$M,

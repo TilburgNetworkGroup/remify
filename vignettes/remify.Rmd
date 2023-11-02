@@ -17,7 +17,7 @@ vignette: >
 
 ---
 
-<i>This vignette explains aim, input, output, attributes and methods of the function `<tt>`remify::remify()`.</i>
+<i>This vignette explains aim, input, output, attributes and methods of the function <tt>`remify::remify()`</tt>.</i>
 
 ---
 
@@ -27,7 +27,7 @@ vignette: >
 
 ## Aim
 The objective of <tt>remify::remify()</tt> is to process raw relational event sequences supplied by the user along with other inputs that characterize the data (actors' names, event types' names, starting time point of the event sequence, set of interactions to be excluded from the risk set at specific time points, etc.).
-The internal routines will transform the structure of the input event sequence into a new one where actors and event types will have assigned unique (numerical) IDs. Furthermore, the function will provide other objects that will be required by all of the packages in [<tt>remverse</tt>](https://github.com/TilburgNetworkGroup/remverse).
+The internal routines will process the structure of the input event sequence into a new one, providing also objects that will be used by the packages in [<tt>remverse</tt>](https://github.com/TilburgNetworkGroup/remverse).
 
 As example, we will use the data `randomREH` (documentation available via `?randomREH`).
 
@@ -70,7 +70,7 @@ Based on the value of this argument, the processing of the time variable is carr
 
 
 ### <b><tt>model</tt></b>
-Whether the model of interest is tie-oriented or actor-oriented, the argument `model` can be specified either as `"tie"` or as `"actor"`. In the case of an actor-oriented model with changing risk set, the output will consist of two risk sets: senders' and dyads' risk sets. For a tie-oriented modeling with changing risk set the output object will contain only the riskset of the dyads. If no dynamic risk set is defined (`omit_dyad = NULL`), the argument `model` won't affect the output object.
+Whether the model of interest is tie-oriented or actor-oriented, the argument `model` can be specified either as `"tie"` or as `"actor"`. This argument affects the structure of the output as to the risk set: in the case of an actor-oriented model with changing risk set, the processed risk set will consist of two objects, senders' and dyads' risk sets, in a tie-oriented modeling, the output risk set will consist of only the riskset on the dyads. If no dynamic risk set is defined (`omit_dyad = NULL`), the argument `model` won't affect the processing of the event sequence.
 
 ------
 
@@ -97,6 +97,7 @@ randomREH$types
 
 ### <b><tt>riskset</tt></b>
 The `riskset` argument specifies the type of risk set that should be used for the input data. It can assume three different values: `"full"`, `"active"` and `"manual"` (with `"full"` being the default value). The risk set is `"full"`, if all the possible dyadic interactions given the number of actors in the network should be considered at risk throughout the event sequence. The risk set is `"active"`, if it is only made of only the observed dyadic interactions and it assumed that they are the only dyads at risk for the entire event sequence. Finally, the risk set is `"manual"`, if it has a time-varying structure, that is, when one or more actors should be excluded from the network until a specific time point because the join the network later, or vice versa, when one or more actors should be excluded from the risk set from a time point and on because they leave the network before the end of the sequence. In other words, a manual risk set is defined whenever one or more dyadic interactions cannot occur during one or more timespans. If the `riskset` argument is `"manual"`, then the user should supply a list object with the risk set modifications to the `omit_dyad` argument.
+More details about risk set definitions are provided in `vignette(topic = "riskset", package = "remify")`.
 
 ------
 
@@ -168,11 +169,16 @@ names(edgelist_reh)
 ------
 
 ### <b><tt>M</tt></b>
-`M` is the number of observed time points. If there are events occurring at the same time point, then the time point will count only once. If all events occurred at different time points, then `M` will correspond also to the number of events.
+`M` is the number of observed time points. If there are events occurring at the same time point, then `M` will count the number of unique time points and the number of events will be returned by `E` (see below). If all events occurred at different time points, then `M` will correspond also to the number of events and `E` will not be defined.
 
 ```{r}
 edgelist_reh$M
 ```
+
+------
+
+### <b><tt>E</tt></b>
+`E` is the number of observed events. `remify()` returns the number of observed events only if there are events that occurred at the same time point. If all observed events occurred at different time points, then `remify()` will not return `E`.
 
 ------
 
@@ -220,7 +226,7 @@ The vector of waiting times is available only if the sequence is processed for i
 ------
 
 ### <b><tt>edgelist</tt></b>
-`edgelist` is a `data.frame` and consists in the converted input edgelist, with columns `[time,actor1_ID,actor2_ID,type_ID,weight]` where actors and types supplied in the input edgelist are converted into IDs. If `type` or `weight` are not supplied as input, then the output edgelist will not incude their columns.
+`edgelist` is a `data.frame` and consists in the original input edgelist, with columns `[time,actor1,actor2,type,weight]` where events by-row are re-ordered if the time variable in the input edgelist was not correctly sorted. If `type` or `weight` are not supplied as input, then the output edgelist will not incude their columns.
 
 ```{r}
 head(edgelist_reh$edgelist)
@@ -252,8 +258,23 @@ Whenever `omit_dyad` is not supplied to `remify()` then its output in the `remif
 
 ## Attributes
 
+Consider now an `"active"` risk set and process the same edgelist:
+```{r}
+edgelist_reh <- remify(edgelist = randomREH$edgelist,
+                    directed = TRUE, # events are directed
+                    ordinal = FALSE, # model with waiting times
+                    model = "tie", # tie-oriented modeling
+                    actors = randomREH$actors,
+                    types = randomREH$types, 
+                    riskset = "active",
+                    origin = randomREH$origin)
+                    
+```
+
 
 The <b>attributes</b> of a `remify` object are:
+
+
 
 ```{r}
 names(attributes(edgelist_reh))
@@ -356,15 +377,6 @@ str(attr(edgelist_reh, "origin")) # printing out only the str() of the attribute
 
 ------
 
-### <b><tt>dyad</tt></b>
-`dyad` is the vector of IDs as to the observed dyads. The IDs range between 1 and `D` (`edgelist_reh$D`). This attribute is empty if `model = "actor"`. For more details about how the ID is assigned to a specific triple of `[actor1,actor2,type]`, see `vignette(topic = "riskset", package = "remify")`.
-
-```{r}
-attr(edgelist_reh, "dyad")[1:10] # printing out only first 10 observed dyads
-```
-
-------
-
 ### <b><tt>ncores</tt></b>
 `ncores` is the number of threads used in the parallelization of internal routines in `remify::remify()`.
 
@@ -374,11 +386,49 @@ attr(edgelist_reh, "ncores")
 
 ------
 
-### <b><tt>dyadIDactive</tt></b>
-`dyadIDactive` is the vector of relational events that follows the dyadID's of the active set of dyads. This attribute is available only when `riskset = "active"`.
+### <b><tt>dyadID</tt></b>
+`dyadID` is a list of vectors containing the IDs of the observed dyads per time point. The IDs range between 1 and `D` (`edgelist_reh$D`). For more details about how the ID is assigned to a specific triple of `[actor1,actor2,type]`, see `vignette(topic = "riskset", package = "remify")`.
 
 ```{r}
-attr(edgelist_reh, "dyadIDactive")
+attr(edgelist_reh, "dyadID")[[1]] # printing out dyads ID's observed at the first time point
+```
+
+------
+
+
+### <b><tt>actor1ID</tt></b>
+`actor1ID` is a list of vectors containing the IDs of the observed actor1's/senders per time point. The IDs range between 1 and `N` (`edgelist_reh$N`). 
+
+```{r}
+attr(edgelist_reh, "actor1ID")[[1]] # printing out the actor1's/senders ID's observed at the first time point
+```
+
+------
+
+
+### <b><tt>actor2ID</tt></b>
+`actor2ID` is a list of vectors containing the IDs of the observed actor2's/receivers per time point. The IDs range between 1 and `N` (`edgelist_reh$N`). 
+
+```{r}
+attr(edgelist_reh, "actor2ID")[[1]] # printing out the actor2's/receivers ID's observed at the first time point
+```
+
+------
+
+### <b><tt>typeID</tt></b>
+`typeID` is a list of vectors containing the IDs of the observed types per time point. The IDs range between 1 and `C` (`edgelist_reh$C`). 
+
+```{r}
+attr(edgelist_reh, "typeID")[[1]] # printing out the types ID's observed at the first time point
+```
+
+------
+
+### <b><tt>dyadIDactive</tt></b>
+`dyadIDactive` is a list of vectors containing the IDs of the active set of dyads. This attribute is available only when `riskset = "active"`.
+
+```{r}
+attr(edgelist_reh, "dyadIDactive")[[1]] # printing out the ID's of the active dyads at the first time point
 ```
 
 ## Methods
@@ -472,13 +522,29 @@ The method can work with only one input dyad of the form [`actor1`,`actor2`,`typ
 ------
 
 ### <b><tt>plot()</tt></b>
-`plot()` returns a sequence of three plots:
+`plot()` returns different descriptive plots:
 
-1. distribution of the waiting times
-2. activity plot (tile plot on dyad count, with marginal in-degree and out-degree distribution of actors, if a directed network)
-3. descriptive dyad and actor activity rate per time unit specified by the user (also calculated per event type, if type is present)
+1. histogram of the inter-event times
+2. activity plot, which is a tile plot where the color of the tiles is proportional to the count of the directed (or undirected) dyad. In-degree and out-degree activity line plots are plotted on the sides (or the total-degree on the top side, if the network is undirected).
+3. for directed networks two plots of normalized out-degree and in-degree values per actor (ranging in $[0,1]$) over a set of `n_intervals` (evenly spaced). For undirected networks, only one plot of normalized total-degree over the `n_intervals` (also here values ranging in [0,1]). The normalization is calculated in each interval as the $$\frac{(degree-min(degree))}{(max(degree)-min(degree))}$$ for each actor considering minimum and maximum degree (in-, out- or total-, degree) observed in the interval (opacity and size of the points is proportional to the normalized measure) 
+4. four plots: (i) number of events (# events) per time interval, (ii) proportion of observed dyads (# dyads / `x$D`) per time interval, (iii) and (iv) (for directed network only) proportion of active senders and receivers per time interval (calculated as # senders/ `x$N` and # receiver/`x$N` per interval) 
+5. two networks: (i) network of events where edges are considered undirected (edges' opacity is proportional to the counts of the undirected events, vertices' opacity is proportional to the total-degree of the actors), (ii) visualization of directed network (edges' opacity is proportional to the counts of the directed events, vertices' opacity is proportional to the in-degree of the actors).
 
 
 ```{r}
-# plot(x = edgelist_reh, x,which = c(1:4),caption = list("Title 1","Title 2","Title 3","Title 4"),APA_style = FALSE, color_palette = "BuPu")
+par(mai=rep(0.8,4), cex.main=0.9, cex.axis=0.75)
+plot(x=edgelist_reh,which=1,n_intervals=13) # histogram of inter-event times
+plot(x=edgelist_reh,which=2,n_intervals=13) # tile plot (counts of dyadic events) with in-/out- degree of actors on the sides
+plot(x=edgelist_reh,which=3,n_intervals=13) # (normalized) in-degree and out-degree of actors
+plot(x=edgelist_reh,which=4,n_intervals=13) # per time interval: number of events, proportion of observed dyads, proportion of active senders and active receivers
+plot(x=edgelist_reh,which=5,n_intervals=13,igraph.edge.color="#cfcece",igraph.vertex.color="#7bbfef") # networks
+```
+
+The plots above slightly vary for the case of undirected networks:
+
+```{r}
+edgelist_reh <- remify(edgelist = randomREH$edgelist,
+                    directed = FALSE, # events are now considered undirected
+                    model = "tie")               
+# plot(x=edgelist_reh,which=1:5,n_intervals=13) 
 ```

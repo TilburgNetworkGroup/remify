@@ -278,3 +278,27 @@ expect_error(
   "'ncores' is recommended to be set at most to: floor(parallel::detectCores()-2L)",
   fixed = TRUE
 ) 
+
+# plot.remify() method
+reh_loc <- randomREH
+out <- remify(edgelist = reh_loc$edgelist,
+                  model = "tie")
+
+# when one or more actors supplied via the argument 'actors' are not found in the network
+expect_error(plot(x=out,actors = c("0","1")), "one or more actors' names ('actors') are not found in the remify object 'x'.", fixed = TRUE)
+
+## when N < 50 and the selection of 'actors' brings to zero events selected from the event sequence
+out <- data.frame(time=1:30,actor1=11:40,actor2=12:41)
+out <- remify(edgelist = out,
+                actors = as.character(1:41),
+                directed = TRUE,
+                model = "tie")  
+expect_error(plot(x=out,actors = as.character(1:10)),"no events found when selecting the set of actors (supplied via the argument 'actors').",fixed=TRUE)
+
+## when N > 50 and the selection of 'actors' brings to zero events selected from the event sequence
+out <- data.frame(time=1:200,actor1=61:260,actor2=62:261)
+out <- remify(edgelist = out,
+                actors = as.character(1:261),
+                directed = TRUE,
+                model = "tie")  
+expect_error(plot(x=out,actors = as.character(1:60)),"no events found when selecting the set of actors (supplied via the argument 'actors').",fixed=TRUE)

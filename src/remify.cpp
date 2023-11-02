@@ -486,7 +486,7 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
 // @param ncores number of threads to use in the parallelization (default is 1)
 //
 // @return cube of possible combination [actor1,actor2,type]: the cell value is the column index in the rehBinary matrix
-Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist, 
+Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist, 
                             Rcpp::RObject input_origin,
                             Rcpp::DataFrame actorsDictionary, 
                             Rcpp::DataFrame typesDictionary, 
@@ -509,7 +509,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
     Rcpp::List out = Rcpp::List::create();
     Rcpp::DataFrame edgelist = input_edgelist;
    // edgelist = Rcpp::clone(input_edgelist); // this way we make a deep copy and the input edgelist won't be altered [[CHECK THIS!]]
-    Rcpp::DataFrame convertedEdgelist;    
+    Rcpp::DataFrame convertedEdgelist;
 
     //[**1**] Processing edgelist 
     std::vector<double> time_loc = Rcpp::as<std::vector<double>>(edgelist["time"]); // converting time input to a double 
@@ -690,7 +690,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                         convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
 
                         // getting dyad index
-                        dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D    
+                        dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D   
                     }
                     else{ // m-th event is a self-loop 
                         dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -919,7 +919,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                         convertedActor2_ID[m] = actorID.at(std::distance(actorName.begin(), j));
 
                         // getting dyad index
-                        dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D    
+                        dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D  
                     }
                     else{ // m-th event is a self-loop 
                         dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -1009,6 +1009,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
     }                                                                            
 
     //[**2**] Processing time variable
+    out["order"] = R_NilValue; 
     if(!ordinal){
         std::vector<double> input_time = Rcpp::as<std::vector<double>>(convertedEdgelist["time"]); // converting any time input to a double 
         double min_time = *min_element(input_time.begin(), input_time.end()); 
@@ -1040,8 +1041,9 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                             return input_time[lhs] < input_time[rhs];
                         }
                 );
+                arma::uvec order_index = arma::conv_to<arma::uvec>::from(sorted_time_order);
                 convertedEdgelist = rearrangeDataFrame(convertedEdgelist,sorted_time_order); // overwriting 'convertedEdgelist' given the new order
-
+                out["order"] = order_index; // returning order of time points if they are not sorted
                 // saving the new sorted time
                 input_time = Rcpp::as<std::vector<double>>(convertedEdgelist["time"]); // overwriting 'input time' given the new order
                 for(m_loc = 0; m_loc < (input_time.size()-1); m_loc++){ // compute the interevent time again std::adjacent_difference could be also used (CHECK)
@@ -1220,7 +1222,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
                 }              
             }
             
-            // sorting actor1 and actor2 if directed FALSE 
+            // sorting actor1 and actor2 if directed FALSE : both for ID and original names (affecting input edgelist)
             if(!directed){
                 D_rr = convertedActor1.length();   
                 for(d = 0; d < D_rr; d++){
@@ -1292,7 +1294,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
 // @param input_edgelist an object of class \code{"\link[base]{data.frame}"} or 
 // \code{"\link[base]{matrix}"} characterizing the relational event history sorted by 
 // time with columns 'time', 'actor1', 'actor2' and optionally 'type' and 
-// 'weight'.  
+// 'weight'. 
 // @param actors vector of actors that may be observed interacting in the network. If \code{NULL}, actor names will be drawn from the input edgelist.
 // @param types vector of event types that may occur in the network. If \code{NULL}, type names will be drawn from the input edgelist.
 // @param directed logical value indicating whether dyadic events are directed (\code{TRUE}) or undirected (\code{FALSE}).
@@ -1306,7 +1308,7 @@ Rcpp::List convertInputREH(Rcpp::DataFrame input_edgelist,
 // @return list of objects with processed raw data.
 //
 // [[Rcpp::export]]
-Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist, 
+Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
                   Rcpp::RObject actors, 
                   Rcpp::RObject types,  
                   bool directed,
@@ -1344,6 +1346,8 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
         out["with_type"] = true;
     }
 
+
+
     // Is the network weighted?
     out["weighted"] = false;
     if(edgelist.containsElementNamed("weight")){ // if weight is not defined
@@ -1356,19 +1360,6 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
 
     // StringVector of actor2
     Rcpp::StringVector actor2 = edgelist["actor2"]; // actor2/receiver
-
-    //StringVector of actor1 and actor2 
-    //Rcpp::StringVector actor1_and_actor2(actor1.length()+actor2.length());
-    //actor1_and_actor2[Rcpp::Range(0,(actor1.length()-1))] = actor1;
-    //actor1_and_actor2[Rcpp::Range(actor1.length(),(actor1_and_actor2.length()-1))] = actor2;
-    //if(!Rf_isNull(actors)){
-    //    Rcpp::StringVector actors_vector = Rcpp::as<Rcpp::StringVector>(actors);
-        //arma::uword N_loc = actors_vector.length();
-
-        //for(arma::uword n = 0; n < N_loc; n++){
-    //        actor1_and_actor2.push_back(actors_vector[n]);
-        //} 
-    //}
 
     //StringVector of actor1 and actor2 
     arma::uword actors_vector_length = 0;
@@ -1455,6 +1446,7 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
     out["M"] = convertedInput["M"]; // if there are self-loops the number of events decreases
     out["omit_dyad"] = convertedInput["omit_dyad"];
     out["intereventTime"] = convertedInput["intereventTime"];
+    out["order"] = convertedInput["order"];
 
     // END of the processing and returning output
     return out;

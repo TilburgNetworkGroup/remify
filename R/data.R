@@ -10,11 +10,11 @@
 #' @format \code{data(randomREH)} will load a list containing following objects:
 #'\describe{
 #'    \item{\code{edgelist}}{a \code{data.frame} that contains the random sequence of events. Columns of the edgelist are:
-#'            \itemize{
-#'                \item{}{\code{time}: the timestamp indicating the time at which each event occurred;}
-#'                \item{}{\code{actor1}: the name of the actor that generated the relational event;}
-#'                \item{}{\code{actor2}: the name of the actor that received the relational event;}
-#'                \item{}{\code{type}: the type of the relational event.}
+#'            \describe{
+#'                \item{\code{time}}{the timestamp indicating the time at which each event occurred;}
+#'                \item{\code{actor1}}{the name of the actor that generated the relational event;}
+#'                \item{\code{actor2}}{the name of the actor that received the relational event;}
+#'                \item{\code{type}}{the type of the relational event.}
 #'            }
 #'     }
 #'    \item{\code{actors}}{names of actors interacting in the dynamic network.}
@@ -73,10 +73,10 @@
 #' @format \code{data(randomREHsmall)} will load a list containing following objects:
 #'\describe{
 #'    \item{\code{edgelist}}{a \code{data.frame} that contains the random sequence of events. Columns of the edgelist are:
-#'            \itemize{
-#'                \item{}{\code{time}: the timestamp indicating the time at which each event occurred;}
-#'                \item{}{\code{actor1}: the name of the actor that generated the relational event;}
-#'                \item{}{\code{actor2}: the name of the actor that received the relational event;}
+#'            \describe{
+#'                \item{\code{time}}{the timestamp indicating the time at which each event occurred;}
+#'                \item{\code{actor1}}{the name of the actor that generated the relational event;}
+#'                \item{\code{actor2}}{the name of the actor that received the relational event;}
 #'            }
 #'     }
 #'    \item{\code{actors}}{names of actors interacting in the dynamic network.}

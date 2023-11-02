@@ -89,3 +89,22 @@ expect_stdout(remify(edgelist = reh_loc$edgelist,
 "Warning: one or more actors/types supplied in `omit_dyad` were not found in the edgelist. Therefore the corresponding dyads defined in the `omit_dyad` object were ignored."
 )
 
+# plot.remify() method warning
+
+## N > 50
+out <- data.frame(time=1:100,actor1=1:100,actor2=2:101)
+out <- remify(edgelist = out,
+                directed = TRUE,
+                model = "tie")  
+expect_warning(plot(out),"Too many actors for rendering plots with a good quality: the 50 most active actors are selected (descriptives on dyads and actors may differ from the descriptives conducted on the whole set of actors)",fixed=TRUE)
+
+## on a subset of actors but still larger than 50 actors
+expect_warning(plot(out,actors=as.character(1:80)),"Too many actors for rendering plots with a good quality: the 50 most active actors are selected (descriptives on dyads and actors may differ from the descriptives conducted on the whole set of actors)",fixed=TRUE)
+
+## for directed = FALSE
+out <- data.frame(time=1:100,actor1=1:100,actor2=2:101)
+out <- remify(edgelist = out,
+                directed = FALSE,
+                model = "tie")  
+expect_warning(plot(out),"Too many actors for rendering plots with a good quality: the 50 most active actors are selected (descriptives on dyads and actors may differ from the descriptives conducted on the whole set of actors)",fixed=TRUE)
+

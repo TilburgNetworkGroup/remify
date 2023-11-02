@@ -1,8 +1,8 @@
 Type: Package
 Package: remify
-Title: Processing and transforming relational event history data
+Title: Processing and Transforming Relational Event History Data
 Version: 3.2.0
-Date: 2023-06-30
+Date: 2023-11-02
 Authors@R: 
     c(person(given = "Giuseppe",
              family = "Arena",
@@ -24,6 +24,10 @@ Authors@R:
              family = "Generoso Vieira",
              role = "ctb",
              email = "f.v.generosovieira@tilburguniversity.edu"),
+      person(given = "Mahdi",
+             family = "Shafiee Kamalabad",
+             role = "ctb",
+             email = "m.shafieekamalabad@uu.nl"),
       person(given = "Roger",
              family = "Leenders",
              role = "ctb",
@@ -33,14 +37,15 @@ Authors@R:
              role = "ctb",
              email = "j.mulder3@tilburguniversity.edu"))
 Maintainer: Giuseppe Arena <g.arena@tilburguniversity.edu>
-Description: This package aims to process relational event history data and transform them into a format suitable for the remverse packages and more.
+Description: Tools to process relational event history data and to transform them into formats suitable for other packages. The primary objective of 'remify' is to convert event history data into a format that integrates with the remverse packages and is compatible with various analytical tools (e.g., computing network statistics, estimating tie-oriented or actor-oriented social network models). Second, it can also transform the data into formats compatible with other packages out of remverse. The package 'remify' processes the data for two types of temporal social network models: tie-oriented modeling framework (Butts, C., 2008, <doi:10.1111/j.1467-9531.2008.00203.x>) and actor-oriented modeling framework (Stadtfeld, C., & Block, P., 2017, <doi:10.15195/v4.a14>). 
 License: MIT + file LICENSE
 URL: https://github.com/TilburgNetworkGroup/remify
 BugReports: https://github.com/TilburgNetworkGroup/remify/issues
 Depends:
     R (>= 4.0.0)
 Imports:
-    Rcpp (>= 1.0.8.3)
+    Rcpp (>= 1.0.8.3),
+    igraph (>= 1.4.3)
 Suggests: 
     knitr,
     rmarkdown,

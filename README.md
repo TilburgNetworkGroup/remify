@@ -5,7 +5,7 @@
 [![R-CMD-check](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml)
 [![codecov](https://codecov.io/gh/TilburgNetworkGroup/remify/branch/master/graph/badge.svg?token=BDG8F1672B)](https://codecov.io/gh/TilburgNetworkGroup/remify)
 
-## A package for pre-processing the structure of REH data
+## Processing and transforming relational event history data
 
 The aim of the `remify` package is twofold:
  * processing REH data and arranging them in a new structure (`remify`) that is used by the packages in [`remverse`](https://github.com/TilburgNetworkGroup/remverse);

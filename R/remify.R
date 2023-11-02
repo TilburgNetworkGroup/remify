@@ -2,8 +2,7 @@
 #'
 #' @description A function that processes raw relational event history data and returns a S3 object of class 'remify' which is used as input in other functions inside \code{remverse}.
 #'
-#' @param edgelist the relational event history. An object of class \code{\link[base]{data.frame}} with first three columns corresponding to time, and actors forming the dyad. The first three columns will be re-named "time", "actor1", "actor2" (where, for directed networks, "actor1" corresponds to the sender and "actor2" to the receiver of the relational event). Optional columns that can be supplied are: `type` and 
-#' `weight`. If one or both exist in \code{edgelist}, they have to be named accordingly.
+#' @param edgelist the relational event history. An object of class \code{\link[base]{data.frame}} with first three columns corresponding to time, and actors forming the dyad. The first three columns will be re-named "time", "actor1", "actor2" (where, for directed networks, "actor1" corresponds to the sender and "actor2" to the receiver of the relational event). Optional columns that can be supplied are: `type` and `weight`. If one or both exist in \code{edgelist}, they have to be named accordingly.
 #' @param directed logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})
 #' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}). (default value is \code{FALSE})
 #' @param model can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.
@@ -192,7 +191,6 @@ remify <- function(edgelist,
       }
     }
 
-
     # Checking argument 'riskset'
     riskset  <- match.arg(arg = riskset, choices = c("full", "active", "manual"), several.ok = FALSE)
     active <- FALSE
@@ -222,17 +220,17 @@ remify <- function(edgelist,
                     model = model,
                     active = active,
                     ncores = ncores)
-
+    if(!is.null(out$order)) edgelist <- edgelist[out$order+1,]
+    
     str_out <- structure(list(M = out$M
                             ,N = out$N
                             ,C = out$C
                             ,D = out$D
                             ,intereventTime = out$intereventTime
-                            ,edgelist = out$edgelist
+                            ,edgelist = edgelist
                             )
                             ,class="remify")
 
-    
     attr(str_out, "with_type") <- out$with_type
     attr(str_out, "weighted") <- out$weighted
     attr(str_out, "directed") <- directed
@@ -241,23 +239,26 @@ remify <- function(edgelist,
     attr(str_out, "riskset") <- riskset
     attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary)
     attr(str_out, "origin") <- out$edgelist$time[1]-out$intereventTime[1]
-    attr(str_out, "dyad") <- out$dyad
     attr(str_out, "ncores") <- ncores 
 
-    if(model == "actor"){
-      attr(str_out,"actor1") <- str_out$edgelist$actor1 
-      attr(str_out,"actor2") <- str_out$edgelist$actor2
+    # ID of actors, types and dyads
+    attr(str_out, "dyadID") <- out$dyad
+    attr(str_out,"actor1ID") <- out$edgelist$actor1_ID
+    attr(str_out,"actor2ID") <- out$edgelist$actor2_ID
+    if(out$with_type){
+        attr(str_out,"typeID") <- out$edgelist$type_ID
     }
-
+    # ID's when riskset = "active"
     if(active){
       str_out$activeD <- out$omit_dyad$D_active
       if(model == "tie"){
         attr(str_out, "dyadIDactive") <- out$omit_dyad$dyadIDactive 
         out$omit_dyad <- NULL
       }
-    }                   
+    }   
+
     str_out$omit_dyad <- out$omit_dyad
-    out <- NULL 
+    out <- NULL # free-ing space
     
     # modifying remify object to account for simultaneous events
     rows_to_remove <- which(str_out$intereventTime == 0) # processing the co-occurrence of events
@@ -271,34 +272,33 @@ remify <- function(edgelist,
         time_unique <-unique(str_out$edgelist$time)
 
         # tie-oriented modeling
-        if(model == "tie"){
-          dyad <- list()
-          dyadIDactive <- list()
-          for(m in 1:length(time_unique)){
-              which_time_m <- which(str_out$edgelist$time == time_unique[m])
-              dyad[[m]] <- attr(str_out, "dyad")[which_time_m]
-              if(active){
-                dyadIDactive[[m]] <- attr(str_out,"dyadIDactive")[which_time_m]
-              }
-          }
-          attr(str_out,"dyad") <- dyad
-          if(active){
-            attr(str_out,"dyadIDactive") <- dyadIDactive
-          }
+        actor1 <- list()
+        actor2 <- list()
+        type <- list()
+        dyad <- list()
+        dyadIDactive <- list()
+        for(m in 1:length(time_unique)){
+            which_time_m <- which(str_out$edgelist$time == time_unique[m])
+            actor1[[m]] <- attr(str_out,"actor1ID")[which_time_m]
+            actor2[[m]] <- attr(str_out,"actor2ID")[which_time_m]
+            dyad[[m]] <- attr(str_out, "dyadID")[which_time_m]
+            if(active){
+              dyadIDactive[[m]] <- attr(str_out,"dyadIDactive")[which_time_m]
+            }
+            if(attr(str_out, "with_type")){
+              type[[m]] <- attr(str_out,"typeID")[which_time_m]
+            }
         }
-
-        # actor-oriented modeling
-        if(model == "actor"){
-          actor1 <- list()
-          actor2 <- list()
-          for(m in 1:length(time_unique)){
-              which_time_m <- which(str_out$edgelist$time == time_unique[m])
-              actor1[[m]] <- str_out$edgelist$actor1[which_time_m]
-              actor2[[m]] <- str_out$edgelist$actor2[which_time_m]
-          }
-          attr(str_out,"actor1") <- actor1 
-          attr(str_out,"actor2") <- actor2
+        attr(str_out,"actor1ID") <- actor1 
+        attr(str_out,"actor2ID") <- actor2
+        attr(str_out,"dyadID") <- dyad
+        if(active){
+          attr(str_out,"dyadIDactive") <- dyadIDactive
         }
+        if(attr(str_out, "with_type")){
+          attr(str_out,"typeID") <- type
+        }
+        rm(actor1,actor2,type,dyad,dyadIDactive)
     }
 
   return(str_out)
@@ -343,7 +343,7 @@ summary.remify <- function(object,...){
   types <- if(!attr(object,"with_type")) NULL else {paste("\t> (event) types = ",object$C,sep="")}
   riskset <- paste("\t> riskset = ",attr(object,"riskset"),sep="")
   if(attr(object,"riskset")=="active"){
-    riskset <- c(riskset,paste("\t\t>> active dyads = ",object$activeD," (full risk set size = ",object$D,")",sep=""))
+    riskset <- c(riskset,paste("\t\t>> active dyads = ",object$activeD," (full risk set size = ",object$D," dyads)",sep=""))
   }
   directed <- paste("\t> directed = ",attr(object,"directed"),sep="")
   ordinal <- paste("\t> ordinal = ",attr(object,"ordinal"),sep="")
@@ -644,7 +644,7 @@ getDyad.remify <- function(x, dyadID, active = FALSE) {
   dyadID_full <- dyadID
   if(active){
     for(d in 1:length(dyadID)){
-      dyadID_full[d] <- attr(x,"dyad")[which(attr(x,"dyadIDactive")==dyadID[d])[1]]
+      dyadID_full[d] <- attr(x,"dyadID")[which(attr(x,"dyadIDactive")==dyadID[d])[1]]
     }
   }
   composition <- getEventsComposition(dyads = dyadID_full, N = x$N, D = x$D,directed = attr(x,"directed"), ncores  = attr(x,"ncores"))
@@ -828,7 +828,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
                                     N = x$N,
                                     directed = attr(x,"directed"))
   if((attr(x,"riskset") == "active") & (attr(x,"model")=="tie")){
-    select_loc <- which(attr(x,"dyad")==dyad_id)[1] # selecting first occurrence of dyad_id in attr(x,"dyad")
+    select_loc <- which(attr(x,"dyadID")==dyad_id)[1] # selecting first occurrence of dyad_id in attr(x,ID"dyad")
     if(length(select_loc > 0)){
       dyad_id <- c(dyad_id,ifelse(length(select_loc>0),attr(x,"dyadIDactive")[select_loc],NA))
       names(dyad_id) <- c("dyadID","dyadIDactive")
@@ -841,289 +841,555 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
 #######################################################################################
 #######################################################################################
 
+#' Generic plot method
+#'
 #' @title plot.remify
 #' @rdname plot.remify
-#' @description visual descriptive analysis of relational event network data.
+#' @description several plots that describe the network of relational events, both for directed and undirected relational events.
 #' @param x is a \code{remify} object.
-#' @param which one or more numbers between 1 and 4. Explain the numbers: (1) plots this, (2) plots that, (3) plots this and (4) plot that.
-#' @param palette a palette from grDevices::hcl.pals() (default is the "RdYlBu" palette).
-#' @param n_intervals number of time intervals for time plots (default is 10).
-#' @param APA_style make the plots APA-style-ready. (check this argument !!)
-#' @param ... other arguments. (check this argument !!)
+#' @param which one or more numbers between 1 and 5. Plots described in order: (1) distribution of the inter-event times (histogram), (2) tile plot titled 'activity plot', with in-degree and out-degree activity line plots on the sides (or total-degree on the top side if the network is undirected). Tiles' color is scaled based on the count of the directed (or undirected) dyad, (3) for directed networks two plots of normalized out-degree and in-degree (values ranging in [0,1]) over a set of \code{n_intervals} (evenly spaced). For undirected networks one plot of normalized total-degree over the \code{n_intervals} (also here values ranging in [0,1]). The normalization is calculated in each interval as the \code{(degree-min(degree))/(max(degree)-min(degree)))} for each actor considering minimum and maximum degree (in-, out- or total-) observed in the interval (opacity and size of the points is proportional to the normalized measure), (4) four plots: (i) number of events (# events) per time interval, (ii) proportion of observed dyads (# dyads / x$D) per time interval, (iii) and (iv) (for directed network only) proportion of active senders and receivers per time interval (calculated as # senders/ x$N and # receiver/x$N per interval), (5) two networks: (i) network of events where edges are considered undirected (edges' opacity is proportional to the counts of the undirected events, vertices' opacity is proportional to the total-degree of the actors), (ii) visualization of directed network (edges' opacity is proportional to the counts of the directed events, vertices' opacity is proportional to the in-degree of the actors).
+#' @param breaks default is \code{15L} and it describes the number of cells of the histogram plot for the inter-event times. It  can be specified in the same way as the argument used by the function \code{graphics::hist()} (see ?graphics::hist for more details).
+#' @param palette a palette from \code{grDevices::hcl.pals()} (default is the \code{"Purples"} palette).
+#' @param n_intervals number of time intervals for time plots (default is \code{10}).
+#' @param rev default is TRUE (reverse order of the color specified in \code{palette})
+#' @param actors default is the set of actors in the network (see \code{attr(x,"dictionary")[["actors"]]}). The user can specify a subset of actors on which to run the descriptive plots. If the set contains more than 50 actors, then the function will select the 50 most active actors from the set provided.
+#' @param pch.degree default is 20. Shape of the points for the degree plots (in-degree, out-degree, total-degree).
+#' @param igraph.edge.color color of the edges in visualization of the network with vertices and nodes. The user can specify the hex value of a color, the color name or use the function\code{grDevices::rgb()} which returns the hex value.
+#' @param igraph.vertex.color color of the vertices in visualization of the network with vertices and nodes. The user can specify the hex value of a color, the color name or use the function \code{grDevices::rgb()} which returns the hex value.
+#' @param ... other graphical parameters
 #' @method plot remify
 #' @export
-#' 
 plot.remify <- function(x,
-                    which = c(1:4),
-                    palette = "RdYlBu",
-                    n_intervals = 10L,
-                    APA_style = FALSE,
+                    which = c(1:5),
+                    breaks= 15L,
+                    palette = "Purples",
+                    n_intervals = 4L,
+                    rev = TRUE,
+                    actors = attr(x,"dictionary")$actors$actorName,
+                    pch.degree = 20,
+                    igraph.edge.color = "#4daa89",
+                    igraph.vertex.color = "#5AAFC8",
                     ...){
+
+  # checks on input arguments
+
+  # which plot
+  selected <- which
+  which <- rep(FALSE,5)
+  which[selected] <- TRUE
+
+  # breaks, palette, n_intervals and rev
+  if(is.null(breaks)) breaks <- 15L
+  if(is.null(palette)) palette <- "Purples" else palette <- as.character(palette)
+  if(is.null(n_intervals)) n_intervals <- 3L else n_intervals <- as.integer(n_intervals)
+  if(is.null(rev)) rev <- TRUE else rev <- as.logical(rev)
   
-dict <- attr(x,"dictionary")
-ordinal <- attr(x,"ordinal")
-
-# checks on input arguments
-
-# [ ... ]
-
-# check on captions supplied by the user
-
-# [ ... ]
-
-# limit number of actors to N <= 50
-reduced <- FALSE
-if(x$N > 50){
-  actors_freq <- table(c(x$edgelist$actor1_ID,x$edgelist$actor2_ID))
-  actors_freq <- sort(actors_freq,decreasing = TRUE)
-  actors_to_select <- as.numeric(names(actors_freq)[1:50])
-  events_to_select <- which((x$edgelist$actor1_ID %in% actors_to_select) & (x$edgelist$actor2_ID %in% actors_to_select))
-  x$edgelist <- x$edgelist[events_to_select,]
-  # x$M <- dim(x$edgelist)[1] pay attention on $M when simultaneous events are observed (!!)
-  x$N <- 50
-  x$D <- ifelse(attr(x,"directed"),x$N*(x$N-1),x$N*(x$N-1)/2)
-  reduced <- TRUE
-  rm(actors_freq,actors_to_select,events_to_select)
-  warning("actors are too many for rendering plots with a good quality: the 50 most active actors are selected (descriptives on dyads and actors may differ from the descriptives conducted on the whole set of actors)")
-}
-
-# [ ... ]
-
-# ---
-
-# other settings
-ask_new_page <- devAskNewPage(TRUE)
-on.exit(expr = devAskNewPage(ask_new_page))
-op <- par(no.readonly = TRUE)
-
-
-if(!ordinal){
-  # [[plot 1]] plotting histogram of the waiting times
-  # Y-axis = Frequency (freq=TRUE)
-  # X-axis = measurement unit of the waiting time
-  time_unit <- NULL
-  time_unit <- attr(x$intereventTime,"unit") # add attribute to x$intereventTime object based on the time scale (default is secodns if time is timestamp, or days if it is a Date )
-  dev.hold()
-  hist(x = x$intereventTime, 
-    breaks = 40, # check whether the number of breaks can be adapted based on information from the remify object
-    angle = 45, 
-    col = "lavender", 
-    border = "darkgray",
-    main = paste("Distribution of the inter-event times",collapse=""),
-    xlab = ifelse(!is.null(time_unit),paste("waiting time (",time_unit,")",sep="", collapse=""),paste("waiting time")),
-    freq = TRUE)
-  dev.flush()
-}
-
-# ... directed networks
-if(attr(x,"directed")){
-  # [[plot 2]] two-way table of event counts (with marginal distributions on actor1 and actor2): actor- and tie- oriented networks
-
-  # calculating frequencies
-  # (only observed actors and dyads are included):
-  # ... frequencies actor1
-  actor1_freq <- table(x$edgelist$actor1_ID)
-  names_actor1 <- rep(NA,length(actor1_freq))
-  for(n in 1:length(actor1_freq)) names_actor1[n] <- dict$actors$actorName[as.integer(names(actor1_freq)[n])]
-  # ... frequencies actor2
-  actor2_freq <- table(x$edgelist$actor2_ID)
-  names_actor2 <- rep(NA,length(actor2_freq))
-  for(n in 1:length(actor2_freq)) names_actor2[n] <- dict$actors$actorName[as.integer(names(actor2_freq)[n])]
-  # ... frequencies dyads (sorted from large to small frequency values) 
-  dyad_freq <- sort(table(paste(x$edgelist$actor1_ID,x$edgelist$actor2_ID,sep="_")),decreasing=TRUE)
-
-
-  # [[CHECK ??]] Maybe reorder the ACTORS depending on their 'activity'. --> this could be diffcult becaus we have to chose which between actor1 and actor2
-
-  # [incomplete] matrix of dyad frequencies by [actor1-actor2] (some actor1-actor2 combinations may not be included)
-  X <- matrix(NA, nrow=length(dyad_freq),ncol=3) 
-  for(d in 1:length(dyad_freq)){
-    X[d,3] <- as.integer(dyad_freq[d])
-    X[d,1:2] <- as.integer(unlist(strsplit(x = names(dyad_freq[d]),  split = "_")))
+  # pch.degree
+  if(is.null(pch.degree)){
+    pch.degree <- 20
   }
-  # Focus on actors that interacted either as a sender or receiver
-  actors_observed <- X[,1:2] 
-  N_obs <- length(unique(as.vector(actors_observed)))
-  egrid <- NULL
-  #if(reduced){
-  #  actors_reduced <- sort(unique(as.vector(actors_observed)))
-  #  egrid <- expand.grid(actors_reduced,actors_reduced)
-  #}
-  #else{
-    egrid <- expand.grid(1:N_obs,1:N_obs)
-  #}
-  egrid <- egrid[,2:1]
-  # [complete] matrix of dyad frequencies
-  X_out <- data.frame(row = egrid[,1],col = egrid[,2], fill = NA)  
-  for(d in 1:dim(X)[1]){
-    row_index <- which((X_out$row == X[d,1]) & (X_out$col == X[d,2]))
-    X_out$fill[row_index] <- X[d,3]
+  else{
+    if((pch.degree > 25) | (pch.degree < 1)){
+      pch.degree <- 20
+    }
+    pch.degree <- as.integer(pch.degree)
+  } 
+
+  # igraph.edge.color and igraph.vertex.color
+  if(is.null(igraph.edge.color)){
+    igraph.edge.color <- "#4daa89"
+  }
+  if(is.null(igraph.vertex.color)){
+    igraph.vertex.color <- "#5AAFC8"
+  }
+  if(substr(igraph.edge.color,1,1) != "#"){
+    # if it is not an hex color then convert it to hex
+    edge_rgb <- grDevices::col2rgb(col=igraph.edge.color)
+    igraph.edge.color <- rgb(red = edge_rgb[1]/255,green = edge_rgb[2]/255, blue = edge_rgb[3]/255)
+  }
+  if(substr(igraph.vertex.color,1,1) != "#"){
+    vertex_rgb <- grDevices::col2rgb(col=igraph.vertex.color)
+    igraph.vertex.color <- rgb(red = vertex_rgb[1]/255,green = vertex_rgb[2]/255, blue = vertex_rgb[3]/255)
+  }
+  if(nchar(igraph.edge.color) != 7) igraph.edge.color <- "#4daa89"
+  if(nchar(igraph.vertex.color) != 7) igraph.vertex.color <- "#5AAFC8"
+
+  # storing some importnat information in advance
+  dict <- attr(x,"dictionary")
+  ordinal <- attr(x,"ordinal")
+
+  # actors input
+  if(is.null(actors)){
+    actors <- dict$actors$actorName
+  }
+  else{
+    # check if 'actors' contains names that are not in the dictionary
+    actors <- sort(unique(as.character(actors)))
+    check_actors <- sapply(actors , function(y) y %in% dict$actors$actorName) 
+    if(any(!check_actors)){
+      stop("one or more actors' names ('actors') are not found in the remify object 'x'.")
+    }
+    rm(check_actors)
   }
 
-  # [[CHECK ??]] X_out$fill <- X_out$fill/max(X_out$fill) # rescaling if possible (it doesn't work with terrain.colors(12))
+  # limiting the number of actors to N = 50 (when x$N > 50)
+  if((x$N > 50) & (length(actors)>50)){ 
+    if(length(actors) < x$N){ 
+      # only when length(actors)>50 but less than x$N, the function does its best by selecting the 50 most active actors out of the subset defined by the input "actors"
+      events_to_select <- which((x$edgelist$actor1 %in% actors) & (x$edgelist$actor2 %in% actors))
+      if(length(events_to_select) == 0){
+          stop("no events found when selecting the set of actors (supplied via the argument 'actors').")
+      }
+      x$edgelist <- x$edgelist[events_to_select,]
+      rm(events_to_select)
+    }
 
-  # plotting
-  # ... setting up axes measures
-  max_freq_actor2 = max(unname(table(x$edgelist$actor2_ID)))+2 
-  min_freq_actor2 = min(unname(table(x$edgelist$actor2_ID)))-1 
-  max_freq_actor1 = max(unname(table(x$edgelist$actor1_ID)))+2 
-  min_freq_actor1 = min(unname(table(x$edgelist$actor1_ID)))-1 
+    # selecting the first 50 most active actors (starting from the most frequent dyads)
+    dyads_freq <- table(apply(x$edgelist,1,function(x) paste(x[2],x[3],sep="_")))
+    dyads_freq_sorted <- sort(dyads_freq,decreasing = TRUE)
+    actors_loc <- 0
+    d_loc <- 25
+    actors_until_d_loc <- NULL
+    while(actors_loc < 50){
+        actors_until_d_loc <-sapply(names(dyads_freq_sorted[1:d_loc]), function(y) (unlist(strsplit(x = y,  split = "_",fixed=TRUE))))
+        actors_loc <- length(unique(as.vector(actors_until_d_loc)))
+        d_loc <- d_loc + 1
+       
+    }
+    # updating vector of actors' names after selecting the 50 most active actors
+    actors <- sort(unique(as.vector(actors_until_d_loc)))
 
-  # ... creating layout
-  layout_matrix <- matrix(c(3,2,1,4), ncol=2, byrow=TRUE) # 0 can become 4 for a legend of the colors
-  dev.hold()
-  layout(layout_matrix, widths=c(4/5,1/5), heights=c(1/5,4/5))
+    # finding vector of events including only the 50 most active actors and sub-setting the x$edgelist
+    events_to_select <- which((x$edgelist$actor1 %in% actors) & (x$edgelist$actor2 %in% actors))
+    x$edgelist <- x$edgelist[events_to_select,] 
+    x$N <- actors_loc # can be 49-50-51, not always exaclty 50
+    x$D <- ifelse(attr(x,"directed"),x$N*(x$N-1),x$N*(x$N-1)/2)
 
-  # ... starting plotting
-  par(oma=c(2,2,2,2))
-  par(mar=c(6,6,1,1))
-  par(mgp=c(6,1,0))
+    # free-ing space
+    rm(dyads_freq,dyads_freq_sorted,actors_loc,d_loc,actors_until_d_loc,events_to_select)
 
-
-  # [1] tile plot
-  plot.new()
-  plot.window(xlim=c(1,x$N),ylim=c(1,x$N))
-  with(X_out,{
-    rect(col-0.5,row-0.5,col+0.5,row+0.5,col=hcl.colors(n=max(unique(sort(fill))),palette=palette)[fill],border="#ffffff") 
-    segments(x0=c(1:x$N)+0.5,y0=c(1:x$N)-0.5,x1=c(1:x$N)-0.5,y1=c(1:x$N)+0.5,col="gray")
-    segments(x0=0.5,y0=0.5,x1=(x$N+0.5),y1=(x$N+0.5),col="gray")
-    # actor names
-    text(x = c(1:x$N), y = 0, labels = names_actor2, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,0), offset = 1.5) 
-    text(x = 0, y = c(1:x$N), labels = names_actor1, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = -0.5)
-    # axes names 
-    mtext(text  = "receiver", side=1, line=5, outer=FALSE, adj=0, at=floor(x$N/2))
-    mtext(text = "sender", side=2, line=5, outer=FALSE, adj=1, at=floor(x$N/2))
-  })
-
-
-  # [2] legend of tie plot
-  par(mar=c(0,0,1,1))
-  plot(0, 0, type="n", xlim = c(0, 5), ylim = c(0, 7),
-      axes = FALSE, xlab = "", ylab = "")   
-  # consider only 3 observed colors
-  colors_legend <- unique(sort(X_out$fill))
-  # colors' legend
-  rect(xleft = 2, ybottom = seq(0,5,length=max(colors_legend)), xright = 3, ytop = seq(1.25,6.25,length=max(colors_legend)),col = hcl.colors(n=max(colors_legend),palette=palette)[1:max(colors_legend)], border = NA)
-  # borders and ticks
-  rect(xleft=2,ybottom=0,xright=3,ytop=6.25)
-  segments(x0=c(2,2.8),y0=rep(seq(0,6.25,length=3)[2],2),x1=c(2.2,3))
-  text(x = rep(3.2,3) , y = seq(0.1,6.25,length=3), labels = c(1,floor(median(colors_legend)),max(colors_legend)), adj = c(0,0.5))
-  text(x = 2.5, y = 6.6, labels = "events",adj =c(0.5,0),cex=1.25)
-
-
-  # [3] line plots in-degree
-  in_degree <- table(factor(x$edgelist$actor2_ID,levels=c(min(x$edgelist$actor2_ID):max(x$edgelist$actor2_ID))))
-  par(mar=c(0,6,1,1))
-  plot(x=1:x$N, type = 'n', xlim = c(1,x$N), ylim = c(min_freq_actor2,max_freq_actor2),axes=FALSE,frame.plot=FALSE,xlab="",ylab="")
-  title(ylab="in-degree \n (receiver)", line = 5)
-  abline(v=seq(1,x$N,by=1),col = "gray", lty = "dotted", lwd = par("lwd"))
-  segments(x0=seq(1,x$N,by=1),y0=0,y1=as.vector(unname(in_degree)),lwd=2,col="cadetblue3")
-  points(x=seq(1,x$N,by=1),y=as.vector(unname(in_degree)),type="p",pch=19,cex=1,col="cadetblue3")
-  axis(side=2)
-  # y-axis name
-  #barplot(unname(table(x$edgelist$actor2_ID)), axes=FALSE, ylim=c(0, top), space=0, names.arg= NULL,border="darkgray",col="lavender",add=TRUE,asp=1/max(actor2_freq))
-
-
-  # [4] line plots out-degree
-  out_degree <- table(factor(x$edgelist$actor1_ID,levels=c(min(x$edgelist$actor1_ID):max(x$edgelist$actor1_ID))))
-  par(mar=c(6,0,1,1))
-  plot(x = seq(min_freq_actor1,max_freq_actor1,length=x$N), y = 1:x$N, type = 'n', xlim = c(min_freq_actor1,max_freq_actor1), ylim = c(1,x$N),axes=FALSE,frame.plot=FALSE,xlab="",ylab="")
-  title(xlab="out-degree \n (sender)", line = 5)
-  abline(h=seq(1,x$N,by=1),col = "gray", lty = "dotted", lwd = par("lwd"))
-  segments(x0=0,y0=seq(1,x$N,by=1),x1=as.vector(unname(out_degree)),lwd=2,col="cadetblue3")
-  points(x=as.vector(unname(out_degree)),y=seq(1,x$N,by=1),type="p",pch=19,cex=1,col="cadetblue3")
-  axis(side=1)
-  #barplot(unname(table(x$edgelist$actor1_ID)), axes=FALSE, xlim=c(0, top), space=0, , names.arg = NULL, horiz=TRUE,border="darkgray",col="lavender")
-  title(main="Activity plot",outer=TRUE)
-  par(op)
-  dev.flush()
-  
-
-  # [[plot 3]] # observed dyads/# potential dyads per time interval or "number of active actors / number of actors"
-  # two plots:
-  #   ## [1] observed dyad/potential_dyads per interval of the time (event rate per time unit)
-  #   ## [2] "number of active actors / number of actors" (actor activity rate per time unit)
-  #   ## [3] make different plots between tie and actor oriented modeling?
-  time <- x$edgelist$time
-  time <- cut(time,breaks = n_intervals)
-  y <- tapply(X = x$edgelist$actor1_ID, INDEX = time, FUN = length)
-
-  # [[plot 4]]
-  # activity plot for sender
-  tab_s <- tapply(X =x$edgelist$actor1_ID, INDEX = time, FUN = function(w) prop.table(table(w)))  
-  dev.hold()        
-  plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)  
-  text(x = 0, y = seq(1,2*x$N,by=2), labels = as.character(dict$actors$actorName), srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = 1)
-  abline(h = seq(0,2*x$N,by=2), lty=2)
-  for(l in 1:length(tab_s)){
-    if(!is.null(tab_s[[l]])){
-      y_loc <- as.numeric(names(tab_s[[l]]))
-      y_loc <- sapply(1:length(y_loc),function(x) x + (x-1) )
-      scaled_y <-  (as.numeric(tab_s[[l]])-min(as.numeric(tab_s[[l]])))/(max(as.numeric(tab_s[[l]]))-min(as.numeric(tab_s[[l]])))
-      if(any(is.nan(scaled_y))) scaled_y[is.nan(scaled_y)] <- 1.0
-      points(rep(l,length(tab_s[[l]])),y_loc,type="p",pch=20,cex=3*scaled_y,col = rgb(red = 80/255, green = 199/255, blue = 199/255, alpha=scaled_y*0.95)) # rgb(red = 100/255, green = 100/255, blue = 120/255, alpha=scaled_y*0.95) 
-    } 
+    # display warning to the UI about the subset of actors
+    warning(paste("Too many actors for rendering plots with a good quality: the 50 most active actors are selected (descriptives on dyads and actors may differ from the descriptives conducted on the whole set of actors)"))
   }
-  title("Sender activity per time interval")
-  dev.flush()  
-  # activity plot for receiver
-  tab_s <- tapply(X =x$edgelist$actor2_ID, INDEX = time, FUN = function(y) prop.table(table(y))) 
-  dev.hold()            
-  plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)  
-  text(x = 0, y = seq(1,2*x$N,by=2), labels = as.character(dict$actors$actorName), srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = 1)
-  abline(h = seq(0,2*x$N,by=2), lty=2)
-  for(l in 1:length(tab_s)){
-    if(!is.null(tab_s[[l]])){
-      y_loc <- as.numeric(names(tab_s[[l]]))
-      y_loc <- sapply(1:length(y_loc),function(x) x + (x-1) )
-      scaled_y <- (as.numeric(tab_s[[l]])-min(as.numeric(tab_s[[l]])))/(max(as.numeric(tab_s[[l]]))-min(as.numeric(tab_s[[l]])))
-      if(any(is.nan(scaled_y))) scaled_y[is.nan(scaled_y)] <- 1.0
-      points(rep(l,length(tab_s[[l]])),y_loc,type="p",pch=20,cex=3*scaled_y,col = rgb(red = 199/255, green = 121/255, blue = 80/255, alpha=scaled_y*0.95)) # rgb(red = 100/255, green = 100/255, blue = 120/255, alpha=scaled_y*0.95)
+  else{ # when x$N <= 50
+    if(length(actors) < x$N){ 
+      # when length(actors) is less than x$N (analysis on a subset of actors that is smaller than 50 actors)
+      x$N <- length(actors)
+      x$D <- ifelse(attr(x,"directed"),x$N*(x$N-1),x$N*(x$N-1)/2)
+      events_to_select <- which((x$edgelist$actor1 %in% actors) & (x$edgelist$actor2 %in% actors))     
+      if(length(events_to_select) == 0){
+        stop("no events found when selecting the set of actors (supplied via the argument 'actors').")
+      }
+      x$edgelist <- x$edgelist[events_to_select,]
+      rm(events_to_select)
     }
   }
-  title("Receiver activity per time interval")  
-  dev.flush()
   
-
-  dev.hold()
-  # plotting (# events) per time interval
-
-  # arranging layout
-  layout.matrix <- NULL
-  if(attr(x,"model") == "tie"){
-    layout.matrix <- matrix(c(1, 2, 3,4), nrow = 2, ncol = 2)
+  # dyads, in-degree, out-degree and total-degree
+  dyads <- paste(x$edgelist$actor1,x$edgelist$actor2,sep="_")
+  if(attr(x,"directed")){
+      in_degree <- table(factor(x$edgelist$actor2,levels=actors))
+      out_degree <- table(factor(x$edgelist$actor1,levels=actors))
   }
-  else if(attr(x,"model") == "actor"){
-    layout.matrix <- matrix(c(1, 2, 0,3), nrow = 2, ncol = 2)
+  else{
+      total_degree <- table(factor(c(x$edgelist$actor1,x$edgelist$actor2),levels=actors))
   }
-  layout(mat = layout.matrix)
+
+  if((which[4L]  & !attr(x,"directed")) | any(which[c(2L,5L)])){
+    # X_dyad is used by plot 5 and total_degree is used by plot 2 when the network is undirected
+    # [incomplete] matrix of dyad frequencies by [actor1-actor2] with no direction (undirected) taken into account (some dyads may not be included at this stage, only observed ones are included)
+    cl <- parallel::makeCluster(attr(x,"ncores"))
+    dyad_no_direction_freq <-parallel::parApply(cl = cl, X = x$edgelist, MARGIN = 1,FUN = function(l) {
+      dyad_l <- sort(as.character(c(l[2],l[3])))
+      paste(dyad_l[1],dyad_l[2],sep="_")
+      })
+    parallel::stopCluster(cl)
+    if(which[4L]  & !attr(x,"directed")){
+      dyads <- dyad_no_direction_freq
+    }
+  }
+
+  if(any(which[c(2L,5L)])){
+    # ... frequencies dyads (sorted from large to small frequency values) 
+    dyad_freq <- table(dyads)
+
+    # [incomplete] matrix of dyad frequencies by [actor1-actor2] (some dyads may not be included at this stage, only observed one are included)
+    if(attr(x,"directed")){
+      X <- matrix(NA, nrow=length(dyad_freq),ncol=3) 
+      X[,3] <- as.integer(dyad_freq)
+      for(d in 1:length(dyad_freq)){
+        X[d,1:2] <- unlist(strsplit(x = names(dyad_freq[d]),  split = "_"))
+      }
+      X <- X[order(X[,1],X[,2]),]
+    }
+
+    dyad_no_direction_freq <- table(dyad_no_direction_freq) 
+    X_dyad <- matrix(NA, nrow=length(dyad_no_direction_freq),ncol=3) 
+    X_dyad[,3] <- as.integer(dyad_no_direction_freq)
+    for(d in 1:length(dyad_no_direction_freq)){
+      X_dyad[d,1:2] <- unlist(strsplit(x = names(dyad_no_direction_freq[d]),split = "_"))
+    }
+    X_dyad <- X_dyad[order(X_dyad[,1],X_dyad[,2]),]
+    rm(dyad_no_direction_freq)
+    if(!attr(x,"directed")){ 
+      # only for undirected networks (if undirected, X and X_dyad are the same)
+      X <- X_dyad
+    }
+  }
+
+  if(any(which[c(3L,4L)])){
+    time <- x$edgelist$time
+    time <- cut(time,breaks = n_intervals)
+    y <- tapply(X = x$edgelist$actor1, INDEX = time, FUN = length)
+    y[is.na(y)] <- 0
+  }
+
+  # important settings for graphics parameters after running the plot function
+  # disabling dynamic pages for remify 3.2.0
+  #ask_new_page <- devAskNewPage(TRUE)
+  #on.exit(expr = devAskNewPage(ask_new_page))
+  op <- par(no.readonly = TRUE)
+  on.exit(expr = par(op))
   
-  plot(y,type="l",col=1,ylab = "# events",xlab = "time", xaxt="n", lwd = 1.5, main="Number of events (# events) per time interval")
-
-  # plotting (proportion of active dyads) per time interval
-  if(attr(x,"model") == "tie"){
-    prop_dyads <- tapply(X = attr(x,"dyad"), INDEX = time, FUN = function(y) length(unique(y))/x$D) 
-    plot(prop_dyads,type="l",col=1,ylab = "active dyads (%)",xlab = "time", xaxt="n", lwd = 1.5, main="Active dyads (%) per time interval")
+  ## [[plot 1]] plotting histogram of the waiting times:
+    # y-axis = Frequency (freq=TRUE)
+    # x-axis = measurement unit of the waiting time
+  if(which[1L] & !ordinal){
+    time_unit <- NULL
+    time_unit <- attr(x$intereventTime,"unit") # [[CHECK!!]] add attribute to x$intereventTime object based on the time scale (default is seconds if time is timestamp, or days if it is a Date )
+    #dev.hold()
+    hist(x = x$intereventTime, 
+      breaks = breaks,
+      angle = 45, 
+      col = "lavender", 
+      border = "darkgray",
+      main = paste("Distribution of the inter-event times",collapse=""),
+      xlab = ifelse(!is.null(time_unit),paste("waiting time (",time_unit,")",sep="", collapse=""),paste("waiting time")),
+      freq = TRUE)
+    #dev.flush()
   }
 
-  # plotting (proportion of active senders) per time interval   
-  s <- tapply(X = x$edgelist$actor1_ID, INDEX = time, FUN = function(y) length(unique(y))/x$N)   
-  plot(s,type="l",col=1,ylab = "active senders (%)",xlab = "time", xaxt="n", lwd = 1.5,main="Active senders (%) per time interval") 
+  # [[plot 2]] two-way table of event counts (with marginal distributions on actor1 and actor2, or total degree if undirected network): actor- and tie- oriented networks
+  if(which[2L]){
+    # actors that interacted either as 'sender' or 'receiver' (or 'actor1' and 'actor2' in case of undirected networks)
+    egrid <- expand.grid(actors,actors)
+    egrid <- egrid[,2:1]
+    if(attr(x,"directed")){
+      tile_plot_x_axis_name <- "receiver"
+      tile_plot_y_axis_name <- "sender"
+      upper_plot_y_axis_name <- "in-degree"
+    }
+    else{
+      tile_plot_x_axis_name <- "actor2"
+      tile_plot_y_axis_name <- "actor1"
+      upper_plot_y_axis_name <- "total-degree"
+    }
 
-  # plotting (proportion of active receivers) per time interval   
-  s <- tapply(X = x$edgelist$actor2_ID, INDEX = time, FUN = function(y) length(unique(y))/x$N)  
-  plot(s,type="l",col=1,ylab = "active receivers (%)",xlab = "time", xaxt="n", lwd = 1.5, main="Active receivers (%) per time interval")  
+    # [complete] matrix of dyad frequencies
+    X_out <- data.frame(row = egrid[,1],col = egrid[,2], fill = NA)  
+    for(d in 1:dim(X)[1]){
+      row_index <- which((X_out$row == X[d,1]) & (X_out$col == X[d,2]))
+      X_out$fill[row_index] <- as.integer(X[d,3])
+    }
+    
+    # assigning actors positions on the grid
+    X_out[,1:2] <- expand.grid(1:length(actors),1:length(actors)) # for positioning actors on the grid
+    X_out[,1:2] <- X_out[,2:1]
 
-  dev.flush()
-}
-# ... undirected networks
-else{
-# tile plot
-# # events per time interval
-# active dyads (%)
+    # setting up axes measures
+    if(attr(x,"directed")){
+      max_upper_plot <- max(unname(in_degree))+2 
+      min_upper_plot <- min(unname(in_degree))-1 
+      max_out_degree <- max(unname(out_degree))+2 
+      min_out_degree <- min(unname(out_degree))-1 
+      total_or_in_degree <- in_degree
+    }
+    else{ 
+      # when the network is undirected use 'total_degree' but keep same name to avoid redundant code
+      max_upper_plot <- max(unname(total_degree))+2 
+      min_upper_plot <- min(unname(total_degree))-1 
+      total_or_in_degree <- total_degree
+    }
+
+    # creating layout and setting up graphical parameters 
+    if(attr(x,"directed")){
+      layout_matrix <- matrix(c(3,2,1,4), ncol=2, byrow=TRUE)
+    }
+    else{
+      layout_matrix <- matrix(c(3,2,1,2), ncol=2, byrow=TRUE)
+    }
+    colors_legend <- unique(sort(X_out$fill))
+    bottom_and_left_mai <- max(strwidth(actors, "inch")+0.4, na.rm = TRUE)
+    dev.hold()
+    layout(layout_matrix, widths=c(4/5,1/5), heights=c(1/5,4/5))
+    par(oma=c(2,2,2,2))
+    par(mar =c(6,6,1,1))
+    par(mgp=c(6,1,0)) 
+
+    # [1] tile plot
+    plot.new()
+    plot.window(xlim=c(1,x$N),ylim=c(1,x$N))
+    with(X_out,{
+      rect(col-0.5,row-0.5,col+0.5,row+0.5,col=hcl.colors(n=max(unique(sort(fill))),palette=palette,rev=rev)[fill],border="#ffffff") 
+      segments(x0=c(1:x$N)+0.5,y0=c(1:x$N)-0.5,x1=c(1:x$N)-0.5,y1=c(1:x$N)+0.5,col="gray")
+      segments(x0=0.5,y0=0.5,x1=(x$N+0.5),y1=(x$N+0.5),col="gray")
+      # actor names
+      text(x = c(1:x$N), y = 0, labels = actors, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,1), offset = 2.5) 
+      text(x = 0, y = c(1:x$N), labels = actors, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = 0)
+      # axes names 
+      mtext(text  = tile_plot_x_axis_name, side=1, line=5, outer=FALSE, adj=0, at=floor(x$N/2))
+      mtext(text = tile_plot_y_axis_name, side=2, line=5, outer=FALSE, adj=1, at=floor(x$N/2))
+    })
+
+    # [2] legend of tile plot
+    par(mar=c(0,0,1,1))
+    plot(0, 0, type="n", xlim = c(0, 5), ylim = c(0, 7), axes = FALSE, xlab = "", ylab = "")   
+    # colors' legend
+    rect(xleft = 2, ybottom = seq(0,5,length=max(colors_legend)), xright = 3, ytop = seq(1.25,6.25,length=max(colors_legend)),col = hcl.colors(n=max(colors_legend),palette=palette,rev=rev)[1:max(colors_legend)], border = NA)
+    # borders and ticks
+    rect(xleft=2,ybottom=0,xright=3,ytop=6.25)
+    segments(x0=c(2,2.8),y0=rep(seq(0,6.25,length=3)[2],2),x1=c(2.2,3))
+    text(x = rep(3.2,3) , y = seq(0.1,6.25,length=3), labels = c(1,floor(median(colors_legend)),max(colors_legend)), adj = c(0,0.5))
+    text(x = 2.5, y = 6.6, labels = "events",adj =c(0.5,0),cex=1.25)
+
+    # [3] line plots in-degree
+    par(mar=c(0,6,1,1))
+    plot(x=1:x$N, type = 'n', xlim = c(1,x$N), ylim = c(min_upper_plot,max_upper_plot),axes=FALSE,frame.plot=FALSE,xlab="",ylab="")
+    title(ylab=upper_plot_y_axis_name, line = 5)
+    abline(v=seq(1,x$N,by=1),col = "gray", lty = "dotted", lwd = par("lwd"))
+    segments(x0=seq(1,x$N,by=1),y0=0,y1=total_or_in_degree,lwd=2,col="cadetblue3")
+    points(x=seq(1,x$N,by=1),y=total_or_in_degree,type="p",pch=19,cex=1,col="cadetblue3")
+    axis(side=2)
+
+    # [4] line plots out-degree
+    if(attr(x,"directed")){
+      par(mar=c(6,0,1,1))
+      plot(x = seq(min_out_degree,max_out_degree,length=x$N), y = 1:x$N, type = 'n', xlim = c(min_out_degree,max_out_degree), ylim = c(1,x$N),axes=FALSE,frame.plot=FALSE,xlab="",ylab="")
+      title(xlab="out-degree", line = 5)
+      abline(h=seq(1,x$N,by=1),col = "gray", lty = "dotted", lwd = par("lwd"))
+      segments(x0=0,y0=seq(1,x$N,by=1),x1=as.vector(unname(out_degree)),lwd=2,col="cadetblue3")
+      points(x=as.vector(unname(out_degree)),y=seq(1,x$N,by=1),type="p",pch=19,cex=1,col="cadetblue3")
+      axis(side=1)
+      title(main="Activity plot",outer=TRUE)
+      par(op)
+    }
+    #dev.flush()
+  }
+
+  ## [[plot 3]] normalized degrees (per actor and per intervals):
+    # for directed networks: normalized in-degree and out-degree
+    # for undirected networks: normalized total-degree
+    # normalization means that per each intervals the in-/out-/total- degree of each actor is normalized for the minimum and maximum observed value of in-/out-/total- degree across all the actors. The normalization is carried out as follows: (degree-min(degree))/(max(degree)-min(degree))
+  if(which[3L]){
+    if(attr(x,"directed")){
+      # out-degree plot
+      tab_s <- tapply(X =x$edgelist$actor1, INDEX = time, FUN = function(w) table(w))
+      #dev.hold()
+      par(mfrow=c(1,1))
+      left_mai <- max(strwidth(actors, "inch")+0.4, na.rm = TRUE)
+      bottom_mai <- max(strwidth(labels(time), "inch")+2, na.rm = TRUE)
+      par(mai =c(bottom_mai,left_mai,1,1))
+      plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time interval", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)  
+      axis(side = 1, at = c(1:length(tab_s)))
+      axis(side = 2, at = seq(1,2*x$N,by=2), labels = as.character(actors),las=2)
+      abline(h = seq(0,2*x$N,by=2), lty=2, col="gray")
+      for(l in 1:length(tab_s)){
+        if(!is.null(tab_s[[l]])){
+          y_loc <- names(tab_s[[l]])
+          y_loc <- sapply(1:length(y_loc),function(x) x + (x-1) )
+          scaled_y <-  (as.numeric(tab_s[[l]])-min(as.numeric(tab_s[[l]])))/(max(as.numeric(tab_s[[l]]))-min(as.numeric(tab_s[[l]])))
+          if(any(is.nan(scaled_y))) scaled_y[is.nan(scaled_y)] <- 1.0
+          points(rep(l,length(tab_s[[l]])),y_loc,type="p",pch=pch.degree,cex=3*scaled_y,col = rgb(red = 80/255, green = 199/255, blue = 199/255, alpha=scaled_y*1))
+        } 
+      }
+      title("(normalized) Out-degree per time interval")
+      #dev.flush()
+
+      # in-degree plot
+      tab_s <- tapply(X =x$edgelist$actor2, INDEX = time, FUN = function(w) table(w)) 
+      #dev.hold()
+      plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time interval", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)  
+      axis(side = 1, at = c(1:length(tab_s)))
+      axis(side = 2, at = seq(1,2*x$N,by=2), labels = as.character(actors),las=2)
+      abline(h = seq(0,2*x$N,by=2), lty=2, col="gray")
+      for(l in 1:length(tab_s)){
+        if(!is.null(tab_s[[l]])){
+          y_loc <- names(tab_s[[l]])
+          y_loc <- sapply(1:length(y_loc),function(x) x + (x-1) )
+          scaled_y <- (as.numeric(tab_s[[l]])-min(as.numeric(tab_s[[l]])))/(max(as.numeric(tab_s[[l]]))-min(as.numeric(tab_s[[l]])))
+          if(any(is.nan(scaled_y))) scaled_y[is.nan(scaled_y)] <- 1.0
+          points(rep(l,length(tab_s[[l]])),y_loc,type="p",pch=pch.degree,cex=3*scaled_y,col = rgb(red = 199/255, green = 121/255, blue = 80/255, alpha=scaled_y*1))
+        }
+      }
+      title("(normalized) In-degree per time interval")  
+      #dev.flush()
+      par(op)
+    }
+    else{ # for undirected networks
+      # total-degree plot
+      time_s <- rep(x$edgelist$time,each=2)
+      time_s <- cut(time_s,breaks = n_intervals)
+      tab_s <- tapply(X =as.vector((t(as.matrix(x$edgelist[,2:3])))), INDEX = time_s, FUN = function(w) table(w))
+      #dev.hold()
+      par(mfrow=c(1,1))
+      left_mai <- max(strwidth(actors, "inch")+0.4, na.rm = TRUE)
+      bottom_mai <- max(strwidth(labels(time), "inch")+2, na.rm = TRUE)
+      par(mai =c(bottom_mai,left_mai,1,1))
+      plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time interval", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)  
+      axis(side = 1, at = c(1:length(tab_s)))
+      axis(side = 2, at = seq(1,2*x$N,by=2), labels = as.character(actors),las=2)
+      abline(h = seq(0,2*x$N,by=2), lty=2, col="gray")
+      for(l in 1:length(tab_s)){
+        if(!is.null(tab_s[[l]])){
+          y_loc <- names(tab_s[[l]])
+          y_loc <- sapply(1:length(y_loc),function(x) x + (x-1) )
+          scaled_y <-  (as.numeric(tab_s[[l]])-min(as.numeric(tab_s[[l]])))/(max(as.numeric(tab_s[[l]]))-min(as.numeric(tab_s[[l]])))
+          if(any(is.nan(scaled_y))) scaled_y[is.nan(scaled_y)] <- 1.0
+          points(rep(l,length(tab_s[[l]])),y_loc,type="p",pch=pch.degree,cex=3*scaled_y,col = rgb(red = 80/255, green = 199/255, blue = 199/255, alpha=scaled_y*1)) 
+        } 
+      }
+      title("(normalized) Total-degree per time interval")
+      #dev.flush()
+    }
+  }
+
+  # [[plot 4]] plots: quantity per time interval
+    ## [1] (# events) per time interval
+    ## [2] (proportion of active dyads, as observed dyads / D) per time interval
+  # if directed network:  
+    ## [3] (proportion of active senders, as observed senders / N) per time interval
+    ## [4] (proportion of active receivers, as observed receivers / N) per time interval
+  if(which[4L]){
+    # arranging layout
+    layout.matrix <- NULL
+    if(attr(x,"directed")){
+    layout.matrix <- matrix(c(1,3,2,4), nrow = 2, ncol = 2)
+    }
+    else{
+    layout.matrix <- matrix(c(1, 2), nrow = 1, ncol = 2)
+    }
+    #dev.hold()
+    layout(mat = layout.matrix)
+    df_spline <- floor(sqrt(n_intervals))
+    # [1] plotting (# events) per time interval
+    type_plot <- ifelse(n_intervals>3,"p","b")
+    plot(1:length(y),y,type=type_plot,cex=0.8,col="#939393",ylab = "# events",xlab = "time interval", xaxt="n", lwd = 1.5, main="Number of events (# events) per time interval")
+    if(n_intervals>3) lines(smooth.spline(x=c(1:length(y)),y=as.numeric(y),df=df_spline),col="#cd0303",lwd=2)
+
+    # [2] plotting (proportion of active dyads) per time interval
+    prop_dyads <- tapply(X = dyads, INDEX = time, FUN = function(l) length(unique(l))) 
+    prop_dyads[is.na(prop_dyads)] <- 0
+    prop_dyads <- prop_dyads/x$D
+    plot(prop_dyads,type=type_plot,cex=0.8,col="#939393",ylab = "active dyads (observed/total)",xlab = "time interval", xaxt="n", lwd = 1.5, main="Active dyads (observed/total) per time interval")
+    if(n_intervals>3) lines(smooth.spline(x=c(1:length(y)),y=as.numeric(prop_dyads),df=df_spline),col="#cd0303",lwd=2)
+    
+    if(attr(x,"directed")){
+      # [3] plotting (proportion of active senders) per time interval   
+      s <- tapply(X = x$edgelist$actor1, INDEX = time, FUN = function(l) length(unique(l))) 
+      s[is.na(s)] <- 0
+      s <- s/x$N
+      plot(s,type=type_plot,cex=0.8,col="#939393",ylab = "active senders (observed/total)",xlab = "time interval", xaxt="n", lwd = 1.5,main="Active senders (observed/total) per time interval") 
+      if(n_intervals>3) lines(smooth.spline(x=c(1:length(y)),y=as.numeric(s),df=df_spline),col="#cd0303",lwd=2)
+      # [4] plotting (proportion of active receivers) per time interval   
+      s <- tapply(X = x$edgelist$actor2, INDEX = time, FUN = function(l) length(unique(l))) 
+      s[is.na(s)] <- 0
+      s <- s/x$N
+      plot(s,type=type_plot,cex=0.8,col="#939393",ylab = "active receivers (observed/total)",xlab = "time interval", xaxt="n", lwd = 1.5, main="Active receivers (observed/total) per time interval")  
+      if(n_intervals>3) lines(smooth.spline(x=c(1:length(y)),y=as.numeric(s),df=df_spline),col="#cd0303",lwd=2)
+    }
+    #dev.flush()
+  }
+
+
+  # [[plot 5]] network visualization as nodes and edges
+  if(which[5L]){
+    requireNamespace(package="igraph",quietly=TRUE)
+    X_dyad[is.na(X_dyad)] <- 0
+    # [1] network of undirected dyad intensity 
+    # defining nodes and links
+    popularity_table <- table(factor(c(x$edgelist$actor1,x$edgelist$actor2),levels=actors))
+    nodes <- data.frame(name= names(popularity_table),popularity =as.vector(popularity_table)) # popularity = total in- and out-degree
+    rm(popularity_table)
+    links <- data.frame(from = as.character(X_dyad[,1]),to = as.character(X_dyad[,2]), weight = as.numeric(X_dyad[,3]))
+    # creating a graph_from_data_frame
+    net_undirected <- igraph::graph_from_data_frame(d=links, vertices=nodes, directed=TRUE) 
+
+    # setting up vertex and edge attributes
+    popularity_scale <- ((nodes$popularity-min(nodes$popularity))/(max(nodes$popularity)-min(nodes$popularity)))
+    popularity_scale[is.na(popularity_scale)] <- 0
+    links_weight <- (links$weight-min(links$weight))/(max(links$weight)-min(links$weight))
+    links_weight[is.na(links_weight)] <- 0
+    igraph::V(net_undirected)$size <- 10 
+    # defining transparency of vertices color based on their popularity (in-degree)
+    transparency_popularity_levels <- sapply(round(255*popularity_scale), function(l) {
+    hc <-rgb(0,0,0, alpha = l,maxColorValue = 255)
+    substr(x=hc, nchar(hc)-1, nchar(hc))
+    })
+    igraph::V(net_undirected)$color <- sapply(transparency_popularity_levels,function(l) paste(igraph.vertex.color,l,sep=""))
+    igraph::V(net_undirected)$frame.color <- NA
+    igraph::E(net_undirected)$arrow.mode <- 0
+    igraph::E(net_undirected)$width <- 2
+    # defining transparency of edges color based on count
+    transparency_links_weight_levels <- sapply(round(255*links_weight), function(l) {
+    hc <-rgb(0,0,0, alpha = l,maxColorValue = 255)
+    substr(x=hc, nchar(hc)-1, nchar(hc))
+    })
+    igraph::E(net_undirected)$color <- sapply(transparency_links_weight_levels,function(l) paste(igraph.edge.color,l,sep="")) 
+    igraph::E(net_undirected)$curved <- 0.1
+    igraph::graph_attr(net_undirected, "layout") <- igraph::layout_with_lgl
+    if(attr(x,"directed")){
+      X[is.na(X)] <- 0
+      # [2] network of directed dyad intensity
+      # defining nodes and links
+      popularity_table <- table(factor(x$edgelist$actor2,levels=actors))
+      nodes <- data.frame(name= names(popularity_table),popularity =as.vector(popularity_table)) # popularity = total in-degree
+      rm(popularity_table)
+      links <- data.frame(from = as.character(X[,1]),to = as.character(X[,2]), weight = as.numeric(X[,3]))
+
+      # creating a graph_from_data_frame
+      net_directed <- igraph::graph_from_data_frame(d=links, vertices=nodes, directed=TRUE) 
+
+      # setting up vertex and edge attributes
+      popularity_scale <- ((nodes$popularity-min(nodes$popularity))/(max(nodes$popularity)-min(nodes$popularity)))
+      links_weight <- (links$weight-min(links$weight))/(max(links$weight)-min(links$weight))
+      igraph::V(net_directed)$size <- 10 
+      # defining transparency of vertices color based on their popularity (in-degree)
+      transparency_popularity_levels <- sapply(round(255*popularity_scale), function(l) {
+      hc <-rgb(0,0,0, alpha = ifelse(is.na(l),0,l),maxColorValue = 255)
+      substr(x=hc, nchar(hc)-1, nchar(hc))
+      })
+      igraph::V(net_directed)$color <- sapply(transparency_popularity_levels,function(l) paste(igraph.vertex.color,l,sep=""))
+      igraph::V(net_directed)$frame.color <- NA
+      igraph::E(net_directed)$arrow.size <- 0.3
+      igraph::E(net_directed)$width <- 2
+      # defining transparency of edges color based on count
+      transparency_links_weight_levels <- sapply(round(255*links_weight), function(l) {
+      hc <-rgb(0,0,0, alpha = ifelse(is.na(l),0,l),maxColorValue = 255)
+      substr(x=hc, nchar(hc)-1, nchar(hc))
+      })
+      igraph::E(net_directed)$color <- sapply(transparency_links_weight_levels,function(l) paste(igraph.edge.color,l,sep="")) 
+      igraph::E(net_directed)$curved <- 0.1
+      igraph::graph_attr(net_directed, "layout") <- igraph::layout_with_lgl
+      # plotting network
+      #dev.hold()
+      par(mfrow=c(1,2))
+      plot(net_undirected, main = "Network of events (undirected edges)")
+      plot(net_directed, main = "Network of events (directed edges)")
+      #dev.flush()
+    }
+    else{
+      # plotting network
+      #dev.hold()
+      par(mfrow=c(1,1))
+      plot(net_undirected, main = "Network of events (undirected edges)")
+      #dev.flush()
+    }
+  }
 }
 
-}
+#######################################################################################
+#######################################################################################
+
 
 #######################################################################################
 #######################################################################################

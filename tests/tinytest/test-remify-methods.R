@@ -266,8 +266,8 @@ expect_warning(getDyad(x = out, dyadID = c(1,1,2)),
 
 tryCatch_error_loc<- tryCatch(getDyad(x = out,dyadID = c(0)),error=function(e) e)       
 expect_inherits(tryCatch_error_loc,c("Rcpp::exception","C++Error","error","condition")) 
-#expect_match(print(tryCatch_error_loc),
-#"<Rcpp::exception: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D>")
+expect_match(print(tryCatch_error_loc),
+"<Rcpp::exception: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D>")
 
 # getDyad without type
 reh_loc$edgelist$type <- NULL
@@ -281,8 +281,8 @@ out <- remify(edgelist = reh_loc$edgelist,
                 model = "tie")
 tryCatch_error_loc <- tryCatch(getDyad(x = out,dyadID = c(0)),error=function(e) e)      
 expect_inherits(tryCatch_error_loc,c("Rcpp::exception","C++Error","error","condition")) 
-#expect_match(print(tryCatch_error_loc),
-#"Error: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D\n")
+expect_match(print(tryCatch_error_loc),
+"Error: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D\n")
 
 expect_silent(getDyad(x = out, dyadID = c(1:10)))
 expect_true(is.data.frame(getDyad(x = out, dyadID = c(1:10))))
@@ -345,15 +345,32 @@ expect_silent(getDyadID(x = out, actor1 = "Alexander", actor2 = "Charles"))
 
 # method plot()
 
-# [... code here ...]
+## directed = TRUE
+out <- remify(edgelist = reh_loc$edgelist,
+                directed = TRUE,
+                model = "tie")  
+expect_silent(plot(x=out))
+expect_silent(plot(x=out,breaks=NULL,palette=NULL,n_intervals=NULL,rev=NULL,actors=NULL,pch.degree=NULL,igraph.edge.color=NULL,igraph.vertex.color=NULL))
+expect_silent(plot(x=out,pch.degree=-1))
+expect_silent(plot(x=out,igraph.edge.color="#000000000",igraph.vertex.color="#000000000"))
+expect_silent(plot(x=out,igraph.edge.color="magenta",igraph.vertex.color="cyan4"))
+expect_silent(plot(x=out,n_intervals = 5L))
+expect_silent(plot(x=out,actors=attr(out,"dictionary")$actors$actorName[1:5]))
+
+
+## directed = FALSE
+out <- remify(edgelist = reh_loc$edgelist,
+                directed = FALSE,
+                model = "tie")  
+expect_silent(plot(x=out))
+expect_silent(plot(x=out,n_intervals = 5L))
+expect_silent(plot(x=out,actors=attr(out,"dictionary")$actors$actorName[1:5]))
 
 # test on methods with active risk set
 out <- remify(edgelist = reh_loc$edgelist,
-                actors = reh_loc$actors,
-                types = reh_loc$types, 
+                directed = FALSE,
                 riskset = "active",
                 model = "tie")  
-
 expect_true(is.numeric(dim(out)))
 #expect_equal(length(dim(out)),5) # with types
 expect_identical(as.numeric(dim(out)),c(out$M,out$N,out$C,out$D,out$activeD))

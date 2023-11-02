@@ -1,4 +1,4 @@
-## tests on function remify::remify() ##
+## tests on function remify::remify() - tie-oriented modeling ##
 out <- remify(edgelist = randomREH$edgelist,
                   actors = randomREH$actors,
                   types = randomREH$types, 
@@ -19,7 +19,7 @@ expect_equal(out$M, dim(randomREH$edgelist)[1])
 expect_equal(out$edgelist[,1],randomREH$edgelist[,1])
 
 # expectations on attributes of the 'remify' object 
-expect_identical(names(attributes(out)),c("names","class","with_type","weighted","directed","ordinal","model","riskset","dictionary","origin","dyad","ncores"))
+expect_identical(names(attributes(out)),c("names","class","with_type","weighted","directed","ordinal","model","riskset","dictionary","origin","ncores","dyadID","actor1ID","actor2ID","typeID"))
 expect_false(attr(out,"ordinal")) 
 expect_true(attr(out,"directed"))
 expect_identical(attr(out,"model"),"tie")
@@ -265,3 +265,31 @@ summary(remify(edgelist = reh_loc$edgelist,
                 omit_dyad = reh_loc$omit_dyad,
                 model = "tie"))
 )
+
+
+
+## tests on function remify::remify() - actor-oriented modeling ##
+out <- remify(edgelist = randomREH$edgelist,
+                  actors = randomREH$actors,
+                  types = randomREH$types, 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = randomREH$origin,
+                  omit_dyad = randomREH$omit_dyad,
+                  model = "actor")
+
+# expectations on output object features               
+expect_inherits(out, "remify")
+expect_true(is.list(out))
+expect_equal(length(out), 7)
+
+# expectations on objects inside the 'remify' object
+expect_identical(names(out),c("M","N","C","D","intereventTime","edgelist","omit_dyad"))
+expect_equal(out$M, dim(randomREH$edgelist)[1])
+expect_equal(out$edgelist[,1],randomREH$edgelist[,1])
+
+# expectations on attributes of the 'remify' object 
+expect_identical(names(attributes(out)),c("names","class","with_type","weighted","directed","ordinal","model","riskset","dictionary","origin","ncores","actor1ID","actor2ID","typeID"))
+expect_false(attr(out,"ordinal")) 
+expect_true(attr(out,"directed"))
+expect_identical(attr(out,"model"),"actor")
