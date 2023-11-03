@@ -27,7 +27,7 @@ vignette: >
 
 ## Aim
 The objective of <tt>remify::remify()</tt> is to process raw relational event sequences supplied by the user along with other inputs that characterize the data (actors' names, event types' names, starting time point of the event sequence, set of interactions to be excluded from the risk set at specific time points, etc.).
-The internal routines will process the structure of the input event sequence into a new one, providing also objects that will be used by the packages in [<tt>remverse</tt>](https://github.com/TilburgNetworkGroup/remverse).
+The internal routines will process the structure of the input event sequence into a new one, providing also objects that will be used by the packages in `remverse`.
 
 As example, we will use the data `randomREH` (documentation available via `?randomREH`).
 
@@ -246,7 +246,7 @@ When `riskset = "manual"`, `omit_dyad` must be supplied to the processing functi
 edgelist_reh$omit_dyad$riskset[,1:10] # printing out the risk set modifications of only the first 10 columns (dyads). A total number of 2 modifications of the risk set are observed (by row)
 ```
 
-The processed object `omit_dyad` (inside any `remify` object) will be required by other packages in [<tt>remverse</tt>](https://github.com/TilburgNetworkGroup/remverse). Given that such packages have function written in C++, the row indices in the vector start at 0 (indicating row 1 in the matrix above) and they assume value -1 when no risk set alteration is observed.
+The processed object `omit_dyad` (inside any `remify` object) will be required by other packages in `remverse`. Given that such packages have function written in C++, the row indices in the vector start at 0 (indicating row 1 in the matrix above) and they assume value -1 when no risk set alteration is observed.
 
 ```{r}
 edgelist_reh$omit_dyad$time[1:10] # printing out the first 10 time points. We can see that in none of the 10 time points any modification takes place (-1)

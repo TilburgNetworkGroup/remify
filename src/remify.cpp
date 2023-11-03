@@ -381,7 +381,7 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
     
     //(2.1) further processing of bounds : making sure that we overlap the lists of changes (on the riskset) on the correct time points
     for(z = 0; z < lb.size(); z++){
-        if((lb[z]!=ub[z]) | ((lb[z]==timeID[0]) | (ub[z]==timeID[timeID.size()-1]))){
+        if((lb[z]!=ub[z]) || ((lb[z]==timeID[0]) || (ub[z]==timeID[timeID.size()-1]))){
             // lower bound
             int lb_z = lb[z];
             if(std::any_of(ub.begin(),ub.end(), [&lb_z](int i){return i == lb_z;})){
@@ -1482,7 +1482,7 @@ Rcpp::IntegerMatrix getEventsComposition(arma::vec dyads,
     #pragma omp parallel for private(d) shared(length_dyads,D,out,N,directed)
     #endif
     for(d = 0; d < length_dyads; d++){
-        if((dyads(d) < 1) | (dyads(d) > D)){
+        if((dyads(d) < 1) || (dyads(d) > D)){
             undefined_dyads = true;
         }
         else{

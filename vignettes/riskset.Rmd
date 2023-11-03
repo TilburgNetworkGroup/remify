@@ -73,7 +73,7 @@ The most common definition of the risk set assumes that all the possible dyads a
 getDyad(x = reh, dyadID = c(1:5)) 
 ```
 
-The ID of the dyads (`dyadID`) corresponds to the order of the dyads used by the functions in `remverse` and it is processed by the function `remify::remify()`. The ID of the dyads is defined by a two-steps approach:
+The ID of the dyads (`dyadID`) corresponds to the order of the dyads used by the functions in `` and it is processed by the function `remify::remify()`. The ID of the dyads is defined by a two-steps approach:
 
 1. Actors' and types' names are first sorted according to their <div class="hovertip">
  alphanumeric<span class="hovertiptext"><p>The alphanumeric order follows first the order of numbers from 0 to 9, then the alphabetical order of the letters.</p> <p>For instance, given the vector of names `c("user22","0usr","1user","1deer")`, its alphanumeric order will be `c("0usr","1deer","1user","user22)`</p><i></i></span></div> order, that for the actors in the random network will be,
