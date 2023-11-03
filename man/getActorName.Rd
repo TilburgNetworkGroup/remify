@@ -14,6 +14,9 @@ getActorName(x, actorID = NULL)
 
 \item{actorID}{a vector of actor ID's. The ID value can range between \code{1} and \code{N} (number of actors in the network).}
 }
+\value{
+character vector of actors' names.
+}
 \description{
 A function that given a vector of actor ID's returns the corresponding vector of actor (input) names.
 }

@@ -27,7 +27,7 @@ vignette: >
 
 ## Aim
 The objective of <tt>remify::remify()</tt> is to process raw relational event sequences supplied by the user along with other inputs that characterize the data (actors' names, event types' names, starting time point of the event sequence, set of interactions to be excluded from the risk set at specific time points, etc.).
-The internal routines will process the structure of the input event sequence into a new one, providing also objects that will be used by the packages in `remverse`.
+The internal routines will process the structure of the input event sequence into a new one, providing also objects that will be used by the packages in 'remverse'.
 
 As example, we will use the data `randomREH` (documentation available via `?randomREH`).
 
@@ -246,7 +246,7 @@ When `riskset = "manual"`, `omit_dyad` must be supplied to the processing functi
 edgelist_reh$omit_dyad$riskset[,1:10] # printing out the risk set modifications of only the first 10 columns (dyads). A total number of 2 modifications of the risk set are observed (by row)
 ```
 
-The processed object `omit_dyad` (inside any `remify` object) will be required by other packages in `remverse`. Given that such packages have function written in C++, the row indices in the vector start at 0 (indicating row 1 in the matrix above) and they assume value -1 when no risk set alteration is observed.
+The processed object `omit_dyad` (inside any `remify` object) will be required by other packages in 'remverse'. Given that such packages have function written in C++, the row indices in the vector start at 0 (indicating row 1 in the matrix above) and they assume value -1 when no risk set alteration is observed.
 
 ```{r}
 edgelist_reh$omit_dyad$time[1:10] # printing out the first 10 time points. We can see that in none of the 10 time points any modification takes place (-1)
@@ -532,12 +532,14 @@ The method can work with only one input dyad of the form [`actor1`,`actor2`,`typ
 
 
 ```{r}
+op <- par(no.readonly = TRUE)
 par(mai=rep(0.8,4), cex.main=0.9, cex.axis=0.75)
 plot(x=edgelist_reh,which=1,n_intervals=13) # histogram of inter-event times
 plot(x=edgelist_reh,which=2,n_intervals=13) # tile plot (counts of dyadic events) with in-/out- degree of actors on the sides
 plot(x=edgelist_reh,which=3,n_intervals=13) # (normalized) in-degree and out-degree of actors
 plot(x=edgelist_reh,which=4,n_intervals=13) # per time interval: number of events, proportion of observed dyads, proportion of active senders and active receivers
 plot(x=edgelist_reh,which=5,n_intervals=13,igraph.edge.color="#cfcece",igraph.vertex.color="#7bbfef") # networks
+par(op)
 ```
 
 The plots above slightly vary in the case of undirected networks:
@@ -545,6 +547,9 @@ The plots above slightly vary in the case of undirected networks:
 ```{r}
 edgelist_reh <- remify(edgelist = randomREH$edgelist,
                     directed = FALSE, # events are now considered undirected
-                    model = "tie")               
-# plot(x=edgelist_reh,which=1:5,n_intervals=13) 
+                    model = "tie")    
+#op <- par(no.readonly = TRUE)
+#par(mai, rep(0.8,4), cex.main=0.9, cex.axis=0.75)           
+#plot(x=edgelist_reh,which=1:5,n_intervals=13)
+#par(op) 
 ```

@@ -14,6 +14,9 @@ getTypeName(x, typeID = NULL)
 
 \item{typeID}{a vector of type ID's. The ID value can range between \code{1} and \code{C} (number of event types in the network).}
 }
+\value{
+character vector of types' names.
+}
 \description{
 A function that given a vector of type ID's returns the corresponding vector of type (input) names.
 }

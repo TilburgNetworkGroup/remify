@@ -14,6 +14,9 @@ getTypeID(x, typeName = NULL)
 
 \item{typeName}{a vector of type names. The same names in the input edgelist.}
 }
+\value{
+type ID as integer value.
+}
 \description{
 A function that given a vector of type names returns the corresponding vector of ID's.
 }

@@ -1,6 +1,6 @@
 #' @title Process a Relational Event History
 #'
-#' @description A function that processes raw relational event history data and returns a S3 object of class 'remify' which is used as input in other functions inside \code{remverse}.
+#' @description A function that processes raw relational event history data and returns a S3 object of class 'remify' which is used as input in other functions inside 'remverse'.
 #'
 #' @param edgelist the relational event history. An object of class \code{\link[base]{data.frame}} with first three columns corresponding to time, and actors forming the dyad. The first three columns will be re-named "time", "actor1", "actor2" (where, for directed networks, "actor1" corresponds to the sender and "actor2" to the receiver of the relational event). Optional columns that can be supplied are: `type` and `weight`. If one or both exist in \code{edgelist}, they have to be named accordingly.
 #' @param directed logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})
@@ -13,12 +13,10 @@
 #' @param omit_dyad [\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).
 #' @param ncores [\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).
 #' 
-#' @return  'remify' S3 object 
+#' @return  'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}. 
 #'
-#' @details In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list.
+#' @details In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list. For more details about 
 #' 
-#' For more details about the \code{omit_dyad} argument, inputs, outputs, attributes and methods of \code{remify::remify()}, see \code{vignette("remify")}. 
-#'
 #' @export
 #' 
 #' @examples
@@ -313,9 +311,12 @@ remify <- function(edgelist,
 
 #' @title summary.remify
 #' @rdname summary.remify
-#' @description A function that returns a summary of the event history.
+#' @description A function that returns a easy-to-read summary of the main characteristics as to the processed relational event sequence.
 #' @param object a \code{remify} object.
 #' @param ... other arguments.
+#' 
+#' @return prints out the main characteristics of the processed relational event sequence.
+#' 
 #' @method summary remify
 #' @export
 #' 
@@ -381,7 +382,11 @@ summary.remify <- function(object,...){
 #' @description print a summary of the event history.
 #' @param x a \code{remify} object.
 #' @param ... further arguments.
+#' 
+#' @return displays the same information provided by the summary method.
+#' 
 #' @method print remify
+#' 
 #' @export
 #' 
 #' @examples 
@@ -407,6 +412,9 @@ print.remify <- function(x,...){
 #' @description A function that returns the dimension of the temporal network.
 #' @param x a \code{remify} object.
 #' @method dim remify
+#' 
+#' @return vector of dimensions of the processed event sequence.
+#' 
 #' @export
 #' 
 #' @examples 
@@ -452,8 +460,11 @@ dim.remify <- function(x){
 #######################################################################################
 
 #' @title getRiskset
-#' @description This function returns a matrix describing the possible risk set changes specified by the input `omit_dyad`. In such a matrix: value 1 refers to the dyads in the risk set, and 0 otherwise (dyads excluded from the risk set). All the possible risk set modifications are described by row, and the columns identify the dyads. Note: This matrix is the output given by processing the input `omit_dyad`, and the number of rows might be equal to or higher than the number of objects in `omit_dyad`. This might happen because more than one modification of the risk set defined in the input could overlap over time with others. 
+#' @description This function returns the processed risk set changes specified by the input `omit_dyad`. In such a matrix: value 1 refers to the dyads in the risk set, and 0 otherwise (dyads excluded from the risk set). All the possible risk set modifications are described by row, and the columns identify the dyads. Note: This matrix is the output given by processing the input `omit_dyad`, and the number of rows might be equal to or higher than the number of objects in `omit_dyad`. This might happen because more than one modification of the risk set defined in the input could overlap over time with others. For more details about how the risk set is processed, see \code{vignette(package="remify",topic="riskset")}.
 #' @param x a \code{remify} object.
+#' 
+#' @return list of objects describing the processed the risk set.
+#' 
 #' @export
 #' 
 #' @examples 
@@ -497,6 +508,9 @@ getRiskset.remify <- function(x) {
 #' @description A function that given a vector of actor ID's returns the corresponding vector of actor (input) names.
 #' @param x a \code{remify} object.
 #' @param actorID a vector of actor ID's. The ID value can range between \code{1} and \code{N} (number of actors in the network).
+#' 
+#' @return character vector of actors' names.
+#' 
 #' @export
 #' 
 #' @examples 
@@ -546,6 +560,9 @@ getActorName.remify <- function(x, actorID = NULL) {
 #' @description A function that given a vector of type ID's returns the corresponding vector of type (input) names.
 #' @param x a \code{remify} object.
 #' @param typeID a vector of type ID's. The ID value can range between \code{1} and \code{C} (number of event types in the network).
+#' 
+#' @return character vector of types' names.
+#' 
 #' @export
 #' 
 #' @examples 
@@ -598,7 +615,10 @@ getTypeName.remify <- function(x, typeID = NULL) {
 #' @description A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).
 #' @param x a \code{remify} object.
 #' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).
-#' @param active logical, whether to consider the input \code{dyadID} as a vector of ID's of active dyads (\code{active = TRUE}) or dyads from the full risk set (\code{active = FALSE})
+#' @param active logical, whether to consider the input \code{dyadID} as a vector of ID's of active dyads (\code{active = TRUE}) or dyads from the full risk set (\code{active = FALSE}).
+#' 
+#' @return a data.frame with "actor1", "actor2" and "type" names corresponding to the vector \code{dyadID}.
+#' 
 #' @export
 #' 
 #' @examples 
@@ -670,6 +690,9 @@ getDyad.remify <- function(x, dyadID, active = FALSE) {
 #' @description A function that given a vector of actor names returns the corresponding vector of ID's.
 #' @param x a \code{remify} object.
 #' @param actorName a vector of actor names. The same names in the input edgelist.
+#' 
+#' @return actor ID as integer value.
+#' 
 #' @export
 #' 
 #' @examples 
@@ -715,6 +738,9 @@ getActorID.remify <- function(x, actorName = NULL) {
 #' @description A function that given a vector of type names returns the corresponding vector of ID's.
 #' @param x a \code{remify} object.
 #' @param typeName a vector of type names. The same names in the input edgelist.
+#' 
+#' @return type ID as integer value.
+#' 
 #' @export
 #' 
 #' @examples 
@@ -764,6 +790,9 @@ getTypeID.remify <- function(x, typeName = NULL) {
 #' @param actor1 [character] name of actor1. 
 #' @param actor2 [character] name of actor2.
 #' @param type [character] name of type.
+#' 
+#' @return dyad ID as integer value.
+#' 
 #' @export
 #' 
 #' @examples 
@@ -857,6 +886,9 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
 #' @param igraph.edge.color color of the edges in visualization of the network with vertices and nodes. The user can specify the hex value of a color, the color name or use the function\code{grDevices::rgb()} which returns the hex value.
 #' @param igraph.vertex.color color of the vertices in visualization of the network with vertices and nodes. The user can specify the hex value of a color, the color name or use the function \code{grDevices::rgb()} which returns the hex value.
 #' @param ... other graphical parameters
+#' 
+#' @return no return value, called for plotting descriptives on the relational event history data.
+#' 
 #' @method plot remify
 #' @export
 plot.remify <- function(x,
@@ -1120,7 +1152,7 @@ plot.remify <- function(x,
     }
     colors_legend <- unique(sort(X_out$fill))
     bottom_and_left_mai <- max(strwidth(actors, "inch")+0.4, na.rm = TRUE)
-    dev.hold()
+    #dev.hold()
     layout(layout_matrix, widths=c(4/5,1/5), heights=c(1/5,4/5))
     par(oma=c(2,2,2,2))
     par(mar =c(6,6,1,1))
@@ -1385,6 +1417,7 @@ plot.remify <- function(x,
       #dev.flush()
     }
   }
+  par(op)
 }
 
 #######################################################################################

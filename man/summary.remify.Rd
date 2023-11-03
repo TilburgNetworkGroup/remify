@@ -11,8 +11,11 @@
 
 \item{...}{other arguments.}
 }
+\value{
+prints out the main characteristics of the processed relational event sequence.
+}
 \description{
-A function that returns a summary of the event history.
+A function that returns a easy-to-read summary of the main characteristics as to the processed relational event sequence.
 }
 \examples{
 

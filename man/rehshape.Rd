@@ -24,7 +24,7 @@ rehshape(
 an object of class specified in the \code{output_format} argument. The output class object 'relevent-rem' contains a list of objects named after the arguments of the function \code{relevent::rem()}: 'eventlist' (mandatory), 'supplist' (optional), 'timing'(mandatory). The output class object 'relevent-rem.dyad' contains a list of objects named after the arguments of the function \code{relevent::rem.dyad()}: 'edgelist' (mandatory), 'n' (mandatory), 'ordinal'(optional).
 }
 \description{
-A function that transforms a \code{remify} object into one of the possible formats that suit external packages. The function can convert, at the moment, the data structure from an object of class \code{remify} to a data structure required by the function \code{relevent::rem()} or by the function \code{relevent::rem.dyad()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2023).
+A function that transforms a \code{remify} object into one of the possible formats that suit external packages. The function can convert, at the moment, the data structure from an object of class \code{remify} to a data structure required by the function \code{relevent::rem()} or by the function \code{relevent::rem.dyad()} from the '\href{https://CRAN.R-project.org/package=relevent}{relevent}' package (Butts, C.T. 2023).
 }
 \examples{
 

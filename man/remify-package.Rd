@@ -6,7 +6,7 @@
 \alias{_PACKAGE}
 \title{remify: Processing and Transforming Relational Event History Data}
 \description{
-Tools to process relational event history data and to transform them into formats suitable for other packages. The primary objective of 'remify' is to convert event history data into a format that integrates with the remverse packages and is compatible with various analytical tools (e.g., computing network statistics, estimating tie-oriented or actor-oriented social network models). Second, it can also transform the data into formats compatible with other packages out of remverse. The package 'remify' processes the data for two types of temporal social network models: tie-oriented modeling framework (Butts, C., 2008, \doi{10.1111/j.1467-9531.2008.00203.x}) and actor-oriented modeling framework (Stadtfeld, C., & Block, P., 2017, \doi{10.15195/v4.a14}).
+Efficiently processes relational event history data and transforms them into formats suitable for other packages. The primary objective of this package is to convert event history data into a format that integrates with the packages in 'remverse' and is compatible with various analytical tools (e.g., computing network statistics, estimating tie-oriented or actor-oriented social network models). Second, it can also transform the data into formats compatible with other packages out of 'remverse'. The package processes the data for two types of temporal social network models: tie-oriented modeling framework (Butts, C., 2008, \doi{10.1111/j.1467-9531.2008.00203.x}) and actor-oriented modeling framework (Stadtfeld, C., & Block, P., 2017, \doi{10.15195/v4.a14}).
 }
 \seealso{
 Useful links:

@@ -1,7 +1,7 @@
 
 #' @title Transform processed remify objects to different formats
 #'
-#' @description A function that transforms a \code{remify} object into one of the possible formats that suit external packages. The function can convert, at the moment, the data structure from an object of class \code{remify} to a data structure required by the function \code{relevent::rem()} or by the function \code{relevent::rem.dyad()} from the \href{https://CRAN.R-project.org/package=relevent}{relevent} package (Butts, C.T. 2023).
+#' @description A function that transforms a \code{remify} object into one of the possible formats that suit external packages. The function can convert, at the moment, the data structure from an object of class \code{remify} to a data structure required by the function \code{relevent::rem()} or by the function \code{relevent::rem.dyad()} from the '\href{https://CRAN.R-project.org/package=relevent}{relevent}' package (Butts, C.T. 2023).
 #'
 #' @param data an object of class 'remify' (see function \code{remify::remify()}).
 #' @param output_format a character indicating the output format which the input data has to be converted to. It can assume two values: \code{"relevent-rem"} , \code{"relevent-rem.dyad"}. Default value is \code{"relevent-rem"}.
@@ -34,7 +34,7 @@
 #' 
 rehshape <- function(data, 
                       output_format = c("relevent-rem","relevent-rem.dyad"),
-                      ncores=1L,
+                      ncores = 1L,
                       optional_arguments = NULL){
 
   output_format  <- match.arg(arg = output_format, choices = c("relevent-rem","relevent-rem.dyad"), several.ok = FALSE)
@@ -49,7 +49,7 @@ rehshape <- function(data,
           stop("'ncores' is recommended to be set at most to: floor(parallel::detectCores()-2L)")
   }
 
-  # ... converting from REMIFY to other structures (relevent, goldfish, etc.)
+  # ... converting from REMIFY to other structures ('relevent', 'goldfish', etc.)
   # check remify input object here
   ## ##
   ## ## ##

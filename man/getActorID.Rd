@@ -14,6 +14,9 @@ getActorID(x, actorName = NULL)
 
 \item{actorName}{a vector of actor names. The same names in the input edgelist.}
 }
+\value{
+actor ID as integer value.
+}
 \description{
 A function that given a vector of actor names returns the corresponding vector of ID's.
 }

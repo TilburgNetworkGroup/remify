@@ -18,6 +18,9 @@ getDyadID(x, actor1, actor2, type)
 
 \item{type}{[character] name of type.}
 }
+\value{
+dyad ID as integer value.
+}
 \description{
 A function that given a vector of names as to actor1, actor2 and type returns the corresponding dyad ID. The names to supply are the original input names of the edgelist before the processing via the function \code{remify::remify()}.
 }

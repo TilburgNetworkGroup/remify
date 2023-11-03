@@ -11,6 +11,9 @@
 
 \item{...}{further arguments.}
 }
+\value{
+displays the same information provided by the summary method.
+}
 \description{
 print a summary of the event history.
 }

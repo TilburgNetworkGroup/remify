@@ -9,6 +9,9 @@
 \arguments{
 \item{x}{a \code{remify} object.}
 }
+\value{
+vector of dimensions of the processed event sequence.
+}
 \description{
 A function that returns the dimension of the temporal network.
 }

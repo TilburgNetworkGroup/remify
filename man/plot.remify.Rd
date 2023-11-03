@@ -41,6 +41,9 @@
 
 \item{...}{other graphical parameters}
 }
+\value{
+no return value, called for plotting descriptives on the relational event history data.
+}
 \description{
 several plots that describe the network of relational events, both for directed and undirected relational events.
 }

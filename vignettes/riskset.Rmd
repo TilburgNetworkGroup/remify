@@ -151,7 +151,11 @@ A possible way for visualizing the risk set composition at each time point consi
 <center>
 ```{r, echo = FALSE}
 risk_set <- expand.grid(sorted_actors,sorted_actors)
-dyad_occurred <- c(11,4,11,11) 
+dyad_occurred <- c(11,4,11,11)
+
+# ... saving current graphical parameters
+op <- par(no.readonly = TRUE)
+
 # ... creating layout
 layout_matrix <- matrix(c(1,2,3,4), ncol=2, byrow=TRUE) # 0 can become 4 for a legend of the colors
 layout(layout_matrix, widths=c(1/2,1/2), heights=c(1/2,1/2))
@@ -193,6 +197,7 @@ mtext(text = bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+
 })
 }
 
+par(op)
 ```
 </center>
 
@@ -202,6 +207,9 @@ A _full_ risk set in undirected networks will assume a particular grid visualiza
 
 <center>
 ```{r, echo = FALSE}
+# ... saving current graphical parameters
+op <- par(no.readonly = TRUE)
+
 dyad_occurred <- c(NA,NA,16) 
 for(m in 3){
 value <- rep(NA,dim(risk_set)[1])
@@ -236,6 +244,8 @@ mtext(text = "actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
 mtext(text = bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
 })
 }
+
+par(op)
 ```
 </center>
 
@@ -289,6 +299,10 @@ Consider the first four time points of the small random network and assume this 
 <center>
 ```{r, echo = FALSE}
 dyad_occurred <- c(11,4,11,11) 
+
+# ... saving current graphical parameters
+op <- par(no.readonly = TRUE)
+
 # ... creating layout
 layout_matrix <- matrix(c(1,2,3,4), ncol=2, byrow=TRUE) # 0 can become 4 for a legend of the colors
 layout(layout_matrix, widths=c(1/2,1/2), heights=c(1/2,1/2))
@@ -334,6 +348,8 @@ mtext(text = "actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1,cex =
 mtext(text = bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
 })
 }
+
+par(op)
 ```
 </center>
 
@@ -343,6 +359,9 @@ Finally, a _manual_ risk set can be defined also for undirected networks and the
 
 <center>
 ```{r, echo = FALSE}
+# ... saving current graphical parameters
+op <- par(no.readonly = TRUE)
+
 dyad_occurred <- c(NA,NA,16) 
 for(m in 3){
 value <- rep(NA,dim(risk_set)[1])
@@ -378,6 +397,7 @@ mtext(text = bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+
 })
 }
 
+par(op)
 ```
 </center>
 
@@ -473,6 +493,9 @@ We can visualize the risk set modifications as they are declared via the `omit_d
 
 <center>
 ```{r,echo=FALSE}
+# ... saving current graphical parameters
+op <- par(no.readonly = TRUE)
+
 min_max_omit_dyad <-range(randomREH$edgelist$time)
 plot(min_max_omit_dyad,c(0,length(randomREH$omit_dyad)+1),type="n",yaxt="n",xlab="time",ylab="modification",main="manual risk set \n (input modifications declared with the omit_dyad argument)")
 axis(2, at=c(1:length(randomREH$omit_dyad)))
@@ -486,6 +509,8 @@ for(r in 1:length(randomREH$omit_dyad)){
     segments(x0=randomREH$omit_dyad[[r]]$time[1],y0=r,x1=randomREH$omit_dyad[[r]]$time[2],y1=r,col="black", lwd = 2)
     #randomREH$omit_dyad[[r]]$time
 }
+
+par(op)
 ```
 </center>
 
@@ -513,6 +538,9 @@ edgelist_reh <- remify::remify(edgelist = randomREH$edgelist,
 
 <center>
 ```{r,echo=FALSE}
+# ... saving current graphical parameters
+op <- par(no.readonly = TRUE)
+
 min_max_omit_dyad <-range(randomREH$edgelist$time)
 plot(min_max_omit_dyad,c(0,length(randomREH$omit_dyad)+1),type="n",yaxt="n",xlab="time",ylab="modification",main="manual risk set \n (before processing)")
 axis(2, at=c(1:length(randomREH$omit_dyad)))
@@ -526,6 +554,8 @@ for(r in 1:length(randomREH$omit_dyad)){
     segments(x0=randomREH$omit_dyad[[r]]$time[1],y0=r,x1=randomREH$omit_dyad[[r]]$time[2],y1=r,col="black", lwd = 2)
     #randomREH$omit_dyad[[r]]$time
 }
+
+par(op)
 ```
 </center> 
 
@@ -545,6 +575,9 @@ for(i in 1:length(modification_idx)){
 
 <center>
 ```{r, echo=FALSE}
+# ... saving current graphical parameters
+op <- par(no.readonly = TRUE)
+
 # plotting vertical lines and different colour for the intersected intervals
 plot(min_max_omit_dyad,c(0,length(randomREH$omit_dyad)+1),type="n",yaxt="n",xlab="time",ylab="modification",main="manual risk set \n (while processing)")
 axis(2, at=c(1:length(randomREH$omit_dyad)))
@@ -552,6 +585,8 @@ for(r in 1:length(randomREH$omit_dyad)){
     segments(x0=randomREH$omit_dyad[[r]]$time[1],y0=r,x1=randomREH$omit_dyad[[r]]$time[2],y1=r,col="black", lwd = 2)
 }
 abline(v = unique(c(start_stop_times$start, start_stop_times$stop)) , lwd = 1, lty = 2, col = "red")
+
+par(op)
 ```
 </center> 
 
@@ -561,6 +596,9 @@ As a result of the processing of the five risk set modifications, the risk set i
 
 <center>
 ```{r,echo=FALSE}
+# ... saving current graphical parameters
+op <- par(no.readonly = TRUE)
+
 plot(min_max_omit_dyad,c(0,length(modification_idx)+1),type="n",yaxt="n",xlab="time",ylab="modification",main="manual risk set \n (after processing)")
 axis(2, at=c(1:length(modification_idx)))
 for(r in 1:length(modification_idx)){
@@ -568,5 +606,6 @@ for(r in 1:length(modification_idx)){
     #randomREH$omit_dyad[[r]]$time
 }
 
+par(op)
 ```
 </center> 
