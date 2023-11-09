@@ -2,8 +2,10 @@
 
 [![github-repo-status](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![R-package-version](https://img.shields.io/github/r-package/v/TilburgNetworkGroup/remify)](https://www.github.com/TilburgNetworkGroup/remify)
+[![CRAN-release](https://www.r-pkg.org/badges/version/remify)](https://cran.r-project.org/package=remify)
 [![R-CMD-check](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml)
 [![codecov](https://codecov.io/gh/TilburgNetworkGroup/remify/branch/master/graph/badge.svg?token=BDG8F1672B)](https://codecov.io/gh/TilburgNetworkGroup/remify)
+
 
 ## Processing and transforming relational event history data
 
