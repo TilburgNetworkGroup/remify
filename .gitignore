@@ -2,9 +2,9 @@
 .Rhistory
 .RData
 .vscode/
-src/*.o
-src/*.so
-inst/doc
-doc/
-Meta/
+/src/*.o
+/src/*.so
+/inst/doc
+/doc
+/Meta
 CRAN-SUBMISSION
