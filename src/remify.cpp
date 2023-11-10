@@ -1,8 +1,4 @@
 #include <RcppArmadillo.h>
-#include <Rcpp.h>
-#include <iostream>
-#include <typeinfo>
-#include <map>
 #include <iterator>
 #include <string>
 #include <algorithm>

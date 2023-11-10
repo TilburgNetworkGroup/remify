@@ -206,7 +206,7 @@ Cosidering the first four time points of `randomREHsmall`, we observe: the (dire
 A _full_ risk set in undirected networks will assume a particular grid visualization. The dyads at risk will be on the lower triangular grid, because the actor names `c(actor1,actor2)` describing the dyad in the input edgelist are sorted according to their alphanumeric order before being processed. For instance, the event at $t_2$ `c("Lexy","Colton")`, will be rearranged as `c("Colton","Lexy")`, and the risk set will change as follows in the picture below.
 
 <center>
-```{r, echo = FALSE}
+```{r, echo = FALSE, out.width="50%"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -358,7 +358,7 @@ where the tiles defining the dyads where `"Richard"` and `"Francesca"` are eithe
 Finally, a _manual_ risk set can be defined also for undirected networks and the grid visualization will focus on the lower triangular grid, because the actor names `c(actor1,actor2)` describing the dyad in the input edgelist are sorted according to their alphanumeric order by the processing. For instance, the event at $t_2$ `c("Lexy","Colton")`, will be rearranged as `c("Colton","Lexy")`, thus the risk set will change as below.
 
 <center>
-```{r, echo = FALSE}
+```{r, echo = FALSE, out.width="50%"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -391,8 +391,8 @@ rect(col-0.5,row-0.5,col+0.5,row+0.5,col=value,border="#f1f1f1")
 text(x = c(1:N), y = 0, labels = sorted_actors, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,0), offset = 1.5,cex = 0.8) 
 text(x = 0, y = c(1:N), labels = sorted_actors, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = -0.5, cex = 0.8)
 # axes names 
-mtext(text  = "actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2),cex = 0.6)
-mtext(text = "actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1,cex = 0.6)
+mtext(text  = "actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2))
+mtext(text = "actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
 mtext(text = bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
 })
 }
@@ -492,7 +492,7 @@ Another example are the risk set chages declared in 4. and 5., where we wanted t
 We can visualize the risk set modifications as they are declared via the `omit_dyad` argument in a plot where the x-axis represents the time and the y-axis describes the five risk set modifications presented above.
 
 <center>
-```{r,echo=FALSE}
+```{r,echo=FALSE,out.width="50%"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -537,7 +537,7 @@ edgelist_reh <- remify::remify(edgelist = randomREH$edgelist,
 ```
 
 <center>
-```{r,echo=FALSE}
+```{r,echo=FALSE,out.width="50%"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -574,7 +574,7 @@ for(i in 1:length(modification_idx)){
 ```
 
 <center>
-```{r, echo=FALSE}
+```{r, echo=FALSE,out.width="50%"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -595,7 +595,7 @@ After the processing of a relational event history, the `remify` object will con
 As a result of the processing of the five risk set modifications, the risk set is describe now by eight risk set modifications. This is due to the partial/total overlapping of two or more time intervals. For instance, the second modification of the processed risk set (figure below) will contain the combination of the third and the fourth modification declared in the input `omit_dyad` (figure above).
 
 <center>
-```{r,echo=FALSE}
+```{r,echo=FALSE, out.width="50%"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
