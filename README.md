@@ -5,7 +5,7 @@
 [![CRAN-release](https://www.r-pkg.org/badges/version/remify)](https://cran.r-project.org/package=remify)
 [![R-CMD-check](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/TilburgNetworkGroup/remify/actions/workflows/check-standard.yaml)
 [![codecov](https://codecov.io/gh/TilburgNetworkGroup/remify/branch/master/graph/badge.svg?token=BDG8F1672B)](https://codecov.io/gh/TilburgNetworkGroup/remify)
-
+[![grand-total-downloads](http://cranlogs.r-pkg.org/badges/grand-total/remify)](https://cran.r-project.org/package=remify)
 
 ## Processing and transforming relational event history data
 
