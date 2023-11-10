@@ -91,7 +91,7 @@ Rcpp::List getOmitDyadActiveRiskSet(std::string model,
     arma::umat riskset(1,D); // (output) row matrix of 0's (0 means that the dyad cannot occur)
 
     #ifdef _OPENMP
-    omp_set_dynamic(1);         // disabling dynamic teams
+    omp_set_dynamic(1);         
     omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
     #pragma omp parallel for if(ncores>1) private(m) shared(M,riskset,actor1,actor2,type,N,directed)  
     #endif
@@ -128,7 +128,7 @@ Rcpp::List getOmitDyadActiveRiskSet(std::string model,
     // finding vector fo dyadID for the active set of dyads 
     arma::uvec dyadIDactive(M,arma::fill::zeros);
     #ifdef _OPENMP
-    omp_set_dynamic(1);         // disabling dynamic teams
+    omp_set_dynamic(1);         
     omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
     #pragma omp parallel for if(ncores>1) private(m) shared(M,dyadIDactive,active_dyads,actor1,actor2,type,N,directed)  
     #endif
@@ -548,7 +548,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
             std::vector<int> convertedType_ID(M,0);
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
                 #ifdef _OPENMP
-                omp_set_dynamic(1);         // disabling dynamic teams
+                omp_set_dynamic(1);         
                 omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
                 #pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,N,directed,dyad,weight,time_loc)         
                 #endif       
@@ -585,7 +585,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
             } 
             else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
                 #ifdef _OPENMP
-                omp_set_dynamic(1);         // disabling dynamic teams
+                omp_set_dynamic(1);         
                 omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
                 #pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,dyad,weight,time_loc)    
                 #endif
@@ -670,7 +670,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
         else{
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
                 #ifdef _OPENMP
-                omp_set_dynamic(1);         // disabling dynamic teams
+                omp_set_dynamic(1);         
                 omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
                 #pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,actorName,actorID,convertedActor1_ID,convertedActor2_ID,N,directed,dyad,weight,time_loc) 
                 #endif
@@ -703,7 +703,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
             } 
             else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
                 #ifdef _OPENMP
-                omp_set_dynamic(1);         // disabling dynamic teams
+                omp_set_dynamic(1);         
                 omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
                 #pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,actorName,actorID,convertedActor1_ID,convertedActor2_ID,dyad,weight,time_loc) 
                 #endif
@@ -785,7 +785,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
             std::vector<int> convertedType_ID(M,0);
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
                 #ifdef _OPENMP
-                omp_set_dynamic(1);         // disabling dynamic teams
+                omp_set_dynamic(1);         
                 omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
                 #pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,N,directed,dyad,time_loc)  
                 #endif
@@ -821,7 +821,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
             } 
             else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
                 #ifdef _OPENMP
-                omp_set_dynamic(1);         // disabling dynamic teams
+                omp_set_dynamic(1);         
                 omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
                 #pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,dyad,time_loc)  
                 #endif
@@ -899,7 +899,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
         else{
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
                 #ifdef _OPENMP
-                omp_set_dynamic(1);         // disabling dynamic teams
+                omp_set_dynamic(1);         
                 omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
                 #pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,actorName,actorID,convertedActor1_ID,convertedActor2_ID,N,directed,dyad,time_loc)  
                 #endif
@@ -931,7 +931,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
             } 
             else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
                 #ifdef _OPENMP
-                omp_set_dynamic(1);         // disabling dynamic teams
+                omp_set_dynamic(1);         
                 omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
                 #pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,actorName,actorID,convertedActor1_ID,convertedActor2_ID,dyad,time_loc)  
                 #endif
@@ -1473,7 +1473,7 @@ Rcpp::IntegerMatrix getEventsComposition(arma::vec dyads,
     bool undefined_dyads = false;
 
     #ifdef _OPENMP
-    omp_set_dynamic(1);         // disabling dynamic teams
+    omp_set_dynamic(1);         
     omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
     #pragma omp parallel for if(ncores>1) private(d) shared(length_dyads,D,out,N,directed)
     #endif
@@ -1578,7 +1578,7 @@ Rcpp::List remify2relventrem(arma::vec actor1,
         }
         else{
             #ifdef _OPENMP
-            omp_set_dynamic(1);         // disabling dynamic teams
+            omp_set_dynamic(1);         
             omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
             #pragma omp parallel for if(ncores>1) private(m) shared(M,actor1,actor2,dyad_loc)
             #endif
@@ -1600,7 +1600,7 @@ Rcpp::List remify2relventrem(arma::vec actor1,
         arma::umat omit_dyad_riskset = Rcpp::as<arma::umat>(omit_dyad["riskset"]);
 
         #ifdef _OPENMP
-        omp_set_dynamic(1);         // disabling dynamic teams
+        omp_set_dynamic(1);         
         omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
         #pragma omp parallel for if(ncores>1) private(m) shared(M,omit_dyad_time,omit_dyad_riskset,supplist)
         #endif
