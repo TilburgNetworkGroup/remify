@@ -1,9 +1,10 @@
 .Rproj.user
 .Rhistory
-.vscode
+.RData
+.vscode/
+src/*.o
+src/*.so
 inst/doc
-doc
-Meta
-/doc/
-/Meta/
+doc/
+Meta/
 CRAN-SUBMISSION
