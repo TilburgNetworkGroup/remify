@@ -12,13 +12,4 @@
 * rhub check: Windows Server 2022, R-devel, 64 bit 
  
 ## R CMD check results
-There were no ERRORs, no WARNINGs.
-
-> **NOTEs**
->
->* Possibly misspelled words in DESCRIPTION:
->  Stadtfeld (40:718)
->  remverse (40:231, 40:490)
->* checking for GNU extensions in Makefiles ... NOTE
->GNU make is a SystemRequirements.
-
+There were no ERRORs, no WARNINGs, no NOTEs.
