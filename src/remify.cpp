@@ -1,4 +1,5 @@
 #include <RcppArmadillo.h>
+#include <typeinfo>
 #include <iterator>
 #include <string>
 #include <algorithm>
@@ -577,7 +578,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/tie]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
                 if(check_self_loop==0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }            
@@ -612,7 +613,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/actor]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
                 if(check_self_loop==0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }  
@@ -695,7 +696,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/tie]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
                 if(check_self_loop==0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }            
@@ -726,7 +727,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/actor]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
                 if(check_self_loop==0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }  
@@ -813,7 +814,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/tie]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
                 if(check_self_loop==0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }            
@@ -847,7 +848,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/actor]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
                 if(check_self_loop==0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }  
@@ -923,10 +924,10 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/tie]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //###
                 if(check_self_loop==0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
-                }            
+                }      
                 out["dyad"] = dyad; 
             } 
             else{ // if the model == "actor" we omit the computation of the dyad ID from the loop
@@ -953,7 +954,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/actor]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>{});
+                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
                 if(check_self_loop==0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }  
@@ -1016,7 +1017,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
             std::vector<double> intereventTime(input_time.size(),1.0);
             double origin;
             // (2) Check if the `time` variable is sorted
-            while(m_loc < input_time.size()){ 
+            while(m_loc < (input_time.size()-1)){ //###
                 if(input_time[m_loc] <=  input_time[m_loc+1]){
                     intereventTime[m_loc+1] = input_time[m_loc+1] - input_time[m_loc]; // compute the interevent time
                     m_loc++;
@@ -1437,7 +1438,7 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
     Rcpp::List convertedInput = convertInputREH(edgelist,origin,actorsDictionary,typesDictionary,M,D,directed,omit_dyad,model,out["weighted"],ordinal,C,active,ncores);
 
     out["D"] = D; // number of dyads (this dimension is the largest possible and doesn't account for the dynamic riskset)
-    out["dyad"] = convertedInput["dyad"];
+    out["dyad"] = convertedInput["dyad"]; //###?
     out["edgelist"] = convertedInput["edgelist"];
     out["M"] = convertedInput["M"]; // if there are self-loops the number of events decreases
     out["omit_dyad"] = convertedInput["omit_dyad"];
