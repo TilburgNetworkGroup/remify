@@ -93,6 +93,17 @@ out <- remify(edgelist = reh_loc$edgelist,
                   model = "tie")
 expect_true(!is.null(out$omit_dyad))
 
+# testing sorting of actor1 and actor2 in omit_dyad objects when directed = FALSE
+reh_loc$omit_dyad[[2]]$dyad <- rbind(reh_loc$omit_dyad[[2]]$dyad,c("Zackary","Megan",NA))
+expect_silent(remify(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = reh_loc$types, 
+                  directed = FALSE, # events are not directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = reh_loc$origin,
+                  omit_dyad = reh_loc$omit_dyad,
+                  model = "tie"))
+
 # if the input `omit_dyad` contains time intervals of the type [start = NA, stop = x] or [start = x, stop = NA]
 reh_loc <- randomREH
 reh_loc$omit_dyad[[1]]$time[1] <- NA
@@ -110,9 +121,9 @@ expect_true(!is.null(out$omit_dyad))
 
 # if riskset = "active" and model = "actor"
 reh_loc <- randomREH
-out <- remify(edgelist = reh_loc$edgelist,
+expect_silent(remify(edgelist = reh_loc$edgelist,
                   model = "actor",
-                  riskset = "active")
+                  riskset = "active"))
 
 
 ### here the new test

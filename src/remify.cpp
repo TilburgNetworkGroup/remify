@@ -377,20 +377,25 @@ Rcpp::List processOmitDyad(Rcpp::List convertedOmitDyad, Rcpp::List convertedOmi
     }
     
     //(2.1) further processing of bounds : making sure that we overlap the lists of changes (on the riskset) on the correct time points
-    for(z = 0; z < lb.size(); z++){
-        if((lb[z]!=ub[z]) || ((lb[z]==timeID[0]) || (ub[z]==timeID[timeID.size()-1]))){
-            // lower bound
-            int lb_z = lb[z];
-            if(std::any_of(ub.begin(),ub.end(), [&lb_z](int i){return i == lb_z;})){
-                lb[z] += 1;
-            }
-            // upper bound
-            int ub_z = ub[z];
-            if(std::any_of(lb.begin(),lb.end(), [&ub_z](int i){return i == ub_z;})){
-                ub[z] -= 1;
-            }
-        }
-    }
+    std::for_each(ub.begin(), ub.end()-1, [](int &x) {x -= 1;});
+    //for(unsigned int p = 0; p<(ub.size()-1); p++){
+    //        ub[p] -= 1;
+    //}
+    // old method - working b
+    //for(z = 0; z < lb.size(); z++){
+    //    if((lb[z]!=ub[z]) || ((lb[z]==timeID[0]) || (ub[z]==timeID[timeID.size()-1]))){
+    //        // lower bound
+    //        int lb_z = lb[z];
+    //        if(std::any_of(ub.begin(),ub.end(), [&lb_z](int i){return i == lb_z;})){
+    //            lb[z] += 1;
+    //        }
+    //        // upper bound
+    //        int ub_z = ub[z];
+    //        if(std::any_of(lb.begin(),lb.end(), [&ub_z](int i){return i == ub_z;})){
+    //            ub[z] -= 1;
+    //        }
+    //    }
+    //}
     
     //(2.2) understanding for each of the new intervals, which set of old intervals overlaps
     Rcpp::List which_r = Rcpp::List::create();
@@ -514,8 +519,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
     std::vector<std::string> stringActor2 = Rcpp::as<std::vector<std::string>>(edgelist["actor2"]);
     std::vector<std::string> actorName = Rcpp::as<std::vector<std::string>>(actorsDictionary["actorName"]); 
     int N = actorName.size(); // number of actors
-    std::vector<int> actorID = actorsDictionary["actorID"];
-    std::for_each(actorID.begin(), actorID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to N-1
+    std::vector<int> actorID = Rcpp::as<std::vector<int>>(actorsDictionary["actorID"]);
+    
 
     //(1) Converting `edgelist`
     // we run here a long (and redundant) code to first select (via ifelse) the characteristics of the network and then apply the conversion of the 'edgelist'
@@ -541,8 +546,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
         if(C>1){
             std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]); // get type column from edgelist
             typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
-            std::vector<int> typeID = typesDictionary["typeID"];
-            std::for_each(typeID.begin(), typeID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to C-1
+            std::vector<int> typeID = Rcpp::as<std::vector<int>>(typesDictionary["typeID"]);
             // allocating memory for actor1, actor2, type and dyad (dyad is used also for the actor-oriented code as helper for the exclusion of self-events)
             convertedType_ID.resize(M,0);
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
@@ -557,6 +561,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                         // find actor1
                         std::vector<std::string>::iterator i = std::find(actorName.begin(), actorName.end(), stringActor1[m]);
                         convertedActor1_ID[m] = actorID.at(std::distance(actorName.begin(), i));
+                        
 
                         // find actor2
                         std::vector<std::string>::iterator j = std::find(actorName.begin(), actorName.end(), stringActor2[m]);
@@ -808,8 +813,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
         if(C>1){ // two or more event types
             std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]); // get type column from edgelist
             typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
-            std::vector<int> typeID = typesDictionary["typeID"];
-            std::for_each(typeID.begin(), typeID.end(), [](int x) {x -= 1;}); // set the IDs from 0 to C-1
+            std::vector<int> typeID = Rcpp::as<std::vector<int>>(typesDictionary["typeID"]);
             convertedType_ID.resize(M,0);
             if(model == "tie"){ // if model == "tie" we include the calculation od the dyad ID in the loop
                 #ifdef _OPENMP
@@ -1253,7 +1257,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                 }              
             }
             
-            // sorting actor1 and actor2 if directed FALSE : both for ID and original names (affecting input edgelist)
+            // sorting actor1 and actor2 ID;s if directed FALSE 
             if(!directed){
                 D_rr = convertedActor1.length();   
                 for(d = 0; d < D_rr; d++){
