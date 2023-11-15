@@ -107,8 +107,12 @@ out <- remify(edgelist = reh_loc$edgelist,
                   model = "tie")
 expect_true(!is.null(out$omit_dyad))
 
-## creating a new omit_dyad object to test more complex overlapping of time intervals
-# [ ... code here ... ]
+
+# if riskset = "active" and model = "actor"
+reh_loc <- randomREH
+out <- remify(edgelist = reh_loc$edgelist,
+                  model = "actor",
+                  riskset = "active")
 
 
 ### here the new test
