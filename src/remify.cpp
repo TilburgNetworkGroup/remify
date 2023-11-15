@@ -31,14 +31,14 @@ Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index) {
         Rcpp::RObject x_j = x[j];
         switch (TYPEOF(x_j))
         {  
-        case INTSXP:{
-            Rcpp::IntegerVector column_j = Rcpp::as<Rcpp::IntegerVector>(x_j);
-            Rcpp::IntegerVector column_j_loc = Rcpp::clone(column_j);
-            for(m = 0; m < x.nrows(); m++){
-                arma::uword m_new = index(m); 
-                column_j[m] = column_j_loc[m_new];
-            }
-            break;}
+        //case INTSXP:{
+        //    Rcpp::IntegerVector column_j = Rcpp::as<Rcpp::IntegerVector>(x_j);
+        //    Rcpp::IntegerVector column_j_loc = Rcpp::clone(column_j);
+        //    for(m = 0; m < x.nrows(); m++){
+       //         arma::uword m_new = index(m); 
+       //         column_j[m] = column_j_loc[m_new];
+        //    }
+       //     break;}
         case REALSXP:{            
             Rcpp::NumericVector column_j = Rcpp::as<Rcpp::NumericVector>(x_j);
             Rcpp::NumericVector column_j_loc = Rcpp::clone(column_j);

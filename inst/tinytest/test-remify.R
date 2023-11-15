@@ -305,6 +305,10 @@ expect_false(attr(out,"ordinal"))
 expect_true(attr(out,"directed"))
 expect_identical(attr(out,"model"),"actor")
 
+## tests on ordinal = TRUE ##
+expect_silent(remify(edgelist = randomREH$edgelist, ordinal = TRUE, model = "tie"))
+expect_silent(remify(edgelist = randomREH$edgelist, ordinal = TRUE, model = "actor"))
+
 #
 
 # tests on edgelist processing without self-loops removal

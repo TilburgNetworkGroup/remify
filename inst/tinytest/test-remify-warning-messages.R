@@ -94,7 +94,7 @@ fixed=TRUE
 
 
 
-# tests on self-loops removal
+# tests on self-loops removal - time as DatatimeVector
 
 ## weighted 
 reh_loc <- randomREH
@@ -129,6 +129,134 @@ fixed=TRUE
 ## not weighted 
 reh_loc <- randomREH
 reh_loc$edgelist$actor1[1:50] <- reh_loc$edgelist$actor2[1:50]
+
+### not weighted - C>1 - tie-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "tie"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### not weighted - C>1 - actor-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "actor"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### not weighted - C=1 - tie-oriented model
+reh_loc$edgelist$type <- "1"
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "tie"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### not weighted - C=1 - actor-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "actor"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+
+# tests on self-loops removal - time as Datatime
+
+## weighted 
+reh_loc <- randomREH
+reh_loc$edgelist$actor1[1:50] <- reh_loc$edgelist$actor2[1:50]
+reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
+reh_loc$edgelist$weight <- as.numeric(reh_loc$edgelist$time)**0.5 # adding a fake weight
+
+### weighted - C>1 - tie-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "tie"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### weighted - C>1 - actor-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "actor"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### weighted - C=1 - tie-oriented model
+reh_loc$edgelist$type <- "1"
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "tie"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### weighted - C=1 - actor-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "actor"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+## not weighted 
+reh_loc <- randomREH
+reh_loc$edgelist$actor1[1:50] <- reh_loc$edgelist$actor2[1:50]
+reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
+
+### not weighted - C>1 - tie-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "tie"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### not weighted - C>1 - actor-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "actor"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### not weighted - C=1 - tie-oriented model
+reh_loc$edgelist$type <- "1"
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "tie"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### not weighted - C=1 - actor-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "actor"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+
+# tests on self-loops removal - time as Numeric or Integer
+
+## weighted 
+reh_loc <- randomREH
+reh_loc$edgelist$actor1[1:50] <- reh_loc$edgelist$actor2[1:50]
+reh_loc$edgelist$time <- as.numeric(reh_loc$edgelist$time)
+reh_loc$edgelist$weight <- as.numeric(reh_loc$edgelist$time)**0.5 # adding a fake weight
+
+### weighted - C>1 - tie-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "tie"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### weighted - C>1 - actor-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "actor"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### weighted - C=1 - tie-oriented model
+reh_loc$edgelist$type <- "1"
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "tie"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+### weighted - C=1 - actor-oriented model
+expect_warning(remify(edgelist = reh_loc$edgelist, model = "actor"),
+"Warning: self-loops are present in the input edgelist (i.e. `actor1` and `actor2` are the same). They are removed with the processing.",
+fixed=TRUE
+)
+
+## not weighted 
+reh_loc <- randomREH
+reh_loc$edgelist$actor1[1:50] <- reh_loc$edgelist$actor2[1:50]
+reh_loc$edgelist$time <- as.numeric(reh_loc$edgelist$time)
 
 ### not weighted - C>1 - tie-oriented model
 expect_warning(remify(edgelist = reh_loc$edgelist, model = "tie"),
