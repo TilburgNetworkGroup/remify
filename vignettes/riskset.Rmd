@@ -89,7 +89,7 @@ N <- length(randomREHsmall$actors)
 and for the event type will be
 ```{r, include = TRUE}
 # no event type, we set it to an empty string
-sorted_types <- c("") 
+sorted_types <- c(" ") 
 
 # C = 1 for 'randomREHsmall'
 C <- length(sorted_types) 

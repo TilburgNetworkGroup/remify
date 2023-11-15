@@ -1,3 +1,4 @@
-library(tinytest)
-library(remify)
-tinytest::test_package("remify", testdir="tinytest")
+if ( requireNamespace("tinytest", quietly=TRUE) ){
+  tinytest::test_package("remify")
+}
+

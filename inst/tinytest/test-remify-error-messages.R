@@ -1,4 +1,4 @@
-## tests on error messages ##
+## tests on error messages for remify::remify() ##
 
 # when input 'edgelist' has less than three columns
 expect_error(remify(edgelist = randomREH$edgelist[,1:2],
@@ -187,80 +187,80 @@ expect_error(
   fixed = TRUE
 ) 
 
-# errors from Rcpp functions, handled via expect_stdout(print(tryCatch(expr,error=function(e) e)),"error message",fixed=TRUE)
-
-# time points defined in omit_dyad are removed
+# error when directed = FALSE and model = "actor"
 reh_loc <- randomREH
-reh_loc$omit_dyad[[1]]$time[2] <- reh_loc$edgelist$time[9000]+60
-tryCatch_error_loc <- tryCatch(remify(edgelist = reh_loc$edgelist,
-                actors = reh_loc$actors,
-                types = reh_loc$types, 
-                directed = TRUE, # events are directed
-                ordinal = FALSE, # REM with waiting times
-                origin = reh_loc$origin, # origin time is defiend
-                omit_dyad = reh_loc$omit_dyad, 
-                model = "tie"),error=function(e) e)
-expect_stdout(print(tryCatch_error_loc),
-"<Rcpp::exception: either start or stop in one of the elements in the list 'omit_dyad' are not found in the edgelist. Please, provide observed time points as start and stop values>"
-)
-
-# when more than two time points are supplied in any of the object inside `omit_dyad`
-reh_loc <- randomREH
-reh_loc$omit_dyad[[1]]$time <- c(reh_loc$omit_dyad[[1]]$time,reh_loc$edgelist$time[9000]+60)
-tryCatch_error_loc <- tryCatch(remify(edgelist = reh_loc$edgelist,
-                actors = reh_loc$actors,
-                types = reh_loc$types, 
-                directed = TRUE, # events are directed
-                ordinal = FALSE, # REM with waiting times
-                origin = reh_loc$origin, # origin time is defiend
-                omit_dyad = reh_loc$omit_dyad, 
-                model = "tie"),error=function(e) e)
-expect_stdout(print(tryCatch_error_loc),
-"<Rcpp::exception: time vector in each element of the list 'omit_dyad' must be of length 2: start and stop time when the riskset changed>"
-)
-
-# when more than two time points are supplied in any of the object inside `omit_dyad`
-reh_loc <- randomREH
-reh_loc$omit_dyad[[1]]$time <- c(reh_loc$omit_dyad[[1]]$time[2],reh_loc$omit_dyad[[1]]$time[1])
-tryCatch_error_loc <- tryCatch(remify(edgelist = reh_loc$edgelist,
-                actors = reh_loc$actors,
-                types = reh_loc$types, 
-                directed = TRUE, # events are directed
-                ordinal = FALSE, # REM with waiting times
-                origin = reh_loc$origin, # origin time is defiend
-                omit_dyad = reh_loc$omit_dyad, 
-                model = "tie"),error=function(e) e)
-expect_stdout(print(tryCatch_error_loc),
-"<Rcpp::exception: time vector in each element of the list 'omit_dyad' must be sorted so that elements indicate respectively start and stop time when the riskset changed>"
-)
-
-# warning when directed = FALSE and model = "actor"
-reh_loc <- randomREH
-tryCatch_error_loc <- tryCatch(remify(edgelist = reh_loc$edgelist,
+expect_error(remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
                 types = reh_loc$types, 
                 directed = FALSE, # events are not directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin, # origin time is defiend
                 omit_dyad = reh_loc$omit_dyad, 
-                model = "actor"),error=function(e) e)
-expect_stdout(print(tryCatch_error_loc),
-"<Rcpp::exception: actor-oriented model can only work with directed networks>"
+                model = "actor"),
+"actor-oriented model can only work with directed networks",
+fixed = TRUE
 )
 
-# when time variable as at least one negative value
+# error when all events are incomplete
 reh_loc <- randomREH
-reh_loc$edgelist$time <- c(-5:9909)
-tryCatch_error_loc<- tryCatch(remify(edgelist = reh_loc$edgelist,
-                    actors = reh_loc$actors,
-                    types = reh_loc$types, 
-                    directed = TRUE, # events are directed
-                    ordinal = FALSE, # REM with waiting times
-                    origin = NULL,
-                    omit_dyad = NULL,
-                    model = "tie"),error=function(e) e)
-expect_stdout(print(tryCatch_error_loc),
-"<Rcpp::exception: time variable can't be negative>"
+reh_loc$edgelist$actor1 <- NA
+expect_error(remify(edgelist = reh_loc$edgelist,
+                actors = reh_loc$actors,
+                types = reh_loc$types, 
+                directed = TRUE, # events are not directed
+                ordinal = FALSE, # REM with waiting times
+                origin = reh_loc$origin, # origin time is defiend
+                omit_dyad = reh_loc$omit_dyad, 
+                model = "tie"),
+"`edgelist` object is empty.",
+fixed = TRUE
+)
+
+# errors from Rcpp functions, handled via expect_stdout()
+
+# time points defined in omit_dyad are removed
+reh_loc <- randomREH
+reh_loc$omit_dyad[[1]]$time[2] <- reh_loc$edgelist$time[9000]+60
+expect_error(remify(edgelist = reh_loc$edgelist,
+                actors = reh_loc$actors,
+                types = reh_loc$types, 
+                directed = TRUE, # events are directed
+                ordinal = FALSE, # REM with waiting times
+                origin = reh_loc$origin, # origin time is defiend
+                omit_dyad = reh_loc$omit_dyad, 
+                model = "tie"),
+  "either start or stop in one of the elements in the list 'omit_dyad' are not found in the edgelist. Please, provide observed time points as start and stop values",
+  fixed = TRUE
+)
+
+# when more than two time points are supplied in any of the object inside `omit_dyad`
+reh_loc <- randomREH
+reh_loc$omit_dyad[[1]]$time <- c(reh_loc$omit_dyad[[1]]$time,reh_loc$edgelist$time[9000]+60)
+expect_error(remify(edgelist = reh_loc$edgelist,
+                actors = reh_loc$actors,
+                types = reh_loc$types, 
+                directed = TRUE, # events are directed
+                ordinal = FALSE, # REM with waiting times
+                origin = reh_loc$origin, # origin time is defiend
+                omit_dyad = reh_loc$omit_dyad, 
+                model = "tie"),
+  "time vector in each element of the list 'omit_dyad' must be of length 2: start and stop time when the riskset changed",
+  fixed = TRUE
+)
+
+# when more than two time points are supplied in any of the object inside `omit_dyad`
+reh_loc <- randomREH
+reh_loc$omit_dyad[[1]]$time <- c(reh_loc$omit_dyad[[1]]$time[2],reh_loc$omit_dyad[[1]]$time[1])
+expect_error(remify(edgelist = reh_loc$edgelist,
+                actors = reh_loc$actors,
+                types = reh_loc$types, 
+                directed = TRUE, # events are directed
+                ordinal = FALSE, # REM with waiting times
+                origin = reh_loc$origin, # origin time is defiend
+                omit_dyad = reh_loc$omit_dyad, 
+                model = "tie"),
+  "time vector in each element of the list 'omit_dyad' must be sorted so that elements indicate respectively start and stop time when the riskset changed",
+  fixed = TRUE
 )
 
 # when 'ncores' is larger than it should be
@@ -279,26 +279,36 @@ expect_error(
   fixed = TRUE
 ) 
 
-# plot.remify() method
+
+
+# when at least one actor name is an empty string ""
 reh_loc <- randomREH
-out <- remify(edgelist = reh_loc$edgelist,
-                  model = "tie")
+expect_error(
+  remify(edgelist = reh_loc$edgelist,
+                  actors = c(reh_loc$actors,""),
+                  types = reh_loc$types, 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = NULL,
+                  omit_dyad = NULL,
+                  model = "tie"),
+  "actors' and types' names cannot be empty strings",
+  fixed = TRUE
+) 
 
-# when one or more actors supplied via the argument 'actors' are not found in the network
-expect_error(plot(x=out,actors = c("0","1")), "one or more actors' names ('actors') are not found in the remify object 'x'.", fixed = TRUE)
 
-## when N < 50 and the selection of 'actors' brings to zero events selected from the event sequence
-out <- data.frame(time=1:30,actor1=11:40,actor2=12:41)
-out <- remify(edgelist = out,
-                actors = as.character(1:41),
-                directed = TRUE,
-                model = "tie")  
-expect_error(plot(x=out,actors = as.character(1:10)),"no events found when selecting the set of actors (supplied via the argument 'actors').",fixed=TRUE)
 
-## when N > 50 and the selection of 'actors' brings to zero events selected from the event sequence
-out <- data.frame(time=1:200,actor1=61:260,actor2=62:261)
-out <- remify(edgelist = out,
-                actors = as.character(1:261),
-                directed = TRUE,
-                model = "tie")  
-expect_error(plot(x=out,actors = as.character(1:60)),"no events found when selecting the set of actors (supplied via the argument 'actors').",fixed=TRUE)
+# when at least one type name is an empty string ""
+reh_loc <- randomREH
+expect_error(
+  remify(edgelist = reh_loc$edgelist,
+                  actors = reh_loc$actors,
+                  types = c(reh_loc$types,""), 
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = NULL,
+                  omit_dyad = NULL,
+                  model = "tie"),
+  "actors' and types' names cannot be empty strings",
+  fixed = TRUE
+) 

@@ -1,5 +1,5 @@
 
-## tests on methods
+## tests on methods, errors and warnings from methods
 
 # method dim() with type
 reh_loc <- randomREH
@@ -47,7 +47,7 @@ out <- remify(edgelist = reh_loc$edgelist,
                 riskset = "active")
 
 # expectations on output object features               
-expect_equal(length(out), 8)
+expect_equal(length(out), 9)
 expect_true(is.numeric(dim(out)))
 expect_equal(length(dim(out)),6) # with types
 expect_identical(as.numeric(dim(out)),c(out$E,out$M,out$N,out$C,out$D,out$activeD))
@@ -69,7 +69,7 @@ out <- remify(edgelist = reh_loc$edgelist,
                 riskset = "active")
 
 # expectations on output object features               
-expect_equal(length(out), 8)
+expect_equal(length(out), 9)
 expect_true(is.numeric(dim(out)))
 expect_equal(length(dim(out)),5) # with types
 expect_identical(as.numeric(dim(out)),c(out$E,out$M,out$N,out$D,out$activeD))
@@ -264,10 +264,9 @@ expect_warning(getDyad(x = out, dyadID = c(1,1,2)),
   fixed = TRUE
 )
 
-tryCatch_error_loc<- tryCatch(getDyad(x = out,dyadID = c(0)),error=function(e) e)       
-expect_inherits(tryCatch_error_loc,c("Rcpp::exception","C++Error","error","condition")) 
-expect_match(print(tryCatch_error_loc),
-"<Rcpp::exception: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D>")
+expect_warning(getDyad(x = out,dyadID = c(0)),
+"one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D. NA's are returned for such ID's",
+fixed=TRUE)
 
 # getDyad without type
 reh_loc$edgelist$type <- NULL
@@ -279,11 +278,9 @@ out <- remify(edgelist = reh_loc$edgelist,
                 origin = reh_loc$origin,
                 omit_dyad = NULL,
                 model = "tie")
-tryCatch_error_loc <- tryCatch(getDyad(x = out,dyadID = c(0)),error=function(e) e)      
-expect_inherits(tryCatch_error_loc,c("Rcpp::exception","C++Error","error","condition")) 
-expect_match(print(tryCatch_error_loc),
-"Error: one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D\n")
-
+expect_warning(getDyad(x = out,dyadID = c(0)),
+"one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D. NA's are returned for such ID's",
+fixed=TRUE)
 expect_silent(getDyad(x = out, dyadID = c(1:10)))
 expect_true(is.data.frame(getDyad(x = out, dyadID = c(1:10))))
 expect_identical(getDyad(x = out, dyadID = c(1:10))$actor1,rep("Alexander",10))
@@ -381,3 +378,48 @@ expect_silent(summary(out))
 expect_silent(getDyad(x = out, dyadID = c(1), active = TRUE))          
 # getDyadID method
 expect_silent(getDyadID(x = out, actor1 = "Alexander", actor2 = "Charles", type = "cooperation"))          
+
+
+# plot.remify() method warnings
+
+## N > 50
+out <- data.frame(time=1:100,actor1=1:100,actor2=2:101)
+out <- remify(edgelist = out,
+                directed = TRUE,
+                model = "tie")  
+expect_warning(plot(out),"Too many actors for rendering plots with a good quality: the 50 most active actors are selected (descriptives on dyads and actors may differ from the descriptives conducted on the whole set of actors)",fixed=TRUE)
+
+## on a subset of actors but still larger than 50 actors
+expect_warning(plot(out,actors=as.character(1:80)),"Too many actors for rendering plots with a good quality: the 50 most active actors are selected (descriptives on dyads and actors may differ from the descriptives conducted on the whole set of actors)",fixed=TRUE)
+
+## for directed = FALSE
+out <- data.frame(time=1:100,actor1=1:100,actor2=2:101)
+out <- remify(edgelist = out,
+                directed = FALSE,
+                model = "tie")  
+expect_warning(plot(out),"Too many actors for rendering plots with a good quality: the 50 most active actors are selected (descriptives on dyads and actors may differ from the descriptives conducted on the whole set of actors)",fixed=TRUE)
+
+
+# plot.remify() method - errors
+reh_loc <- randomREH
+out <- remify(edgelist = reh_loc$edgelist,
+                  model = "tie")
+
+# when one or more actors supplied via the argument 'actors' are not found in the network
+expect_error(plot(x=out,actors = c("0","1")), "one or more actors' names ('actors') are not found in the remify object 'x'.", fixed = TRUE)
+
+## when N < 50 and the selection of 'actors' brings to zero events selected from the event sequence
+out <- data.frame(time=1:30,actor1=11:40,actor2=12:41)
+out <- remify(edgelist = out,
+                actors = as.character(1:41),
+                directed = TRUE,
+                model = "tie")  
+expect_error(plot(x=out,actors = as.character(1:10)),"no events found when selecting the set of actors (supplied via the argument 'actors').",fixed=TRUE)
+
+## when N > 50 and the selection of 'actors' brings to zero events selected from the event sequence
+out <- data.frame(time=1:200,actor1=61:260,actor2=62:261)
+out <- remify(edgelist = out,
+                actors = as.character(1:261),
+                directed = TRUE,
+                model = "tie")  
+expect_error(plot(x=out,actors = as.character(1:60)),"no events found when selecting the set of actors (supplied via the argument 'actors').",fixed=TRUE)

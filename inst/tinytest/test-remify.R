@@ -192,6 +192,17 @@ expect_silent(remify(edgelist = randomREH$edgelist,
                   model = "tie",
                   ncores = NULL))
 
+# test on argument `riskset` as NULL (default is 'full')
+expect_silent(remify(edgelist = randomREH$edgelist,
+                  actors = randomREH$actors,
+                  types = randomREH$types, 
+                  riskset = NULL,
+                  directed = TRUE, # events are directed
+                  ordinal = FALSE, # REM with waiting times
+                  origin = randomREH$origin,
+                  omit_dyad = randomREH$omit_dyad,
+                  model = "tie"))                  
+
 # check snapshots [[At the moment tonly testing that the expectation of an stdout - should compare with a snapshot defined in pattern]]
 
 # test (1) on method print()"
@@ -293,3 +304,91 @@ expect_identical(names(attributes(out)),c("names","class","with_type","weighted"
 expect_false(attr(out,"ordinal")) 
 expect_true(attr(out,"directed"))
 expect_identical(attr(out,"model"),"actor")
+
+#
+
+# tests on edgelist processing without self-loops removal
+
+#
+
+## weighted 
+reh_loc <- randomREH
+reh_loc$edgelist$weight <- as.numeric(reh_loc$edgelist$time)**0.5 # adding a fake weight
+
+### weighted - C>1 - tie-oriented model
+expect_silent(remify(edgelist = reh_loc$edgelist, model = "tie"))
+
+### weighted - C>1 - actor-oriented model
+expect_silent(remify(edgelist = reh_loc$edgelist, model = "actor"))
+
+### weighted - C=1 - tie-oriented model
+reh_loc$edgelist$type <- "1"
+expect_silent(remify(edgelist = reh_loc$edgelist, model = "tie"))
+
+### weighted - C=1 - actor-oriented model
+expect_silent(remify(edgelist = reh_loc$edgelist, model = "actor"))
+
+## not weighted 
+reh_loc <- randomREH
+
+### not weighted - C>1 - tie-oriented model
+expect_silent(remify(edgelist = reh_loc$edgelist, model = "tie"))
+
+### not weighted - C>1 - actor-oriented model
+expect_silent(remify(edgelist = reh_loc$edgelist, model = "actor"))
+
+### not weighted - C=1 - tie-oriented model
+reh_loc$edgelist$type <- "1"
+expect_silent(remify(edgelist = reh_loc$edgelist, model = "tie"))
+
+### not weighted - C=1 - actor-oriented model
+expect_silent(remify(edgelist = reh_loc$edgelist, model = "actor"))
+
+#
+
+# tests on edgelist processing with self-loops removal
+
+#
+
+## weighted 
+reh_loc <- randomREH
+reh_loc$edgelist$actor1[1:50] <- reh_loc$edgelist$actor2[1:50]
+reh_loc$edgelist$weight <- as.numeric(reh_loc$edgelist$time)**0.5 # adding a fake weight
+
+### weighted - C>1 - tie-oriented model
+out <- suppressWarnings(remify(edgelist = reh_loc$edgelist, model = "tie"))
+expect_equal(dim(reh_loc$edgelist)[1]-50,out$M)
+
+### weighted - C>1 - actor-oriented model
+out <- suppressWarnings(remify(edgelist = reh_loc$edgelist, model = "actor"))
+expect_equal(dim(reh_loc$edgelist)[1]-50,out$M)
+
+### weighted - C=1 - tie-oriented model
+reh_loc$edgelist$type <- "1"
+out <- suppressWarnings(remify(edgelist = reh_loc$edgelist, model = "tie"))
+expect_equal(dim(reh_loc$edgelist)[1]-50,out$M)
+
+### weighted - C=1 - actor-oriented model
+out <- suppressWarnings(remify(edgelist = reh_loc$edgelist, model = "actor"))
+expect_equal(dim(reh_loc$edgelist)[1]-50,out$M)
+
+## not weighted 
+reh_loc <- randomREH
+reh_loc$edgelist$actor1[1:50] <- reh_loc$edgelist$actor2[1:50]
+
+### not weighted - C>1 - tie-oriented model
+out <- suppressWarnings(remify(edgelist = reh_loc$edgelist, model = "tie"))
+expect_equal(dim(reh_loc$edgelist)[1]-50,out$M)
+
+### not weighted - C>1 - actor-oriented model
+out <- suppressWarnings(remify(edgelist = reh_loc$edgelist, model = "actor"))
+expect_equal(dim(reh_loc$edgelist)[1]-50,out$M)
+
+### not weighted - C=1 - tie-oriented model
+reh_loc$edgelist$type <- "1"
+out <- suppressWarnings(remify(edgelist = reh_loc$edgelist, model = "tie"))
+expect_equal(dim(reh_loc$edgelist)[1]-50,out$M)
+
+### not weighted - C=1 - actor-oriented model
+out <- suppressWarnings(remify(edgelist = reh_loc$edgelist, model = "actor"))
+expect_equal(dim(reh_loc$edgelist)[1]-50,out$M)
