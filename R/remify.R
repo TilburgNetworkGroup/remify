@@ -241,7 +241,6 @@ remify <- function(edgelist,
           warning(out$warnings[[w]])
         }
     }
-    
     str_out <- structure(list(M = out$M
                             ,N = out$N
                             ,C = out$C
@@ -250,7 +249,6 @@ remify <- function(edgelist,
                             ,edgelist = out$edgelist
                             )
                             ,class="remify")
-
     attr(str_out, "with_type") <- out$with_type
     attr(str_out, "weighted") <- out$weighted
     attr(str_out, "directed") <- directed
@@ -280,18 +278,26 @@ remify <- function(edgelist,
     }   
 
     str_out$omit_dyad <- out$omit_dyad
-    out <- NULL # free-ing space
-    
+    evenly_spaced_interevent_time <- NULL
+    rows_to_remove <- NULL
+    if(!is.null(out$evenly_spaced_interevent_time)){
+      evenly_spaced_interevent_time <- out$evenly_spaced_interevent_time
+      rows_to_remove <- out$rows_to_remove
+    }
+    out <- NULL # free-ing space [[now]]
+
     # modifying remify object to account for simultaneous events
-    rows_to_remove <- which(str_out$intereventTime == 0) # processing the co-occurrence of events
-    if(length(rows_to_remove) != 0){
-        str_out$intereventTime <- str_out$intereventTime[-rows_to_remove] # updating interevent time vector
-        if(!is.null(str_out$omit_dyad)){
-          str_out$omit_dyad$time <- str_out$omit_dyad$time[-rows_to_remove] # updating vector of risk set changes over time
-        }
+    if(!is.null(rows_to_remove)){
+        #attribute intereventTime evenly spaced
+        attr(str_out, "evenly_spaced_interevent_time") <- evenly_spaced_interevent_time 
+        # removing zeros from intereventTime
+        str_out$intereventTime <- str_out$intereventTime[-rows_to_remove] # updating interevent time vector 
+        # saving indices of simultaneous events to be removed (for remstimate)
+        attr(str_out, "indices_simultaneous_events") <- rows_to_remove
+        #str_out$intereventTime and str_out$omit_dyad$time are processed in remstimate depending on method=c("pe","pt") from remstats 
         str_out$E <- str_out$M # number of events
-        str_out$M <- length(str_out$intereventTime) # overwrite (lower) number of time points
-        time_unique <-unique(str_out$edgelist$time)
+        str_out$M <- str_out$M-length(rows_to_remove) # overwrite (lower) number of time points
+        time_unique <- unique(str_out$edgelist$time)
 
         # tie-oriented modeling
         actor1 <- list()

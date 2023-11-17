@@ -82,7 +82,7 @@ expect_true(attr(out,"weighted"))
 
 # processing the input `omit_dyad` when the network is undirected
 reh_loc <- randomREH
-reh_loc$omit_dyad[[2]]$dyad <- rbind(reh_loc$omit_dyad[[2]]$dyad,c("Megan","Zackary",NA))
+reh_loc$omit_dyad[[2]]$dyad <- rbind(reh_loc$omit_dyad[[2]]$dyad,c("Megan","Zackary",NA),c(NA,"Alexander",NA))
 out <- remify(edgelist = reh_loc$edgelist,
                   actors = reh_loc$actors,
                   types = reh_loc$types, 
@@ -156,6 +156,7 @@ expect_true(!is.null(out$omit_dyad))
 # test omit_dyad object with sequence with simultaneous events
 reh_loc <- randomREH
 reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
+reh_loc$edgelist$time[9910:9915] <- reh_loc$edgelist$time[9910:9915]+c(1:6)
 reh_loc$origin <- as.Date(reh_loc$origin)-1
 reh_loc$omit_dyad[[1]]$time <- as.Date(reh_loc$omit_dyad[[1]]$time)
 reh_loc$omit_dyad[[2]]$time <- as.Date(reh_loc$omit_dyad[[1]]$time)
@@ -167,7 +168,7 @@ out <- remify(edgelist = reh_loc$edgelist,
                   origin = reh_loc$origin,
                   omit_dyad = reh_loc$omit_dyad,
                   model = "tie")
-
+expect_identical(names(attributes(out)),c("names","class","with_type","weighted","directed","ordinal","model","riskset","dictionary","origin","ncores","dyadID","actor1ID","actor2ID","typeID","evenly_spaced_interevent_time","indices_simultaneous_events"))
 
 # `time` in 'omit_dyad' defined as c(NA,NA)
 reh_loc <- randomREH

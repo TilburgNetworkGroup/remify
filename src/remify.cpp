@@ -1091,13 +1091,13 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
             out["order"] = order_index; // returning order of time points if they are not sorted
             // saving the new sorted time
             input_time = Rcpp::as<std::vector<double>>(convertedEdgelist["time"]); // overwriting 'input time' given the new order
-            std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // with std::adjacent_difference time_input[0] remains the same so we will update it later when processing the origin
+            std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // with std::adjacent_difference input_time[0] remains the same so we will update it later when processing the origin
         }
         else{
-            std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // with std::adjacent_difference time_input[0] remains the same so we will update it later when processing the origin 
+            std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // with std::adjacent_difference input_time[0] remains the same so we will update it later when processing the origin 
         }
 
-        // (2) Checking whether the origin is NULL or it is defined by the user (time variable is not yet sorted if needed, therefore we work with time_input.min() value) []
+        // (2) Checking whether the origin is NULL or it is defined by the user
         if(Rf_isNull(input_origin)){ // if origin input is NULL
             origin = min_time - 1.0; // if in seconds event_0 will occur one second earlier than event_1, if in days it will be one day earlier
         }
@@ -1115,9 +1115,76 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
         input_time[0] -= origin;
 
         out["intereventTime"] = input_time;
+
+        // evenly spaced time (processing)
+        auto which_interevent_is_zero = std::find(input_time.begin(), input_time.end(), 0.0);
+        if(which_interevent_is_zero != input_time.end()){ // at leat one interevent time is equal to 0.0
+        arma::vec evenly_spaced_time = arma::conv_to<arma::vec>::from(input_time);
+        arma::uvec rows_to_remove = arma::find(evenly_spaced_time == 0.0);
+        out["rows_to_remove"] = rows_to_remove;
+        int size_time_input = static_cast<int>(input_time.size());
+        int a,b;
+        double wt;
+        a = 1;
+        wt = 0.0;
+        while(a < size_time_input){
+            b = a;
+            std::vector<int> k_vec;
+            while(b < size_time_input){
+                if(input_time[b] == 0.0){
+                    if(input_time[b-1] != 0.0){
+                        k_vec.push_back(b-1);
+                        k_vec.push_back(b);
+                        wt = input_time[b-1];
+                    }
+                    else{
+                        k_vec.push_back(b);
+                    }
+                }
+                else if((input_time[b] != 0.0) && (static_cast<int>(k_vec.size())>0)){
+                    wt /= static_cast<double>(k_vec.size());
+                    for(int e = 0 ; e < static_cast<int>(k_vec.size()); e++){
+                        int which_pos = k_vec[e];
+                        evenly_spaced_time(which_pos) = wt;
+                    }
+                    k_vec.clear();
+                    wt = 0.0;
+                    a = b;
+                    b = size_time_input;
+                }
+                else if((input_time[b] != 0.0) && (static_cast<int>(k_vec.size())==0)){
+                    k_vec.clear();
+                    wt = 0.0;
+                    b = size_time_input;
+                }
+                if(b == (size_time_input-1)){
+                    wt /= static_cast<double>(k_vec.size());
+                    for(int e = 0 ; e < static_cast<int>(k_vec.size()); e++){
+                        int which_pos = k_vec[e];
+                        evenly_spaced_time(which_pos) = wt;
+                    }
+                    k_vec.clear();
+                    wt = 0.0;
+                    a = b;
+                    b = size_time_input;
+                }
+                b += 1;
+            }
+            a += 1;
+        }
+
+            out["evenly_spaced_interevent_time"] = evenly_spaced_time;
+        }
+        else{
+            out["rows_to_remove"] = R_NilValue;
+            out["evenly_spaced_interevent_time"] = R_NilValue;
+        }
+
     }
     else{
         out["intereventTime"] = R_NilValue;
+        out["rows_to_remove"] = R_NilValue;
+        out["evenly_spaced_interevent_time"] = R_NilValue;
     }
 
     // Storing converted `edgelist` (without self-loops, if present, and, reoredered if events were not sorted by their time of occurrence)
@@ -1499,6 +1566,8 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
     out["M"] = convertedInput["M"]; // if there are self-loops the number of events decreases
     out["omit_dyad"] = convertedInput["omit_dyad"];
     out["intereventTime"] = convertedInput["intereventTime"];
+    out["evenly_spaced_interevent_time"] = convertedInput["evenly_spaced_interevent_time"];
+    out["rows_to_remove"] = convertedInput["rows_to_remove"];
     out["order"] = convertedInput["order"];
 
     // END of the processing and returning output
