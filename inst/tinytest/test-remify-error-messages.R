@@ -204,14 +204,14 @@ fixed = TRUE
 # error when all events are incomplete
 reh_loc <- randomREH
 reh_loc$edgelist$actor1 <- NA
-expect_error(remify(edgelist = reh_loc$edgelist,
+expect_error(suppressWarnings(remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
                 types = reh_loc$types, 
                 directed = TRUE, # events are not directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin, # origin time is defiend
                 omit_dyad = reh_loc$omit_dyad, 
-                model = "tie"),
+                model = "tie")),
 "`edgelist` object is empty.",
 fixed = TRUE
 )

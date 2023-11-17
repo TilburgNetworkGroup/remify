@@ -33,7 +33,7 @@ out <- remify(edgelist = reh_loc$edgelist,
                   directed = TRUE, # events are directed
                   ordinal = FALSE, # REM with waiting times
                   origin = reh_loc$origin,
-                  omit_dyad = reh_loc$omit_dyad,
+                  omit_dyad = NULL,
                   model = "tie")
 expect_null(out$C)
 expect_null(out$edgelist$type)
@@ -186,14 +186,14 @@ expect_silent(
 # test on unsorted time variable (Rcpp level) 
 reh_loc <- randomREH
 reh_loc$edgelist$time <- reh_loc$edgelist$time[sample(1:dim(reh_loc$edgelist)[1],size=dim(reh_loc$edgelist)[1],replace=FALSE)]
-out <- remify(edgelist = reh_loc$edgelist,
+out <- suppressWarnings(remify(edgelist = reh_loc$edgelist,
                   actors = reh_loc$actors,
                   types = reh_loc$types, 
                   directed = TRUE, # events are directed
                   ordinal = FALSE, # REM with waiting times
                   origin = NULL,
                   omit_dyad = NULL,
-                  model = "tie")
+                  model = "tie"))
 expect_equal(sort(reh_loc$edgelist$time),out$edgelist[,1])
 
 

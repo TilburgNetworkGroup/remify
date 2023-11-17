@@ -431,6 +431,35 @@ attr(edgelist_reh, "typeID")[[1]] # printing out the types ID's observed at the 
 attr(edgelist_reh, "dyadIDactive")[[1]] # printing out the ID's of the active dyads at the first time point
 ```
 
+
+------
+
+### <b><tt>evenly_spaced_interevent_time</tt> and <tt>indices_simultaneous_events</tt></b>
+`evenly_spaced_interevent_time` is the vector of processed waiting times when in the relational event sequence two or more events are observed at the same time point. This attribute will be `NULL` when there are no simultaneous events in the sequence. The evenly spaced interevent time assumes that if two or more events occurred at the same time, the waiting time since the previous (different) time point is evenly spread across the simultaneous events. For instance, if we observe five events at time `10` and the previous (different) time point is `4`, their raw waiting time will be calculated as below.
+
+```{r}
+time_points <- c(4,10,10,10,10,10)
+waiting_times <- diff(time_points) # waiting_times: [1] 6 0 0 0 0 calculated as t[m]-t[m-1]
+```
+The waiting time of the second event from the first event is `6` (calculated as the difference of the two time points, `10-4=6`). The value of the waiting time is `0` for the other events that are simultaneous (i.e. `10-10=0`). In this scenario, `remify` spreads the waiting time `6` for the five simultaneous events as,
+
+```{r}
+rep(waiting_times[1]/5,5)# 5 is the number of events in the example observed at the same time (10)
+```
+
+`indices_simultaneous_events` is a vector of indices from the input `edgelist` indicating which rows of the edgelist correspond to simultaneous events (excluding the first simultaneous event). This attribute will be `NULL` when there are no simultaneous events in the sequence. Considering the example above, if there are five simultaneous events at time `10`, `remify` will return the following set of indices
+```{r}
+time_points <- c(4,10,10,10,10,10)
+diff(time_points) # waiting times calculated as t[m]-t[m-1]
+which(diff(time_points)==0) # indices of simultaneous events, excluding the first simultaneous event 
+```
+`remify`, doesn't remove the first simultaneous event for each case of two or more simultaneous events in the sequence because that time point must be processed to group the simultaneous events as occurred at a specific time point.
+```{r}
+# attr(edgelist_reh, "evenly_spaced_interevent_time") 
+# attr(edgelist_reh, "indices_simultaneous_events")
+```
+
+
 ## Methods
 
 The available <b>methods</b> for a `remify` object are: `print`, `summary`, `dim`, `getRiskset`, `getActorName`, `getTypeName`, `getDyad`, `getActorID`, `getTypeID`, `getDyadID` and `plot`.
