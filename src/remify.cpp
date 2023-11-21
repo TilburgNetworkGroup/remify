@@ -584,8 +584,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/tie]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
-                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                int check_self_loop = std::count(dyad.cbegin(), dyad.cend(), 0); //##
+                if(check_self_loop>0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }            
                 out["dyad"] = dyad; 
@@ -622,8 +622,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/actor]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
-                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                int check_self_loop = std::count(dyad.cbegin(), dyad.cend(), 0); //##
+                if(check_self_loop>0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }  
                 out["dyad"] = R_NilValue;
@@ -718,8 +718,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/tie]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
-                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                int check_self_loop = std::count(dyad.cbegin(), dyad.cend(), 0); //##
+                if(check_self_loop>0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }            
                 out["dyad"] = dyad; 
@@ -751,8 +751,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/actor]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
-                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                int check_self_loop = std::count(dyad.cbegin(), dyad.cend(), 0); //##
+                if(check_self_loop>0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }  
                 out["dyad"] = R_NilValue;
@@ -848,8 +848,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/tie]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
-                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                int check_self_loop = std::count(dyad.cbegin(), dyad.cend(), 0); //##
+                if(check_self_loop>0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }            
                 out["dyad"] = dyad; 
@@ -885,8 +885,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/actor]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
-                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                int check_self_loop = std::count(dyad.cbegin(), dyad.cend(), 0); //##
+                if(check_self_loop>0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }  
                 out["dyad"] = R_NilValue;
@@ -975,8 +975,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/tie]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
-                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                int check_self_loop = std::count(dyad.cbegin(), dyad.cend(), 0); //##
+                if(check_self_loop>0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }      
                 out["dyad"] = dyad; 
@@ -1007,8 +1007,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
                     }
                 }
                 // check for self-loop in [weighted/C>1/actor]
-                int check_self_loop = std::accumulate(dyad.cbegin(), dyad.cend(), 1, std::multiplies<int>()); //##
-                if(check_self_loop==0){ // there are self-loops to be removed from the sequence
+                int check_self_loop = std::count(dyad.cbegin(), dyad.cend(), 0); //##
+                if(check_self_loop>0){ // there are self-loops to be removed from the sequence
                     dyad.erase(std::remove_if(dyad.begin(), dyad.end(), [&INFTY_DYAD](int x){return (x==INFTY_DYAD);}),dyad.end());
                 }  
                 out["dyad"] = R_NilValue;

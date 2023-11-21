@@ -1,7 +1,7 @@
-# remify 3.2.0
+# remify 3.2.2
  
-* Date: 2023-11-03
-* This is the 3.2.0 version of the package. There have been two major updates from the previous version (3.1.0). The package now includes processing of relational event sequences with simultaneous events and a new plot function.
+* Date: 2023-11-21
+* This is the 3.2.2 version of the package. There have been two major updates from the previous version (3.1.0). The package now includes processing of relational event sequences with simultaneous events and a new plot function.
 * Minor edits. 
  
 ## Test environments 
