@@ -1118,7 +1118,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
 
         // evenly spaced time (processing)
         auto which_interevent_is_zero = std::find(input_time.begin(), input_time.end(), 0.0);
-        if(which_interevent_is_zero != input_time.end()){ // at leat one interevent time is equal to 0.0
+        if(which_interevent_is_zero != input_time.end()){ // at least one interevent time is equal to 0.0
         arma::vec evenly_spaced_time = arma::conv_to<arma::vec>::from(input_time);
         arma::uvec rows_to_remove = arma::find(evenly_spaced_time == 0.0);
         out["rows_to_remove"] = rows_to_remove;
@@ -1172,7 +1172,6 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
             }
             a += 1;
         }
-
             out["evenly_spaced_interevent_time"] = evenly_spaced_time;
         }
         else{
@@ -1182,8 +1181,39 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
 
     }
     else{
+        std::vector<int> input_time = Rcpp::as<std::vector<int>>(convertedEdgelist["time"]); // converting any time input to a double 
+        // (1.1) Check sorting time variable and force the sorting if necessary (ranks may be not correctly sorted)
+        if(!std::is_sorted(std::begin(input_time), std::end(input_time))){
+            //Rcpp::Rcout << warningMessage(0); // warning message about the sorting operation
+            warnings_list.push_back(warningMessage(0));
+            // reordering edgelist
+            std::vector<int> sorted_time_order(input_time.size()); //it was std::vector<std::size_t> with size_t from stddef library
+            std::iota(std::begin(sorted_time_order), std::end(sorted_time_order), 0);
+            std::sort(std::begin(sorted_time_order), std::end(sorted_time_order),
+                    [&input_time](const auto & lhs, const auto & rhs)
+                    {
+                        return input_time[lhs] < input_time[rhs];
+                    }
+            );
+            arma::uvec order_index = arma::conv_to<arma::uvec>::from(sorted_time_order);
+            convertedEdgelist = rearrangeDataFrame(convertedEdgelist,order_index); // overwriting 'convertedEdgelist' given the new order
+            out["order"] = order_index; // returning order of time points if they are not sorted
+            // saving the new sorted time
+            input_time = Rcpp::as<std::vector<int>>(convertedEdgelist["time"]); // overwriting 'input time' given the new order
+            std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // with std::adjacent_difference input_time[0] remains the same so we will update it later when processing the origin
+        }
+        else{
+            std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // with std::adjacent_difference input_time[0] remains the same so we will update it later when processing the origin 
+        }
+
+        arma::uvec distance_time = arma::conv_to<arma::uvec>::from(input_time);
+        distance_time(0) = 1;
+        arma::uvec which_interevent_is_zero = arma::find(distance_time <= 0); // can't be negative at this stage of processing
+        if(which_interevent_is_zero.n_elem != 0){ // at least one interevent time is equal to 0
+            out["rows_to_remove"] = which_interevent_is_zero;
+        }
+
         out["intereventTime"] = R_NilValue;
-        out["rows_to_remove"] = R_NilValue;
         out["evenly_spaced_interevent_time"] = R_NilValue;
     }
 

@@ -322,8 +322,10 @@ expect_true(attr(out,"directed"))
 expect_identical(attr(out,"model"),"actor")
 
 ## tests on ordinal = TRUE ##
-expect_silent(remify(edgelist = randomREH$edgelist, ordinal = TRUE, model = "tie"))
-expect_silent(remify(edgelist = randomREH$edgelist, ordinal = TRUE, model = "actor"))
+reh_loc_ordinal <- randomREH$edgelist
+reh_loc_ordinal$time  <- rep(1:(9915/5),each=5)
+expect_silent(remify(edgelist = reh_loc_ordinal, ordinal = TRUE, model = "tie"))
+expect_silent(remify(edgelist = reh_loc_ordinal, ordinal = TRUE, model = "actor"))
 
 #
 

@@ -280,18 +280,22 @@ remify <- function(edgelist,
     str_out$omit_dyad <- out$omit_dyad
     evenly_spaced_interevent_time <- NULL
     rows_to_remove <- NULL
-    if(!is.null(out$evenly_spaced_interevent_time)){
-      evenly_spaced_interevent_time <- out$evenly_spaced_interevent_time
+    if(!is.null(out$rows_to_remove)){
+      if(!ordinal){
+        evenly_spaced_interevent_time <- out$evenly_spaced_interevent_time
+      }
       rows_to_remove <- out$rows_to_remove
     }
     out <- NULL # free-ing space [[now]]
 
     # modifying remify object to account for simultaneous events
     if(!is.null(rows_to_remove)){
-        #attribute intereventTime evenly spaced
-        attr(str_out, "evenly_spaced_interevent_time") <- evenly_spaced_interevent_time 
-        # removing zeros from intereventTime
-        str_out$intereventTime <- str_out$intereventTime[-rows_to_remove] # updating interevent time vector 
+        if(!ordinal){
+          #attribute intereventTime evenly spaced
+          attr(str_out, "evenly_spaced_interevent_time") <- evenly_spaced_interevent_time 
+          # removing zeros from intereventTime
+          str_out$intereventTime <- str_out$intereventTime[-rows_to_remove] # updating interevent time vector 
+        }
         # saving indices of simultaneous events to be removed (for remstimate)
         attr(str_out, "indices_simultaneous_events") <- rows_to_remove
         #str_out$intereventTime and str_out$omit_dyad$time are processed in remstimate depending on method=c("pe","pt") from remstats 

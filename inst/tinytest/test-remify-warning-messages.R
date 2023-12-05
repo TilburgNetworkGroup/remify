@@ -62,6 +62,15 @@ expect_warning(remify(edgelist = reh_loc$edgelist,
 fixed=TRUE
 )
 
+# unsorted time column when ordinal  = TRUE
+## tests on ordinal = TRUE ##
+reh_loc_ordinal <- randomREH$edgelist
+reh_loc_ordinal$time  <- rep(1:(9915/5),each=5)[c(10:1,11:9915)]
+expect_warning(remify(edgelist = reh_loc_ordinal, ordinal = TRUE, model = "tie"),
+"Warning: the `time` variable is not sorted. Sorting will be forced.",
+fixed=TRUE
+)
+
 # first `time` value and `origin` are the same
 reh_loc <- randomREH
 reh_loc$origin <- reh_loc$edgelist$time[1]

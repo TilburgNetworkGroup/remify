@@ -17,9 +17,12 @@ The two main functions `remify()` and `rehshape()` perform respectively the proc
 
 	
 ## Installation
-Install the package in R using `devtools` or `remotes`:
+Install the package in R from `CRAN`, (via `devtools` or `remotes` also avaialble):
 
 ```
+# via CRAN
+install.packages("remify")
+
 # via `devtools`
 devtools::install_github(repo = "TilburgNetworkGroup/remify", build_vignettes = TRUE)
 
