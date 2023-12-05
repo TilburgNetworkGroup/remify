@@ -1,8 +1,7 @@
-# remify 3.2.3
+# remify 3.2.4
  
-* Date: 2023-12-05
-* This is the 3.2.3 version of the package. There has been one minor but important improvement from the 3.2.2 version. The package now includes the processing of relational event sequences with tied event ranks (in the case of sequences where only the order of events is known). This improvement is crucial for the estimation of models relational events have tied ranks.
-* Added new tests.
+* Date: 2023-12-06
+* This is the 3.2.4 version of the package. There has been one minor but important improvement from the 3.2.2 version. The package since version 3.2.3 includes the processing of relational event sequences with tied event ranks (in the case of sequences where only the order of events is known). A small correction has been made on an indexing which was wrongly assigned in the 3.2.3 version. 
  
 ## Test environments 
 * Local macOS Sonoma 14.0, R version 4.3.1 

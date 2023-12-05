@@ -1095,7 +1095,7 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
         }
         else{
             std::adjacent_difference(input_time.begin(), input_time.end(), input_time.begin()); // with std::adjacent_difference input_time[0] remains the same so we will update it later when processing the origin 
-        }
+        } 
 
         // (2) Checking whether the origin is NULL or it is defined by the user
         if(Rf_isNull(input_origin)){ // if origin input is NULL
@@ -1120,8 +1120,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
         auto which_interevent_is_zero = std::find(input_time.begin(), input_time.end(), 0.0);
         if(which_interevent_is_zero != input_time.end()){ // at least one interevent time is equal to 0.0
         arma::vec evenly_spaced_time = arma::conv_to<arma::vec>::from(input_time);
-        arma::uvec rows_to_remove = arma::find(evenly_spaced_time == 0.0);
-        out["rows_to_remove"] = rows_to_remove;
+        arma::uvec rows_to_remove = arma::find(evenly_spaced_time <= 0.0);
+        out["rows_to_remove"] = rows_to_remove+1;
         int size_time_input = static_cast<int>(input_time.size());
         int a,b;
         double wt;
