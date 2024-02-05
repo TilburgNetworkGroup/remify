@@ -10,4 +10,4 @@
 ^cran-comments\.md$
 ^README\.md$
 ^CRAN-SUBMISSION$
-^man\figures\$
+^man/figures/

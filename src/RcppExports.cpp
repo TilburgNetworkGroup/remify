@@ -32,7 +32,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // getEventsComposition
-Rcpp::IntegerMatrix getEventsComposition(arma::vec dyads, int N, int D, bool directed, int ncores);
+arma::imat getEventsComposition(arma::vec dyads, int N, int D, bool directed, int ncores);
 RcppExport SEXP _remify_getEventsComposition(SEXP dyadsSEXP, SEXP NSEXP, SEXP DSEXP, SEXP directedSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

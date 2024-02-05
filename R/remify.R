@@ -207,14 +207,20 @@ remify <- function(edgelist,
     # Checking for NA's 
 
     ## NA's in `edgelist` :
- 
-	  if(anyNA(edgelist)){
+    NA_time <- which(is.na(edgelist$time))
+    NA_actor1 <- which(is.na(edgelist$actor1))
+    NA_actor2 <- which(is.na(edgelist$actor2))
+    NA_type <- which(is.na(edgelist$type))
+    NA_weight <- which(is.na(edgelist$weight))
+    to_remove <- c(NA_time,NA_actor1,NA_actor2,NA_type,NA_weight)
+    if(length(to_remove)>0){
+      to_remove <- unique(to_remove)
       warning("`edgelist` contains missing data: incomplete events are dropped.") # `edgelist` contains missing data: incomplete events (rows) are dropped.
-      to_remove <- unique(which(is.na(edgelist), arr.ind = T)[,1])
       if(length(to_remove) == dim(edgelist)[1]){
         stop("`edgelist` object is empty.")
       }
       edgelist <- edgelist[-to_remove,]
+      rm(to_remove)
     }
     
     # Pre-processing relational event history (remifyCpp.cpp)
@@ -891,9 +897,9 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
   }
 
   # finding dyad ID
-  dyad_id <- getDyadIndex_cpp(actor1 = actor1_id-1,
-                                    actor2 = actor2_id-1,
-                                    type = type_id-1,
+  dyad_id <- getDyadIndex_cpp(actor1 = actor1_id,
+                                    actor2 = actor2_id,
+                                    type = type_id,
                                     N = x$N,
                                     directed = attr(x,"directed"))
   if((attr(x,"riskset") == "active") & (attr(x,"model")=="tie")){

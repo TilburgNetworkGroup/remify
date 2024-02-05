@@ -43,13 +43,13 @@ namespace remify{
 
 
 
-        Rcpp::IntegerVector getDyadComposition(int d, int N, bool directed) {
+        arma::ivec getDyadComposition(int d, int N, bool directed) {
 
         // Note on the internal routine getDyadComposition:
         // (1) this function assumes that all the possible dyads are in the stats object
         // (2) this function is not coded to account for reduced (that omits dyads) arrays of stats
         // (3) this function works (at the moment) only with directed netwroks
-        Rcpp::IntegerVector composition(3);
+        arma::ivec composition(3);
         arma::mat actors_id(N,1);
         actors_id.col(0) = arma::linspace(0,N-1,N);
         int actor1,actor2,type;

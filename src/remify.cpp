@@ -1618,14 +1618,14 @@ Rcpp::List remifyCpp(Rcpp::DataFrame input_edgelist,
 //
 // @return \code{data.frame} whose columns are rearranged according to the input index
 // [[Rcpp::export]]
-Rcpp::IntegerMatrix getEventsComposition(arma::vec dyads, 
+arma::imat getEventsComposition(arma::vec dyads, 
                                 int N, 
                                 int D,
                                 bool directed,
                                 int ncores) {
     arma::uword d;
     arma::uword length_dyads = dyads.n_elem;
-    Rcpp::IntegerMatrix out(length_dyads,3);
+    arma::imat out(3,length_dyads,arma::fill::zeros);
 
     #ifdef _OPENMP
     omp_set_dynamic(0);         
@@ -1634,14 +1634,13 @@ Rcpp::IntegerMatrix getEventsComposition(arma::vec dyads,
     #endif
     for(d = 0; d < length_dyads; d++){
         if((dyads(d) < 1) || (dyads(d) > D)){
-            out(d,Rcpp::_) = Rcpp::IntegerVector::create(NA_INTEGER,NA_INTEGER,NA_INTEGER);
+            out.col(d) = {NA_INTEGER,NA_INTEGER,NA_INTEGER};
         }
         else{
-            out(d,Rcpp::_) = remify::getDyadComposition(dyads(d)-1, N,directed)+1;
+            out.col(d) = remify::getDyadComposition(dyads(d)-1, N,directed)+1;
         }
     }
-
-    return out;
+    return out.t();
 }
 
 
@@ -1659,7 +1658,7 @@ Rcpp::IntegerMatrix getEventsComposition(arma::vec dyads,
 //
 // [[Rcpp::export]]
 int getDyadIndex_cpp(double actor1, double actor2, double type, int N, bool directed){
-    return remify::getDyadIndex(actor1-1,actor2-1,type-1,N,directed)+1;
+    return remify::getDyadIndex(actor1-1.0,actor2-1.0,type-1.0,N,directed)+1;
 }
 
 
