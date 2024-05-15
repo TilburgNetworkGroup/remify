@@ -4,7 +4,7 @@
 
 ## **remify** 
 
-### _Processing and transforming relational event history data_
+### _Processing and Transforming Relational Event History Data_
 
 <!-- badges: start -->
 [![github-repo-status](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
