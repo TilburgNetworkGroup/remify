@@ -16,7 +16,9 @@
 <!-- badges: start -->
 
 <br />
+
 The aim of the `remify` package is twofold:
+
  * processing REH data and arranging them in a new structure (`remify`) that is used by the packages in [`remverse`](https://github.com/TilburgNetworkGroup/remverse);
  * transforming REH data from a `remify` structure to other formats used in other R packages.
  
