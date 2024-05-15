@@ -17,12 +17,12 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Giuseppe Arena \email{g.arena@tilburguniversity.edu}
+\strong{Maintainer}: Giuseppe Arena \email{g.arena@tilburguniversity.edu} (\href{https://orcid.org/0000-0001-5204-3326}{ORCID})
 
 Other contributors:
 \itemize{
   \item Rumana Lakdawala \email{r.j.lakdawala@tilburguniversity.edu} [contributor]
-  \item Marlyne Meijerink-Bosman \email{m.l.meijerink@tilburguniversity.edu} [contributor]
+  \item Marlyne Meijerink-Bosman [contributor]
   \item Diana Karimova \email{d.karimova@tilburguniversity.edu} [contributor]
   \item Fabio Generoso Vieira \email{f.v.generosovieira@tilburguniversity.edu} [contributor]
   \item Mahdi Shafiee Kamalabad \email{m.shafieekamalabad@uu.nl} [contributor]

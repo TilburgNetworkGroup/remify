@@ -10,4 +10,7 @@
 ^cran-comments\.md$
 ^README\.md$
 ^CRAN-SUBMISSION$
-^man/figures/
+^man\figures\$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

@@ -1,0 +1,82 @@
+url: https://tilburgnetworkgroup.github.io/remify/
+template:
+  bslib:
+    version: 5
+    boothswatch: yeti
+    base_font: {google: "Open Sans"}
+    heading_font: {google: "Open Sans"}
+    bs-theme: light
+
+
+navbar:
+  title: "remstimate"
+  left:
+    - icon: fa-home fa-lg
+      href: index.html
+    - text: "Vignettes"
+      href: articles/index.html
+    - text: "Functions"
+      href: reference/index.html
+    - text: "News"
+      href: news/index.html
+    - text: "Other Packages"
+      menu:
+        - text: "remstats"
+          href: https://tilburgnetworkgroup.github.io/remstats/
+        - text: "remstimate"
+          href: https://tilburgnetworkgroup.github.io/remstimate/
+        - text: "remulate"
+          href: https://github.com/TilburgNetworkGroup/remulate     
+        - text: "bremory"
+          href: https://github.com/TilburgNetworkGroup/bremory
+        - text: "remx"
+          href: https://github.com/TilburgNetworkGroup/remx
+    - text: "remverse"
+      href: https://github.com/TilburgNetworkGroup/remverse
+  right:
+   - icon: fa-twitter
+     href: https://twitter.com/TiUNetworkGroup
+   - icon: fa-github
+     href: https://github.com/TilburgNetworkGroup/remstimate
+
+
+articles:
+  - title: ""
+    desc: >
+      These vignettes explain how to process relational event history data, define a custom riskset, transform data to other formats using
+      the **remify** package.
+    contents:
+      - remify
+      - riskset
+      - rehshape
+  
+reference:
+  - title: "Remify"
+    desc: > 
+      Function for processing of relational event history data.
+    contents:
+      - remify
+      - dim.remify
+      - print.remify
+      - summary.remify
+      - plot.remify
+      - getActorID
+      - getActorName
+      - getDyad
+      - getDyadID
+      - getRiskset
+      - getTypeID
+      - getTypeName
+  - title: "Rehshape"
+    desc: >
+      Function to transform relational event history data into formats compatible with other packages out of 'remverse'
+    contents:
+      - rehshape
+  - title: "Data"
+    desc: >
+      Relational event history available inside remify
+    contents:
+      - randomREH
+      - randomREHsmall
+
+

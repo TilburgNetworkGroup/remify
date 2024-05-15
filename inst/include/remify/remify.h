@@ -18,14 +18,14 @@ namespace remify{
                         if(actor1>0){
                             dyad_loc += actor1/2;
                         }
-                        dyad = dyad_loc;
+                        dyad = static_cast<int>(dyad_loc);
                     }
                     else{
                         double dyad_loc = (N*(N-1)/2)*type+(N-1)*actor2+actor1-actor2-1-(actor2*actor2)/2;
                         if(actor2>0){
                             dyad_loc += actor2/2;
                         }
-                        dyad = dyad_loc;
+                        dyad = static_cast<int>(dyad_loc);
                     }
                 }
                 else{ 
@@ -34,7 +34,7 @@ namespace remify{
                     if(actor2>actor1){
                         dyad_loc -= 1;
                     }
-                    dyad = dyad_loc;
+                    dyad = static_cast<int>(dyad_loc);
                 }
             }
 
@@ -59,11 +59,11 @@ namespace remify{
             // 2. get actor1_actor2 with type = 0
             int dyad_notype = d - (type*N*(N-1)); // dyad ID that ranges between 0 and N*(N-1)
             // 3. get actor1
-            actor1 = dyad_notype/(N-1.0); //floor // actor ID that ranges between 0 and N-1
+            actor1 = static_cast<int>(dyad_notype/(N-1.0)); //floor // actor ID that ranges between 0 and N-1
             // 4. get actor2
-            int which_actor2 = dyad_notype-(actor1)*(N-1.0);
+            int which_actor2 = static_cast<int>(dyad_notype-(actor1)*(N-1.0));
             actors_id.shed_row(actor1);
-            actor2 = actors_id[which_actor2];
+            actor2 = static_cast<int>(actors_id[which_actor2]);
             // save dyad composition
             composition = {actor1,actor2,type};
         }
