@@ -5,87 +5,54 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="remify">
 <title>Process a Relational Event History • remify</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Open_Sans-0.4.9/font.css" rel="stylesheet">
-<!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js" integrity="sha512-7O5pXpc0oCRrxk8RUfDYFgn0nO1t+jLuIOQdOMRp4APB7uZ4vSjspzp5y6YDtDs4VzUSTbWzBFZ/LKJhnyFOKw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Process a Relational Event History">
-<meta property="og:description" content="remify">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Process a Relational Event History">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
-    
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light" data-bs-theme="light"><div class="container">
-    
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
     <a class="navbar-brand me-2" href="../index.html">remify</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.7</small>
 
-    
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item">
-  <a class="nav-link" href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li class="active nav-item">
-  <a class="nav-link" href="../articles/index.html">Vignettes</a>
-</li>
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Functions</a>
-</li>
-<li class="nav-item">
-  <a class="nav-link" href="../news/index.html">News</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../index.html"><span class="fa fa-home fa-lg"></span></a></li>
+<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Vignettes</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
 <li class="nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-other-packages">Other Packages</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-other-packages">
-    <a class="external-link dropdown-item" href="https://tilburgnetworkgroup.github.io/remstats/">remstats</a>
-    <a class="external-link dropdown-item" href="https://tilburgnetworkgroup.github.io/remstimate/">remstimate</a>
-    <a class="external-link dropdown-item" href="https://github.com/TilburgNetworkGroup/remulate">remulate</a>
-    <a class="external-link dropdown-item" href="https://github.com/TilburgNetworkGroup/bremory">bremory</a>
-    <a class="external-link dropdown-item" href="https://github.com/TilburgNetworkGroup/remx">remx</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other-packages" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other Packages</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-other-packages">
+<li><a class="external-link dropdown-item" href="https://tilburgnetworkgroup.github.io/remstats/">remstats</a></li>
+    <li><a class="external-link dropdown-item" href="https://tilburgnetworkgroup.github.io/remstimate/">remstimate</a></li>
+    <li><a class="external-link dropdown-item" href="https://github.com/TilburgNetworkGroup/remulate">remulate</a></li>
+    <li><a class="external-link dropdown-item" href="https://github.com/TilburgNetworkGroup/bremory">bremory</a></li>
+    <li><a class="external-link dropdown-item" href="https://github.com/TilburgNetworkGroup/remx">remx</a></li>
+  </ul>
 </li>
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/TilburgNetworkGroup/remverse">remverse</a>
-</li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/TilburgNetworkGroup/remverse">remverse</a></li>
       </ul>
-<form class="form-inline my-2 my-lg-0" role="search">
-        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
-</form>
-
-      <ul class="navbar-nav">
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://twitter.com/TiUNetworkGroup">
-    <span class="fa fa-twitter"></span>
-     
-  </a>
-</li>
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/TilburgNetworkGroup/remstimate">
-    <span class="fa fa-github"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><a class="external-link nav-link" href="https://twitter.com/TiUNetworkGroup"><span class="fa fa-twitter"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/TilburgNetworkGroup/remstimate"><span class="fa fa-github"></span></a></li>
       </ul>
 </div>
 
-    
+
   </div>
 </nav><div class="container template-article">
 
@@ -94,11 +61,12 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="" class="logo" alt=""><h1>Process a Relational Event History</h1>
+
+      <h1>Process a Relational Event History</h1>
                         <h4 data-toc-skip class="author"></h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/TilburgNetworkGroup/remify/blob/HEAD/vignettes/remify.Rmd" class="external-link"><code>vignettes/remify.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/TilburgNetworkGroup/remify/blob/master/vignettes/remify.Rmd" class="external-link"><code>vignettes/remify.Rmd</code></a></small>
       <div class="d-none name"><code>remify.Rmd</code></div>
     </div>
 
@@ -272,19 +240,27 @@ are provided in
 <h4 id="origin">
 <b><tt>origin</tt></b><a class="anchor" aria-label="anchor" href="#origin"></a>
 </h4>
-<p>The initial time (<span class="math inline">\(t_0\)</span>) of an
-event sequence is the time at which the network of actors starts being
-observed and any event occurring from that time point and on is
+<p>The initial time
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>t</mi><mn>0</mn></msub><annotation encoding="application/x-tex">t_0</annotation></semantics></math>)
+of an event sequence is the time at which the network of actors starts
+being observed and any event occurring from that time point and on is
 annotated. This information is not always known and it depends on the
-study design. If the <span class="math inline">\(t_0\)</span> of an
-event sequence is known, it can be specified by the argument
+study design. If the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>t</mi><mn>0</mn></msub><annotation encoding="application/x-tex">t_0</annotation></semantics></math>
+of an event sequence is known, it can be specified by the argument
 <code>origin</code> and it must have the same class of the
 <code>time</code> column in the input <code>edgelist</code>. If the
 argument is left unspecified (<code>NULL</code>), it will be set by
-default to one time unit earlier than <span class="math inline">\(t_1\)</span> (time of the first observed event).
-For instance, when the waiting time is measured in seconds then <span class="math inline">\(t_0 = t_1 - 1sec\)</span> , when the waiting time
-is measured in days then <span class="math inline">\(t_0 = t_1 -
-1day\)</span> and so forth. In the <code>randomREH</code> data a <span class="math inline">\(t_0\)</span> is provided.</p>
+default to one time unit earlier than
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>t</mi><mn>1</mn></msub><annotation encoding="application/x-tex">t_1</annotation></semantics></math>
+(time of the first observed event). For instance, when the waiting time
+is measured in seconds then
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mn>0</mn></msub><mo>=</mo><msub><mi>t</mi><mn>1</mn></msub><mo>−</mo><mn>1</mn><mi>s</mi><mi>e</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">t_0 = t_1 - 1sec</annotation></semantics></math>
+, when the waiting time is measured in days then
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mn>0</mn></msub><mo>=</mo><msub><mi>t</mi><mn>1</mn></msub><mo>−</mo><mn>1</mn><mi>d</mi><mi>a</mi><mi>y</mi></mrow><annotation encoding="application/x-tex">t_0 = t_1 - 1day</annotation></semantics></math>
+and so forth. In the <code>randomREH</code> data a
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>t</mi><mn>0</mn></msub><annotation encoding="application/x-tex">t_0</annotation></semantics></math>
+is provided.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">origin</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] "2020-03-05 01:32:53 UTC"</span></span></code></pre>
@@ -449,9 +425,10 @@ of actors and also the number of event types (if measured). It
 represents the largest size of the risk set (full risk set size). The
 number of dyads <code>D</code> can change based on whether relational
 events are directed or undirected: * if the network is <i>directed</i>,
-then <span class="math inline">\(D = N*(N-1)*C\)</span>; * if the
-network is <i>undirected</i>, then <span class="math inline">\(D =
-(N*(N-1)/2)*C\)</span>.</p>
+then
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mi>N</mi><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>*</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">D = N*(N-1)*C</annotation></semantics></math>;
+* if the network is <i>undirected</i>, then
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mn>2</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>*</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">D = (N*(N-1)/2)*C</annotation></semantics></math>.</p>
 <p>If the input argument <code>riskset</code> is <code>"active"</code>,
 then in the output object there will also be the number
 <code>activeD</code>, which is the size of the active risk set (active
@@ -466,8 +443,8 @@ dyads observed in the event history).</p>
 <b><tt>intereventTime</tt></b><a class="anchor" aria-label="anchor" href="#intereventtime"></a>
 </h4>
 <p><code>intereventTime</code> is a numeric vector of waiting times
-between two subsequent events, that is: <span class="math display">\[\begin{bmatrix} t_1 - t_0 \\ t_2 - t_1 \\ \cdots
-\\ t_M - t_{M-1} \end{bmatrix}\]</span></p>
+between two subsequent events, that is:
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>1</mn></msub><mo>−</mo><msub><mi>t</mi><mn>0</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>2</mn></msub><mo>−</mo><msub><mi>t</mi><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mi>M</mi></msub><mo>−</mo><msub><mi>t</mi><mrow><mi>M</mi><mo>−</mo><mn>1</mn></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">\begin{bmatrix} t_1 - t_0 \\ t_2 - t_1 \\ \cdots \\ t_M - t_{M-1} \end{bmatrix}</annotation></semantics></math></p>
 <div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">edgelist_reh</span><span class="op">$</span><span class="va">intereventTime</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1]  854.6961  189.9698 2408.3461  504.0680 1046.0560  628.0785</span></span></code></pre>
@@ -509,13 +486,14 @@ modeling, the list consists of two objects: a vector named
 <ul>
 <li><p><code>riskset</code> is a 1/0’s matrix where all the possible
 risk set modifications are described by row, and the columns identify
-the dyads (<span class="math inline">\(D\)</span> columns). The number
-of rows depends on the number of risk set modifications occurring in the
-event sequence, thus it remains variable (and it is not necessarly the
-same as the number of risk set modifications declared with the input
-<code>omit_dyad</code>, because they can also occur on
-no/partially/totally overlapping time windows that are processed
-internally).</p></li>
+the dyads
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math>
+columns). The number of rows depends on the number of risk set
+modifications occurring in the event sequence, thus it remains variable
+(and it is not necessarly the same as the number of risk set
+modifications declared with the input <code>omit_dyad</code>, because
+they can also occur on no/partially/totally overlapping time windows
+that are processed internally).</p></li>
 <li><p><code>time</code> is a vector of row indices that for each time
 point indicates which modification of the risk set (row index in the
 matrix <code>riskset</code>) is observed.</p></li>
@@ -680,12 +658,24 @@ the processing of the data. Possible values are: <code>"full"</code>,
 <code>actors</code> has two columns: the first with actor names
 (<code>actorName</code>) sorted according to their alphanumerical order,
 the second with their corresponding ID’s (<code>actorID</code>), ranging
-from <span class="math inline">\(1\)</span> to <span class="math inline">\(N\)</span> (with <span class="math inline">\(N\)</span> being the number of actors);</li>
+from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1</mn><annotation encoding="application/x-tex">1</annotation></semantics></math>
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
+(with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
+being the number of actors);</li>
 <li>
 <code>types</code> has two columns: the first with type names
 (<code>typeName</code>) sorted according to their alphanumerical order,
 the second with their corresponding ID’s (<code>typeID</code>), ranging
-from <span class="math inline">\(1\)</span> to <span class="math inline">\(C\)</span> (with <span class="math inline">\(C\)</span> being the number of event types);</li>
+from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1</mn><annotation encoding="application/x-tex">1</annotation></semantics></math>
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>C</mi><annotation encoding="application/x-tex">C</annotation></semantics></math>
+(with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>C</mi><annotation encoding="application/x-tex">C</annotation></semantics></math>
+being the number of event types);</li>
 </ul>
 <div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">edgelist_reh</span>, <span class="st">"dictionary"</span><span class="op">)</span></span></code></pre></div>
@@ -899,9 +889,10 @@ brief summary of the relational network data.</p>
 <p><code><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim()</a></code> returns some useful dimensions characterizing the
 network, such as: number of events, number of actors, number of event
 types (omitted in the case of networks with one or no event types),
-largest number of possible dyads (<span class="math inline">\(D\)</span>) and, finally, number of active dyads
-(<code>activeD</code>, showed only if
-<code>riskset = "active"</code>).</p>
+largest number of possible dyads
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math>)
+and, finally, number of active dyads (<code>activeD</code>, showed only
+if <code>riskset = "active"</code>).</p>
 <div class="sourceCode" id="cb83"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">edgelist_reh</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##        events        actors         types         dyads dyads(active) </span></span>
@@ -1025,11 +1016,13 @@ In-degree and out-degree activity line plots are plotted on the sides
 (or the total-degree on the top side, if the network is
 undirected).</li>
 <li>for directed networks two plots of normalized out-degree and
-in-degree values per actor (ranging in <span class="math inline">\([0,1]\)</span>) over a set of
-<code>n_intervals</code> (evenly spaced). For undirected networks, only
-one plot of normalized total-degree over the <code>n_intervals</code>
-(also here values ranging in [0,1]). The normalization is calculated in
-each interval as the <span class="math display">\[\frac{(degree-min(degree))}{(max(degree)-min(degree))}\]</span>
+in-degree values per actor (ranging in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0,1]</annotation></semantics></math>)
+over a set of <code>n_intervals</code> (evenly spaced). For undirected
+networks, only one plot of normalized total-degree over the
+<code>n_intervals</code> (also here values ranging in [0,1]). The
+normalization is calculated in each interval as the
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo>−</mo><mi>m</mi><mi>i</mi><mi>n</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>m</mi><mi>a</mi><mi>x</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>m</mi><mi>i</mi><mi>n</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mfrac><annotation encoding="application/x-tex">\frac{(degree-min(degree))}{(max(degree)-min(degree))}</annotation></semantics></math>
 for each actor considering minimum and maximum degree (in-, out- or
 total-, degree) observed in the interval (opacity and size of the points
 is proportional to the normalized measure)</li>
@@ -1076,7 +1069,7 @@ is proportional to the in-degree of the actors).</li>
 </div>
 </div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
 
@@ -1087,15 +1080,15 @@ is proportional to the in-degree of the actors).</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>
 </div>
 
-  
 
-  
+
+
 
   </body>
 </html>
