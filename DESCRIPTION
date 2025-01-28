@@ -1,33 +1,29 @@
 Type: Package
 Package: remify
 Title: Processing and Transforming Relational Event History Data
-Version: 3.2.6
-Date: 2024-05-15
+Version: 3.2.7
+Date: 2025-01-28
 Authors@R: 
     c(person(given = "Giuseppe",
              family = "Arena",
              role = c("aut", "cre"),
-             email = "g.arena@tilburguniversity.edu",
+             email = "g.arena@uva.nl",
              comment = c(ORCID = "0000-0001-5204-3326")),
       person(given = "Rumana",
              family = "Lakdawala",
-             role = "ctb",
-             email = "r.j.lakdawala@tilburguniversity.edu"),
+             role = "ctb"),
       person(given = "Marlyne",
              family = "Meijerink-Bosman",
              role = "ctb"),
       person(given = "Diana",
              family = "Karimova",
-             role = "ctb",
-             email = "d.karimova@tilburguniversity.edu"),
+             role = "ctb"),
       person(given = "Fabio",
              family = "Generoso Vieira",
-             role = "ctb",
-             email = "f.v.generosovieira@tilburguniversity.edu"),
+             role = "ctb"),
       person(given = "Mahdi",
              family = "Shafiee Kamalabad",
-             role = "ctb",
-             email = "m.shafieekamalabad@uu.nl"),
+             role = "ctb"),
       person(given = "Roger",
              family = "Leenders",
              role = "ctb",
@@ -57,4 +53,4 @@ VignetteBuilder:
     knitr
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2

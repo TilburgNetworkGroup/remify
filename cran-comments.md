@@ -1,7 +1,7 @@
-# remify 3.2.6
+# remify 3.2.7
  
-* Date: 2024-05-15
-* Minor fixes of implicit conversions in remify.h
+* Date: 2025-01-15
+* DESCRIPTION file update
  
 ## Test environments 
 * Local macOS Sonoma 14.0, R version 4.3.1 

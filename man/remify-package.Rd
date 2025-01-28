@@ -3,7 +3,6 @@
 \docType{package}
 \name{remify-package}
 \alias{remify-package}
-\alias{_PACKAGE}
 \title{remify: Processing and Transforming Relational Event History Data}
 \description{
 Efficiently processes relational event history data and transforms them into formats suitable for other packages. The primary objective of this package is to convert event history data into a format that integrates with the packages in 'remverse' and is compatible with various analytical tools (e.g., computing network statistics, estimating tie-oriented or actor-oriented social network models). Second, it can also transform the data into formats compatible with other packages out of 'remverse'. The package processes the data for two types of temporal social network models: tie-oriented modeling framework (Butts, C., 2008, \doi{10.1111/j.1467-9531.2008.00203.x}) and actor-oriented modeling framework (Stadtfeld, C., & Block, P., 2017, \doi{10.15195/v4.a14}).
@@ -17,15 +16,15 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Giuseppe Arena \email{g.arena@tilburguniversity.edu} (\href{https://orcid.org/0000-0001-5204-3326}{ORCID})
+\strong{Maintainer}: Giuseppe Arena \email{g.arena@uva.nl} (\href{https://orcid.org/0000-0001-5204-3326}{ORCID})
 
 Other contributors:
 \itemize{
-  \item Rumana Lakdawala \email{r.j.lakdawala@tilburguniversity.edu} [contributor]
+  \item Rumana Lakdawala [contributor]
   \item Marlyne Meijerink-Bosman [contributor]
-  \item Diana Karimova \email{d.karimova@tilburguniversity.edu} [contributor]
-  \item Fabio Generoso Vieira \email{f.v.generosovieira@tilburguniversity.edu} [contributor]
-  \item Mahdi Shafiee Kamalabad \email{m.shafieekamalabad@uu.nl} [contributor]
+  \item Diana Karimova [contributor]
+  \item Fabio Generoso Vieira [contributor]
+  \item Mahdi Shafiee Kamalabad [contributor]
   \item Roger Leenders \email{r.t.a.j.leenders@tilburguniversity.edu} [contributor]
   \item Joris Mulder \email{j.mulder3@tilburguniversity.edu} [contributor]
 }
