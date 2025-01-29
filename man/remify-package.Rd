@@ -10,7 +10,7 @@ Efficiently processes relational event history data and transforms them into for
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/TilburgNetworkGroup/remify}
+  \item \url{https://tilburgnetworkgroup.github.io/remify/}
   \item Report bugs at \url{https://github.com/TilburgNetworkGroup/remify/issues}
 }
 

@@ -1,7 +1,7 @@
-# remify 3.2.7
+# remify 3.2.8
  
 * Date: 2025-01-15
-* DESCRIPTION file update
+* DESCRIPTION file update (URL and Maintainer's email)
  
 ## Test environments 
 * Local macOS Sonoma 14.0, R version 4.3.1 
