@@ -148,7 +148,7 @@ head(attr(reh,"dyad"))
 A possible way for visualizing the risk set composition at each time point consists in plotting a grid with actors' names on both axes: referring to the __senders__ (on the __y-axis__) and to the __receivers__ (on the __x-axis__). 
 
 <center>
-```{r, echo = FALSE, dev=c("jpeg"), fig.alt = "Visualizing risk set composition at each time point"}
+```{r, echo = FALSE, dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing risk set composition at each time point"}
 risk_set <- expand.grid(sorted_actors,sorted_actors)
 dyad_occurred <- c(11,4,11,11)
 
@@ -205,7 +205,7 @@ Cosidering the first four time points of `randomREHsmall`, we observe: the (dire
 A _full_ risk set in undirected networks will assume a particular grid visualization. The dyads at risk will be on the lower triangular grid, because the actor names `c(actor1,actor2)` describing the dyad in the input edgelist are sorted according to their alphanumeric order before being processed. For instance, the event at $t_2$ `c("Lexy","Colton")`, will be rearranged as `c("Colton","Lexy")`, and the risk set will change as follows in the picture below.
 
 <center>
-```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), fig.alt = "Visualizing risk set composition at each time point - full risk set"}
+```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing risk set composition at each time point - full risk set"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -296,7 +296,7 @@ A _manual_ risk set consists of a time-based definition of the ensemble of dyads
 Consider the first four time points of the small random network and assume this time that actors `"Richard"` and `"Francesca"` didn't join the study until the second day of the study. This means that the risk set for at least the first four time points will have the following composition,
 
 <center>
-```{r, echo = FALSE, dev=c("jpeg"), fig.alt = "Visualizing risk set composition at each time point - manual risk set for directed network"}
+```{r, echo = FALSE, dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing risk set composition at each time point - manual risk set for directed network"}
 dyad_occurred <- c(11,4,11,11) 
 
 # ... saving current graphical parameters
@@ -357,7 +357,7 @@ where the tiles defining the dyads where `"Richard"` and `"Francesca"` are eithe
 Finally, a _manual_ risk set can be defined also for undirected networks and the grid visualization will focus on the lower triangular grid, because the actor names `c(actor1,actor2)` describing the dyad in the input edgelist are sorted according to their alphanumeric order by the processing. For instance, the event at $t_2$ `c("Lexy","Colton")`, will be rearranged as `c("Colton","Lexy")`, thus the risk set will change as below.
 
 <center>
-```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), fig.alt = "Visualizing risk set composition at each time point - manual risk set for undirected network"}
+```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing risk set composition at each time point - manual risk set for undirected network"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -491,7 +491,7 @@ Another example are the risk set chages declared in 4. and 5., where we wanted t
 We can visualize the risk set modifications as they are declared via the `omit_dyad` argument in a plot where the x-axis represents the time and the y-axis describes the five risk set modifications presented above.
 
 
-```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), fig.alt = "Plot showing manual risk set modifications from the omit_dyad argument"}
+```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Plot showing manual risk set modifications from the omit_dyad argument"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -534,7 +534,7 @@ edgelist_reh <- remify::remify(edgelist = randomREH$edgelist,
 ```
 
 <center>
-```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), fig.alt = "Plot showing manual risk set before processing"}
+```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Plot showing manual risk set before processing"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -571,7 +571,7 @@ for(i in 1:length(modification_idx)){
 ```
 
 <center>
-```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), fig.alt = "Plot showing manual risk set while processing"}
+```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Plot showing manual risk set while processing"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 
@@ -592,7 +592,7 @@ After the processing of a relational event history, the `remify` object will con
 As a result of the processing of the five risk set modifications, the risk set is describe now by eight risk set modifications. This is due to the partial/total overlapping of two or more time intervals. For instance, the second modification of the processed risk set (figure below) will contain the combination of the third and the fourth modification declared in the input `omit_dyad` (figure above).
 
 <center>
-```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), fig.alt = "Plot showing manual risk set modifications after processing"}
+```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Plot showing manual risk set modifications after processing"}
 # ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
 

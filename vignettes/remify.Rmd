@@ -559,7 +559,7 @@ The method can work with only one input dyad of the form [`actor1`,`actor2`,`typ
 5. two networks: (i) network of events where edges are considered undirected (edges' opacity is proportional to the counts of the undirected events, vertices' opacity is proportional to the total-degree of the actors), (ii) visualization of directed network (edges' opacity is proportional to the counts of the directed events, vertices' opacity is proportional to the in-degree of the actors).
 
 
-```{r, out.width="50%", fig.align = "center", dev=c("jpeg"), fig.alt = "summary plots"}
+```{r, out.width="50%", fig.align = "center", dev=c("jpeg"), fig.alt = "summary plots", dev.args = list(bg = "white")}
 op <- par(no.readonly = TRUE)
 par(mai=rep(0.8,4), cex.main=0.9, cex.axis=0.75)
 plot(x=edgelist_reh,which=1,n_intervals=13) # histogram of inter-event times
