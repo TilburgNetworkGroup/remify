@@ -1,6 +1,6 @@
 <br />
 
-<img align="right" width="185" src='man/figures/remify-logo.svg'>
+<img align="right" width="185" src='man/figures/remify-logo.svg' alt="remify logo">
 
 ## **remify** 
 
