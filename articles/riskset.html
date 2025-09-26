@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">remify</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,7 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../index.html" aria-label="Home"><span class="fa fa-home fa-lg"></span></a></li>
-<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Vignettes</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Vignettes</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
 <li class="nav-item dropdown">
@@ -66,7 +66,7 @@
                         <h4 data-toc-skip class="author"></h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/TilburgNetworkGroup/remify/blob/master/vignettes/riskset.Rmd" class="external-link"><code>vignettes/riskset.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/TilburgNetworkGroup/remify/blob/HEAD/vignettes/riskset.Rmd" class="external-link"><code>vignettes/riskset.Rmd</code></a></small>
       <div class="d-none name"><code>riskset.Rmd</code></div>
     </div>
 
@@ -114,11 +114,11 @@ event</li>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREHsmall</span><span class="op">$</span><span class="va">edgelist</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">##                  time  actor1 actor2</span></span>
-<span><span class="co">## 1 2020-03-05 15:36:37  Colton  Kayla</span></span>
-<span><span class="co">## 2 2020-03-05 18:34:11    Lexy Colton</span></span>
-<span><span class="co">## 3 2020-03-05 19:49:37  Colton  Kayla</span></span>
-<span><span class="co">## 4 2020-03-05 20:38:23  Colton  Kayla</span></span>
-<span><span class="co">## 5 2020-03-06 05:54:12 Richard Colton</span></span></code></pre>
+<span><span class="co">## 1 2020-03-05 16:36:37  Colton  Kayla</span></span>
+<span><span class="co">## 2 2020-03-05 19:34:11    Lexy Colton</span></span>
+<span><span class="co">## 3 2020-03-05 20:49:37  Colton  Kayla</span></span>
+<span><span class="co">## 4 2020-03-05 21:38:23  Colton  Kayla</span></span>
+<span><span class="co">## 5 2020-03-06 06:54:12 Richard Colton</span></span></code></pre>
 <p>where <code>time</code>, <code>actor1</code>, <code>actor2</code>
 describe each observed event in the sequence (Note that in this example
 the <code>type</code> of events is not annotated).</p>
@@ -476,7 +476,7 @@ a specific time point until the end of the observation period.</li>
 </ol>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">time</span> <span class="co"># start and stop time point defining the time window of interest</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "2020-05-07 20:42:38 UTC" "2020-05-23 21:46:41 UTC"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "2020-05-07 22:42:38 CEST" "2020-05-23 23:46:41 CEST"</span></span></code></pre>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">dyad</span> <span class="co"># dyads to be removed from the time points defined by the interval in `time`</span></span></code></pre></div>
 <pre><code><span><span class="co">##   actor1 actor2     type</span></span>
@@ -488,7 +488,7 @@ the last observed time point.</li>
 </ol>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">time</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "2020-05-19 23:30:09 UTC" "2020-05-23 21:46:41 UTC"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "2020-05-20 01:30:09 CEST" "2020-05-23 23:46:41 CEST"</span></span></code></pre>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">dyad</span></span></code></pre></div>
 <pre><code><span><span class="co">##     actor1   actor2 type</span></span>
@@ -513,7 +513,7 @@ the start of the event history.</li>
 </ol>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">time</span> </span></code></pre></div>
-<pre><code><span><span class="co">## [1] NA                        "2020-04-02 03:31:13 UTC"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] NA                         "2020-04-02 05:31:13 CEST"</span></span></code></pre>
 <div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">dyad</span> </span></code></pre></div>
 <pre><code><span><span class="co">##      actor1    actor2 type</span></span>
@@ -531,7 +531,7 @@ interval (about 2 months) embedded in the event history.</li>
 </ol>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">time</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "2020-03-27 09:55:56 UTC" "2020-05-13 10:17:57 UTC"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "2020-03-27 10:55:56 CET"  "2020-05-13 12:17:57 CEST"</span></span></code></pre>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">dyad</span></span></code></pre></div>
 <pre><code><span><span class="co">##    actor1  actor2 type</span></span>
@@ -542,7 +542,7 @@ interval (about 2 months) embedded in the event history.</li>
 </ol>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">5</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">time</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "2020-04-30 07:44:08 UTC" "2020-05-04 01:20:53 UTC"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "2020-04-30 09:44:08 CEST" "2020-05-04 03:20:53 CEST"</span></span></code></pre>
 <div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">5</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">dyad</span></span></code></pre></div>
 <pre><code><span><span class="co">##   actor1 actor2 type</span></span>
@@ -650,7 +650,7 @@ third and the fourth modification declared in the input
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
 </div>
 
     </footer>

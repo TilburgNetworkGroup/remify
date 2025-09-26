@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">remify</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,7 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../index.html" aria-label="Home"><span class="fa fa-home fa-lg"></span></a></li>
-<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Vignettes</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Vignettes</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
 <li class="nav-item dropdown">
@@ -66,7 +66,7 @@
                         <h4 data-toc-skip class="author"></h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/TilburgNetworkGroup/remify/blob/master/vignettes/remify.Rmd" class="external-link"><code>vignettes/remify.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/TilburgNetworkGroup/remify/blob/HEAD/vignettes/remify.Rmd" class="external-link"><code>vignettes/remify.Rmd</code></a></small>
       <div class="d-none name"><code>remify.Rmd</code></div>
     </div>
 
@@ -124,12 +124,12 @@ the third column.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">randomREH</span><span class="op">$</span><span class="va">edgelist</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##                  time    actor1  actor2        type</span></span>
-<span><span class="co">## 1 2020-03-05 01:47:08     Kayla Kiffani competition</span></span>
-<span><span class="co">## 2 2020-03-05 01:50:18    Colton  Justin    conflict</span></span>
-<span><span class="co">## 3 2020-03-05 02:30:26    Kelsey    Maya cooperation</span></span>
-<span><span class="co">## 4 2020-03-05 02:38:50 Alexander  Colton competition</span></span>
-<span><span class="co">## 5 2020-03-05 02:56:16     Wyatt  Kelsey    conflict</span></span>
-<span><span class="co">## 6 2020-03-05 03:06:45     Derek Breanna competition</span></span></code></pre>
+<span><span class="co">## 1 2020-03-05 02:47:08     Kayla Kiffani competition</span></span>
+<span><span class="co">## 2 2020-03-05 02:50:18    Colton  Justin    conflict</span></span>
+<span><span class="co">## 3 2020-03-05 03:30:26    Kelsey    Maya cooperation</span></span>
+<span><span class="co">## 4 2020-03-05 03:38:50 Alexander  Colton competition</span></span>
+<span><span class="co">## 5 2020-03-05 03:56:16     Wyatt  Kelsey    conflict</span></span>
+<span><span class="co">## 6 2020-03-05 04:06:45     Derek Breanna competition</span></span></code></pre>
 <hr>
 </div>
 <div class="section level4">
@@ -262,7 +262,7 @@ and so forth. In the <code>randomREH</code> data a
 is provided.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">origin</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "2020-03-05 01:32:53 UTC"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "2020-03-05 02:32:53 CET"</span></span></code></pre>
 <hr>
 </div>
 <div class="section level4">
@@ -289,7 +289,7 @@ specific time point until the end of the observation period.</li>
 </ol>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">time</span> <span class="co"># start and stop time point defining the time window of interest</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "2020-05-07 20:42:38 UTC" "2020-05-23 21:46:41 UTC"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "2020-05-07 22:42:38 CEST" "2020-05-23 23:46:41 CEST"</span></span></code></pre>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">dyad</span> <span class="co"># dyads to be removed from the time points defined by the interval in `time`</span></span></code></pre></div>
 <pre><code><span><span class="co">##   actor1 actor2     type</span></span>
@@ -301,7 +301,7 @@ last observed time point.</li>
 </ol>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">time</span> <span class="co"># start and stop time point defining the time window of interest</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "2020-05-19 23:30:09 UTC" "2020-05-23 21:46:41 UTC"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "2020-05-20 01:30:09 CEST" "2020-05-23 23:46:41 CEST"</span></span></code></pre>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">dyad</span> <span class="co"># dyads to be removed from the time points defined by the interval in `time`</span></span></code></pre></div>
 <pre><code><span><span class="co">##     actor1   actor2 type</span></span>
@@ -425,9 +425,9 @@ represents the largest size of the risk set (full risk set size). The
 number of dyads <code>D</code> can change based on whether relational
 events are directed or undirected: * if the network is <i>directed</i>,
 then
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mi>N</mi><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>*</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">D = N*(N-1)*C</annotation></semantics></math>;
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mi>N</mi><mo>*</mo><mo stretchy="false" form="prefix">(</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mo>*</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">D = N*(N-1)*C</annotation></semantics></math>;
 * if the network is <i>undirected</i>, then
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mn>2</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>*</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">D = (N*(N-1)/2)*C</annotation></semantics></math>.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>N</mi><mo>*</mo><mo stretchy="false" form="prefix">(</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mn>2</mn><mo stretchy="false" form="postfix">)</mo><mo>*</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">D = (N*(N-1)/2)*C</annotation></semantics></math>.</p>
 <p>If the input argument <code>riskset</code> is <code>"active"</code>,
 then in the output object there will also be the number
 <code>activeD</code>, which is the size of the active risk set (active
@@ -465,12 +465,12 @@ input, then the output edgelist will not incude their columns.</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">edgelist_reh</span><span class="op">$</span><span class="va">edgelist</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##                  time    actor1  actor2        type</span></span>
-<span><span class="co">## 1 2020-03-05 01:47:08     Kayla Kiffani competition</span></span>
-<span><span class="co">## 2 2020-03-05 01:50:18    Colton  Justin    conflict</span></span>
-<span><span class="co">## 3 2020-03-05 02:30:26    Kelsey    Maya cooperation</span></span>
-<span><span class="co">## 4 2020-03-05 02:38:50 Alexander  Colton competition</span></span>
-<span><span class="co">## 5 2020-03-05 02:56:16     Wyatt  Kelsey    conflict</span></span>
-<span><span class="co">## 6 2020-03-05 03:06:45     Derek Breanna competition</span></span></code></pre>
+<span><span class="co">## 1 2020-03-05 02:47:08     Kayla Kiffani competition</span></span>
+<span><span class="co">## 2 2020-03-05 02:50:18    Colton  Justin    conflict</span></span>
+<span><span class="co">## 3 2020-03-05 03:30:26    Kelsey    Maya cooperation</span></span>
+<span><span class="co">## 4 2020-03-05 03:38:50 Alexander  Colton competition</span></span>
+<span><span class="co">## 5 2020-03-05 03:56:16     Wyatt  Kelsey    conflict</span></span>
+<span><span class="co">## 6 2020-03-05 04:06:45     Derek Breanna competition</span></span></code></pre>
 <hr>
 </div>
 <div class="section level4">
@@ -719,7 +719,7 @@ see
 name.</p>
 <div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">edgelist_reh</span>, <span class="st">"origin"</span><span class="op">)</span><span class="op">)</span> <span class="co"># printing out only the str() of the attribute since the data.frame `value` is large</span></span></code></pre></div>
-<pre><code><span><span class="co">##  POSIXct[1:1], format: "2020-03-05 01:32:53"</span></span></code></pre>
+<pre><code><span><span class="co">##  POSIXct[1:1], format: "2020-03-05 02:32:53"</span></span></code></pre>
 <hr>
 </div>
 <div class="section level4">
@@ -1016,12 +1016,12 @@ In-degree and out-degree activity line plots are plotted on the sides
 undirected).</li>
 <li>for directed networks two plots of normalized out-degree and
 in-degree values per actor (ranging in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0,1]</annotation></semantics></math>)
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0,1]</annotation></semantics></math>)
 over a set of <code>n_intervals</code> (evenly spaced). For undirected
 networks, only one plot of normalized total-degree over the
 <code>n_intervals</code> (also here values ranging in [0,1]). The
 normalization is calculated in each interval as the
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo>−</mo><mi>m</mi><mi>i</mi><mi>n</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>m</mi><mi>a</mi><mi>x</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>m</mi><mi>i</mi><mi>n</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mfrac><annotation encoding="application/x-tex">\frac{(degree-min(degree))}{(max(degree)-min(degree))}</annotation></semantics></math>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mrow><mo stretchy="false" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo>−</mo><mi>m</mi><mi>i</mi><mi>n</mi><mo stretchy="false" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>m</mi><mi>a</mi><mi>x</mi><mo stretchy="false" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mi>m</mi><mi>i</mi><mi>n</mi><mo stretchy="false" form="prefix">(</mo><mi>d</mi><mi>e</mi><mi>g</mi><mi>r</mi><mi>e</mi><mi>e</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo></mrow></mfrac><annotation encoding="application/x-tex">\frac{(degree-min(degree))}{(max(degree)-min(degree))}</annotation></semantics></math>
 for each actor considering minimum and maximum degree (in-, out- or
 total-, degree) observed in the interval (opacity and size of the points
 is proportional to the normalized measure)</li>
@@ -1079,7 +1079,7 @@ is proportional to the in-degree of the actors).</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
 </div>
 
     </footer>
