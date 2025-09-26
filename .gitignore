@@ -11,3 +11,5 @@ CRAN-SUBMISSION
 docs
 /doc/
 /Meta/
+.DS_Store
+man/.DS_Store

@@ -1404,7 +1404,7 @@ plot.remify <- function(x,
     substr(x=hc, nchar(hc)-1, nchar(hc))
     })
     igraph::V(net_undirected)$color <- sapply(transparency_popularity_levels,function(l) paste(igraph.vertex.color,l,sep=""))
-    igraph::V(net_undirected)$frame.color <- NA
+    igraph::V(net_undirected)$frame.color <- "black"
     igraph::E(net_undirected)$arrow.mode <- 0
     igraph::E(net_undirected)$width <- 2
     # defining transparency of edges color based on count
@@ -1437,7 +1437,7 @@ plot.remify <- function(x,
       substr(x=hc, nchar(hc)-1, nchar(hc))
       })
       igraph::V(net_directed)$color <- sapply(transparency_popularity_levels,function(l) paste(igraph.vertex.color,l,sep=""))
-      igraph::V(net_directed)$frame.color <- NA
+      igraph::V(net_directed)$frame.color <- "black"
       igraph::E(net_directed)$arrow.size <- 0.3
       igraph::E(net_directed)$width <- 2
       # defining transparency of edges color based on count

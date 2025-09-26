@@ -1,7 +1,7 @@
-# remify 3.2.8
+# remify 3.2.9
  
-* Date: 2025-01-15
-* DESCRIPTION file update (URL and Maintainer's email)
+* Date: 2025-09-26
+* Fixing error anticipated by new igraph version
  
 ## Test environments 
 * Local macOS Sonoma 14.0, R version 4.3.1 

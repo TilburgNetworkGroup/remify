@@ -14,3 +14,5 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^\.DS_Store$
+^man/\.DS_Store$

@@ -56,7 +56,7 @@ rehshape <- function(data,
   # stop('') + add tests
   ## ##
 
-  # ... to "relevent-rem"
+  # ... to "relevent::rem()"
   if(output_format == "relevent-rem"){
     # (3) processing information about likelihood
     timing <- ifelse(attr(data,"ordinal"),"ordinal","interval")
@@ -83,9 +83,9 @@ rehshape <- function(data,
     return(out)
   }
 
-  # ... to "relevent-rem"
+  # ... to "relevent::rem.dyad()"
   if(output_format == "relevent-rem.dyad"){
-    # process optional_arguments here (for the pre-computation of optional objects required by relevent::rem.dyad())
+    # process optional_arguments here (for the pre-computation of optional objects required by relevent::rem.dyad()) -- not yet developed
     out <- structure(list(edgelist = data$edgelist[,1:3],
                           n = data$N, 
                           ordinal = attr(data,"ordinal")),

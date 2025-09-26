@@ -19,7 +19,7 @@
 
 // @title rearrangeDataFrame
 //
-// @details function that rearrange a data.frame according to the input index (vector of integers)
+// @details a function that rearranges the column order of a data.frame according to a specific one.
 //
 // @param x \code{data.frame} object to reorder
 // @param index vector with the new order
@@ -65,7 +65,7 @@ Rcpp::DataFrame rearrangeDataFrame(Rcpp::DataFrame x, arma::uvec index) {
 
 // @title getOmitDyadActiveRiskSet
 //
-// @details function that returns a boolean vector of true/false describing events at risk/not at riks an an "active" risk set
+// @details function to process the active risk set as the set of unique observed dyads. It returns a list of objects: (1) risksetSender (only if model = “actor”) that is of size N with 1/0’s indicating presence/absence of an actor in the risk set, (2) D_active that is the number of active dyads, (3) dyadIDactive that is a vector of 1/0’s describing events at risk/not at risk in the "active" risk set.
 //
 // @param model string "tie" or "actor" (tie-oriented modeling or actor-oriented modeling)
 // @param actor1 vector of actor1 names observed per event
@@ -110,7 +110,7 @@ Rcpp::List getOmitDyadActiveRiskSet(std::string model,
 
     arma::vec which_time(M,arma::fill::zeros);
 
-    Rcpp::List out = Rcpp::List::create(Rcpp::Named("time") = which_time,Rcpp::Named("riskset") = riskset); // to add later: Rcpp::Named("time") = which_time, 
+    Rcpp::List out = Rcpp::List::create(Rcpp::Named("time") = which_time,Rcpp::Named("riskset") = riskset); 
     if(model == "actor"){
         arma::umat riskset_sender(1,N); 
         // parallelize here ? (ncores is set up already)
@@ -147,7 +147,9 @@ Rcpp::List getOmitDyadActiveRiskSet(std::string model,
 
 // @title getRisksetSender
 //
-// @param which_dyad is list of matrices where each matrix defines by row [actor1,actor2,type] to be removed from the riskset. Each matrix as a whole will finally produce a vector (length = D) of 1/0 with 0's for dyads that have to be excluded from the riskset
+// @details function that returns a matrix describing the risk set for the sender (actor-oriented model)
+//
+// @param which_dyad is a list of matrices describing the dyads to be removed from the riskset (using the triple {actor1,actor2,type}) . Each matrix in the list is processed in a vector of 1/0’s where 0 indicates the dyads that are excluded from the riskset
 // @param C number of event types
 // @param D number of dyads
 // @param N number of actors
@@ -218,7 +220,7 @@ Rcpp::IntegerMatrix getRisksetSender(Rcpp::List which_dyad,
 
 
 
-// @title getRiskset (a function that returns an utility matrix used in optimization algorithms)
+// @title getRiskset function that returns a matrix describing the risk set for the dyads (tie-oriented model)
 //
 // @param which_dyad is list of matrices where each matrix defines by row [actor1,actor2,type] to be removed from the riskset. Each matrix as a whole will finally produce a vector (length = D) of 1/0 with 0's for dyads that have to be excluded from the riskset
 // @param C number of event types
@@ -335,7 +337,7 @@ Rcpp::IntegerMatrix getRiskset(Rcpp::List which_dyad,
 
 // @title processOmitDyad 
 //
-// a function that returns a list of two objects: a vector ("time") that indicates whether the riskset at the specific time point changed or not; a matrix ("riskset") with all the possible changes in the riskset (defined by row). If a change in the riskset is observed at a certain time index, the vector "time" will contain the row index of the matrix "riskset" to be chosen in order to apply the change into the riskset (the row index is given according to the C++ and Rcpp notation, starting from 0). If no changes in the riskset are observed, then the vector "time" will assume value -1.
+// a function that returns a list of two objects: a vector ("time") that indicates whether the risk set at the specific time point changed or not; a matrix ("riskset") with all the possible changes in the riskset (defined by row). If a change in the risk set is observed at a certain time index, the vector "time" will contain the row index of the matrix "riskset" to be chosen in order to apply the change into the risk set (the row index is given according to the C++ and Rcpp notation, starting from 0). If no changes in the risk set are observed, then the vector "time" will assume value -1.
 //
 // @param convertedOmitDyad 
 // @param convertedOmitDyad_time
@@ -1674,7 +1676,7 @@ int getDyadIndex_cpp(double actor1, double actor2, double type, int N, bool dire
 
 // @title remify2relventrem
 //
-// @details more details can be found at the following documentation: \link[remify]{reh}.
+// @details returns “eventlist” and ”supplist” to supply as input arguments to the relevant::rem().
 // 
 // @param actor1
 // @param actor2
