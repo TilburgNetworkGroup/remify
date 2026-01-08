@@ -2,6 +2,7 @@
  
 * Date: 2026-01-08
 * Changing maintainer
+* minor correction in C++ function
  
 ## Test environments 
 * Local macOS Sonoma 14.0, R version 4.3.1 
