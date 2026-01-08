@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">remify</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -270,7 +270,7 @@ referring to the <strong>senders</strong> (on the
 <strong>y-axis</strong>) and to the <strong>receivers</strong> (on the
 <strong>x-axis</strong>).</p>
 <center>
-<img src="riskset_files/figure-html/unnamed-chunk-9-1.png" alt="Visualizing risk set composition at each time point" width="700">
+<img src="riskset_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="Visualizing risk set composition at each time point" width="700">
 </center>
 <p>Cosidering the first four time points of <code>randomREHsmall</code>,
 we observe: the (directed) dyad <em>(Colton,Kayla)</em> at time
@@ -295,7 +295,7 @@ alphanumeric order before being processed. For instance, the event at
 <code>c("Colton","Lexy")</code>, and the risk set will change as follows
 in the picture below.</p>
 <center>
-<img src="riskset_files/figure-html/unnamed-chunk-10-1.png" alt="Visualizing risk set composition at each time point - full risk set" width="50%">
+<img src="riskset_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="Visualizing risk set composition at each time point - full risk set" width="50%">
 </center>
 <hr>
 </div>
@@ -424,7 +424,7 @@ assume this time that actors <code>"Richard"</code> and
 the study. This means that the risk set for at least the first four time
 points will have the following composition,</p>
 <center>
-<img src="riskset_files/figure-html/unnamed-chunk-11-1.png" alt="Visualizing risk set composition at each time point - manual risk set for directed network" width="700">
+<img src="riskset_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="Visualizing risk set composition at each time point - manual risk set for directed network" width="700">
 </center>
 <p>where the tiles defining the dyads where <code>"Richard"</code> and
 <code>"Francesca"</code> are either the sender (actor1) or receiver
@@ -442,7 +442,7 @@ alphanumeric order by the processing. For instance, the event at
 <code>c("Colton","Lexy")</code>, thus the risk set will change as
 below.</p>
 <center>
-<img src="riskset_files/figure-html/unnamed-chunk-12-1.png" alt="Visualizing risk set composition at each time point - manual risk set for undirected network" width="50%">
+<img src="riskset_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="Visualizing risk set composition at each time point - manual risk set for undirected network" width="50%">
 </center>
 <div class="section level5">
 <h5 id="specifying-a-manual-risk-set-the-omit_dyad-argument">
@@ -582,7 +582,7 @@ considered.</p>
 the <code>omit_dyad</code> argument in a plot where the x-axis
 represents the time and the y-axis describes the five risk set
 modifications presented above.</p>
-<p><img src="riskset_files/figure-html/unnamed-chunk-27-1.png" alt="Plot showing manual risk set modifications from the omit_dyad argument" width="50%"></p>
+<p><img src="riskset_files/figure-html/unnamed-chunk-27-1.png" class="r-plt" alt="Plot showing manual risk set modifications from the omit_dyad argument" width="50%"></p>
 <hr>
 </div>
 </div>
@@ -608,7 +608,7 @@ the final processing.</p>
 <span>                    origin <span class="op">=</span> <span class="va">randomREH</span><span class="op">$</span><span class="va">origin</span>,</span>
 <span>                    omit_dyad <span class="op">=</span> <span class="va">randomREH</span><span class="op">$</span><span class="va">omit_dyad</span><span class="op">)</span></span></code></pre></div>
 <center>
-<img src="riskset_files/figure-html/unnamed-chunk-29-1.png" alt="Plot showing manual risk set before processing" width="50%">
+<img src="riskset_files/figure-html/unnamed-chunk-29-1.png" class="r-plt" alt="Plot showing manual risk set before processing" width="50%">
 </center>
 <p>The processing function understands the partial/complete overlapping
 of the time windows and defines new time intervals in which one or more
@@ -621,7 +621,7 @@ the new time windows. If the user supplies time windows that are not
 overlapping, then the processed risk set will have the same structure of
 the input.</p>
 <center>
-<img src="riskset_files/figure-html/unnamed-chunk-31-1.png" alt="Plot showing manual risk set while processing" width="50%">
+<img src="riskset_files/figure-html/unnamed-chunk-31-1.png" class="r-plt" alt="Plot showing manual risk set while processing" width="50%">
 </center>
 <p>After the processing of a relational event history, the
 <code>remify</code> object will contain a list called
@@ -635,7 +635,7 @@ processed risk set (figure below) will contain the combination of the
 third and the fourth modification declared in the input
 <code>omit_dyad</code> (figure above).</p>
 <center>
-<img src="riskset_files/figure-html/unnamed-chunk-32-1.png" alt="Plot showing manual risk set modifications after processing" width="50%">
+<img src="riskset_files/figure-html/unnamed-chunk-32-1.png" class="r-plt" alt="Plot showing manual risk set modifications after processing" width="50%">
 </center>
 </div>
 </div>
@@ -646,11 +646,11 @@ third and the fourth modification declared in the input
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Giuseppe Arena.</p>
+  <p>Developed by Giuseppe Arena, Joris Mulder.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

@@ -1,0 +1,128 @@
+# Transform processed relational event sequences to different formats
+
+*This vignette explains input arguments, output structure and usage of
+the function
+[`remify::rehshape()`](https://tilburgnetworkgroup.github.io/remify/reference/rehshape.md).*
+
+------------------------------------------------------------------------
+
+### Aim
+
+[`remify::rehshape()`](https://tilburgnetworkgroup.github.io/remify/reference/rehshape.md)
+transforms a `remify` object into another object with a structure that
+is suitable to external packages. The function can return the data
+inputs required by the functions:
+
+- `relevent::rem()`
+- `relevent::rem.dyad()`
+
+Both functions are available inside the
+[relevent](https://CRAN.R-project.org/package=relevent) package (Butts
+C., 2023).
+
+------------------------------------------------------------------------
+
+### Input
+
+The input arguments of
+[`remify::rehshape()`](https://tilburgnetworkgroup.github.io/remify/reference/rehshape.md)
+are:
+
+- `data`, the processed relational event history (S3 object of class
+  `remify`)
+- `output_format`, a character value that indicates to which output
+  format the input `data` should be converted. This argument can assume
+  two values: `"relevent-rem"` , `"relevent-rem.dyad"` (default is
+  `"relevent-rem"`)
+- `ncores`, number of threads used to parallelize internal routines
+  (default is `1L`)
+- `optional_arguments`, vector of arguments names from `relevent::rem`
+  or `relevent::rem.dyad()` that the user might want to process and have
+  in the output object of rehshape (e.g., the pre-computed structures
+  required by `relevent::rem.dyad()`, such as `acl`, `cumideg`, etc.) -
+  *this feature will be available in a future version of remify* -
+
+------------------------------------------------------------------------
+
+### Output
+
+The output structure of the function is different according to the
+chosen `output_format`:
+
+- If `output_format = "relevent-rem"`, then the output is an S3 object
+  of class `relevent-rem`, which contains:
+  - `eventlist`, a matrix of two columns: observed dyads in the first
+    column, vector of time in the second column
+  - `supplist`, a logical matrix of dimensions \[rows = number of
+    events, columns = number of dyads\]. The matrix indicates at each
+    time point (by row) whether each dyad was at risk (`TRUE`), or not
+    (`FALSE`)
+  - `timing`, is a character that can assume two values: `"interval"`
+    (which uses the inter-event time in the model), or `"ordinal"`
+    (which only considers the event order in the model)
+- If `output_format = "relevent-rem.dyad"`, then the output is an S3
+  object of class `relevent-rem.dyad`, which contains:
+  - `edgelist`, a matrix of three columns: the time (or order) of the
+    events in the first column, the sender and the receiver of the
+    relational event, respectively, in the second and third column
+  - `n`, is the number of actors in the relational event network
+    (senders and receivers)
+  - `ordinal`, is a logical (`TRUE`/`FALSE`) value which indicates
+    whether the likelihood should be ‘ordinal’ (`TRUE`) or ‘interval’
+    (`FALSE`)
+
+------------------------------------------------------------------------
+
+### Usage
+
+To explain the usage of the function
+[`remify::rehshape()`](https://tilburgnetworkgroup.github.io/remify/reference/rehshape.md),
+we consider the example edgelist available with the data `randomREH`.
+First, we process the edgelist with
+[`remify::remify()`](https://tilburgnetworkgroup.github.io/remify/reference/remify.md).
+
+``` r
+library(remify)
+data(randomREH) 
+reh_remify <- remify::remify(edgelist = randomREH$edgelist, model = "tie")
+reh_remify
+```
+
+    ## Relational Event Network
+    ## (processed for tie-oriented modeling):
+    ##  > events = 9915
+    ##  > actors = 20
+    ##  > (event) types = 3
+    ##  > riskset = full
+    ##  > directed = TRUE
+    ##  > ordinal = FALSE
+    ##  > weighted = FALSE
+    ##  > time length ~ 80 days
+    ##  > interevent time 
+    ##       >> minimum ~ 0.0011 seconds
+    ##       >> maximum ~ 5811.4011 seconds
+
+Then, we can transform the `remify` object to any of the possible output
+formats:
+
+- from `remify` to `relevent-rem`:
+
+``` r
+reh_rem <- remify::rehshape(data = reh_remify, 
+                      output_format = c("relevent-rem"))
+names(reh_rem)                     
+```
+
+    ## [1] "eventlist" "supplist"  "timing"
+
+- from `remify` to `relevent-rem.dyad`:
+
+``` r
+reh_rem.dyad <- remify::rehshape(data = reh_remify, 
+                      output_format = c("relevent-rem.dyad"))
+names(reh_rem.dyad)                     
+```
+
+    ## [1] "edgelist" "n"        "ordinal"
+
+------------------------------------------------------------------------

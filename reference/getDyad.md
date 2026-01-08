@@ -1,0 +1,61 @@
+# getDyad
+
+A function that given a vector of one or more dyad ID's returns the
+corresponding dyad composition of "actor1", "actor2" and "type" (if
+event types are present). The ID's to supply must range between 1 and D
+(largest risk set size).
+
+## Usage
+
+``` r
+getDyad(x, dyadID, active = FALSE)
+
+# S3 method for class 'remify'
+getDyad(x, dyadID, active = FALSE)
+```
+
+## Arguments
+
+- x:
+
+  a `remify` object.
+
+- dyadID:
+
+  a vector of one or more dyad ID's, each one ranging from 1 to D
+  (largest risk set size).
+
+- active:
+
+  logical, whether to consider the input `dyadID` as a vector of ID's of
+  active dyads (`active = TRUE`) or dyads from the full risk set
+  (`active = FALSE`).
+
+## Value
+
+a data.frame with "actor1", "actor2" and "type" names corresponding to
+the vector `dyadID`.
+
+## Methods (by class)
+
+- `getDyad(remify)`: return dyad composition in actor1, actor2 and type
+  from one (or more) dyad ID
+
+## Examples
+
+``` r
+# processing the random network 'randomREH'
+library(remify)
+data(randomREH)
+reh <- remify(edgelist = randomREH$edgelist,
+              model = "tie",
+              riskset = "manual",
+              omit_dyad = randomREH$omit_dyad)
+
+# find dyad composition (names of actor1, actor2 and type) from the dyad ID
+getDyad(x = reh, dyadID = c(450,239,900))
+#>   dyadID    actor1 actor2        type
+#> 1    450   Charles   Maya    conflict
+#> 2    239      Lexy Kelsey competition
+#> 3    900 Francesca  Derek cooperation
+```
