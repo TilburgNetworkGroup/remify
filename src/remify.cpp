@@ -1211,10 +1211,8 @@ Rcpp::List convertInputREH( Rcpp::DataFrame input_edgelist,
         arma::uvec distance_time = arma::conv_to<arma::uvec>::from(input_time);
         distance_time(0) = 1;
         arma::uvec which_interevent_is_zero = arma::find(distance_time <= 0); // can't be negative at this stage of processing
-        if(which_interevent_is_zero.n_elem != 0){ // at least one interevent time is equal to 0
-            out["rows_to_remove"] = which_interevent_is_zero;
-        }
 
+        out["rows_to_remove"] = R_NilValue;
         out["intereventTime"] = R_NilValue;
         out["evenly_spaced_interevent_time"] = R_NilValue;
     }
