@@ -12,41 +12,41 @@
 #' @param origin [\emph{optional}] starting time point of the observaton period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}.
 #' @param omit_dyad [\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).
 #' @param ncores [\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).
-#' 
-#' @return  'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}. 
 #'
-#' @details In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list. For more details about 
-#' 
+#' @return  'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}.
+#'
+#' @details In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list. For more details about
+#'
 #' @export
-#' 
+#'
 #' @examples
-#' 
+#'
 #' # load package and random network 'randomREH'
 #' library(remify)
 #' data(randomREH)
-#' 
+#'
 #' # first events in the sequence
 #' head(randomREH$edgelist)
-#' 
+#'
 #' # actor's names
 #' randomREH$actors
-#' 
+#'
 #' # event type's names
 #' randomREH$types
-#' 
+#'
 #' # start time of the study (origin)
 #' randomREH$origin
-#' 
+#'
 #' # list of changes of the risk set: each one is a list of:
 #' # 'time' (indicating the time window where to apply the risk set reduction)
-#' # 'dyad' (a data.frame describing the dyads to remove from the risk set 
+#' # 'dyad' (a data.frame describing the dyads to remove from the risk set
 #' # during the time window specified in 'time')
 #' str(randomREH$omit_dyad)
-#' 
+#'
 #' # -------------------------------------- #
 #' #  processing for tie-oriented modeling  #
 #' # -------------------------------------- #
-#' 
+#'
 #' tie_randomREH <- remify(edgelist = randomREH$edgelist,
 #'        directed = TRUE,
 #'        ordinal = FALSE,
@@ -56,32 +56,32 @@
 #'        riskset = "manual",
 #'        origin = randomREH$origin,
 #'        omit_dyad = randomREH$omit_dyad)
-#' 
+#'
 #' # summary
 #' summary(tie_randomREH)
-#' 
+#'
 #' # dimensions of the processed network
 #' dim(tie_randomREH)
-#' 
+#'
 #' # Which ID is assigned to the actors with names "Francesca" and "Kayla"?
 #' getActorID(x = tie_randomREH, actorName = c("Francesca","Kayla"))
-#' 
+#'
 #' # Which ID is assigned to the event type "conflict"?
 #' getTypeID(x = tie_randomREH, typeName = "conflict")
-#' 
+#'
 #' # Find dyad composition (names of actor1, actor2 and type) from the dyad ID: c(1,380,760,1140)
 #' getDyad(x = tie_randomREH, dyadID = c(1,380,760,1140))
-#' 
+#'
 #' # visualize descriptive measures of relational event data
 #' # plot(x = tie_randomREH)
-#' 
+#'
 #' # -------------------------------------- #
 #' # processing for actor-oriented modeling #
 #' # -------------------------------------- #
-#' 
+#'
 #' # loading network 'randomREHsmall'
 #' data(randomREHsmall)
-#' 
+#'
 #' # processing small random network
 #' actor_randomREH <- remify(edgelist = randomREHsmall$edgelist,
 #'        directed = TRUE,
@@ -89,18 +89,18 @@
 #'        model = "actor",
 #'        actors = randomREHsmall$actors,
 #'        origin = randomREHsmall$origin)
-#'        
+#'
 #' # summary
 #' summary(actor_randomREH)
-#' 
+#'
 #' # dimensions of the processed network
 #' dim(actor_randomREH)
-#' 
+#'
 #' # ------------------------------------ #
 #' # for more information about remify()  #
 #' # check: vignette(package="remify")    #
 #' # ------------------------------------ #
-#'  
+#'
 remify <- function(edgelist,
                 directed = TRUE,
                 ordinal = FALSE,
@@ -112,7 +112,7 @@ remify <- function(edgelist,
                 omit_dyad = NULL,
                 ncores = 1L
                 ){
-    
+
     # (1) Checking for 'edgelist' input object
 
     # Make sure edgelist is a data.frame
@@ -131,7 +131,7 @@ remify <- function(edgelist,
     if(dim(edgelist)[2] < 3){
       stop("`edgelist` must be a data.frame of three columns: one column for the vector of event times, and two columns that describe the actors that form the dyadic event.")
     }
-     
+
     # Checking `edgelist$time` column
     assign_names <- NULL
     if(!("time" %in% names(edgelist))){
@@ -163,7 +163,7 @@ remify <- function(edgelist,
 
     if((model == "actor") & (directed == FALSE)){
         stop("actor-oriented model can only work with directed networks")
-    }   
+    }
 
     # (3) Checking for time variable classes (they must be the same)
 
@@ -204,7 +204,7 @@ remify <- function(edgelist,
       active <- TRUE
     }
 
-    # Checking for NA's 
+    # Checking for NA's
 
     ## NA's in `edgelist` :
     NA_time <- which(is.na(edgelist$time))
@@ -222,11 +222,11 @@ remify <- function(edgelist,
       edgelist <- edgelist[-to_remove,]
       rm(to_remove)
     }
-    
+
     # Pre-processing relational event history (remifyCpp.cpp)
     out <- tryCatch(remifyCpp(input_edgelist = edgelist,
-                    actors = actors, 
-                    types = types, 
+                    actors = actors,
+                    types = types,
                     directed = directed,
                     ordinal = ordinal,
                     origin = origin,
@@ -235,7 +235,7 @@ remify <- function(edgelist,
                     active = active,
                     ncores = ncores),error= function(e) e)
 
-    # handling potential errors coming from C++  - stopping function            
+    # handling potential errors coming from C++  - stopping function
     if(any(class(out) %in% c("error"))){
       stop(out$message)
     }
@@ -263,7 +263,19 @@ remify <- function(edgelist,
     attr(str_out, "riskset") <- riskset
     attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary)
     attr(str_out, "origin") <- out$edgelist$time[1]-out$intereventTime[1]
-    attr(str_out, "ncores") <- ncores 
+    attr(str_out, "ncores") <- ncores
+    # instead of using attributes, make them list elements
+    str_out$meta <- list(
+        with_type = out$with_type,
+        weighted = out$weighted,
+        directed = directed,
+        ordinal = ordinal,
+        model = model, # useful because tie and actor models have two different ways for handling changing risksets
+        riskset = riskset,
+        dictionary = list(actors = out$actorsDictionary, types = out$typesDictionary),
+        origin = out$edgelist$time[1]-out$intereventTime[1],
+        ncores = ncores
+    )
 
     # ID of actors, types and dyads
     attr(str_out, "dyadID") <- out$dyad
@@ -272,16 +284,45 @@ remify <- function(edgelist,
     if(out$with_type){
         attr(str_out,"typeID") <- out$type_ID
     }
+    # build index (event-level ids)
+    str_out$index <- list(
+      dyadID   = out$dyad,
+      actor1ID = out$actor1_ID,
+      actor2ID = out$actor2_ID,
+      type   = if (out$with_type) out$type_ID else NULL
+    )
+
     # ID's when riskset = "active"
     if(active){
       str_out$activeD <- out$omit_dyad$D_active
       out$omit_dyad$D_active <- NULL
       if(model == "tie"){
-        attr(str_out, "dyadIDactive") <- out$omit_dyad$dyadIDactive 
+        attr(str_out, "dyadIDactive") <- out$omit_dyad$dyadIDactive
+        str_out$index$dyadIDactive <- out$omit_dyad$dyadIDactive
         out$omit_dyad$dyadIDactive <- NULL
       }
+    }
 
-    }   
+    # # store dyad mapping via existing encoder (supports types and active riskset)
+    # if (model == "tie") {
+    #   if (riskset == "full") {
+    #     str_out$index$dyad_map <- remify::getDyad(
+    #       x = str_out,
+    #       dyadID = seq_len(str_out$D),
+    #       active = FALSE
+    #     )
+    #   } else if (riskset == "active") {
+    #     str_out$index$dyad_map_active <- remify::getDyad(
+    #       x = str_out,
+    #       dyadID = seq_len(as.integer(str_out$activeD)[1]),
+    #       active = TRUE
+    #     )
+    #     if (!is.null(out$omit_dyad$dyadIDactive)) {
+    #       str_out$index$dyad_map_active$dyadID <- as.integer(out$omit_dyad$dyadIDactive)
+    #       str_out$index$dyadID_full_for_active <- as.integer(out$omit_dyad$dyadIDactive)
+    #     }
+    #   }
+    # }
 
     str_out$omit_dyad <- out$omit_dyad
     evenly_spaced_interevent_time <- NULL
@@ -298,18 +339,28 @@ remify <- function(edgelist,
     if(!is.null(rows_to_remove)){
         if(!ordinal){
           #attribute intereventTime evenly spaced
-          attr(str_out, "evenly_spaced_interevent_time") <- evenly_spaced_interevent_time 
+          attr(str_out, "evenly_spaced_interevent_time") <- evenly_spaced_interevent_time
           # removing zeros from intereventTime
-          str_out$intereventTime <- str_out$intereventTime[-rows_to_remove] # updating interevent time vector 
+          str_out$intereventTime <- str_out$intereventTime[-rows_to_remove] # updating interevent time vector
         }
         # saving indices of simultaneous events to be removed (for remstimate)
         attr(str_out, "indices_simultaneous_events") <- rows_to_remove
-        #str_out$intereventTime and str_out$omit_dyad$time are processed in remstimate depending on method=c("pe","pt") from remstats 
+        #str_out$intereventTime and str_out$omit_dyad$time are processed in remstimate depending on method=c("pe","pt") from remstats
         str_out$E <- str_out$M # number of events
         str_out$M <- str_out$M-length(rows_to_remove) # overwrite (lower) number of time points
         time_unique <- unique(str_out$edgelist$time)
 
         # tie-oriented modeling
+        # also store vectorized versions
+        str_out$index$dyadIDactive_vec <- str_out$index$dyadIDactive
+        str_out$index$dyadID_vec <- str_out$index$dyadID
+        str_out$index$actor1ID_vec <- str_out$index$actor1ID
+        str_out$index$actor2ID_vec <- str_out$index$actor2ID
+        str_out$index$type_vec <- str_out$index$type
+        attr(str_out, "dyadIDactive_vec") <- attr(str_out, "dyadIDactive")
+        attr(str_out, "dyadID_vec") <- attr(str_out, "dyadID")
+        attr(str_out, "actor1ID_vec") <- attr(str_out, "actor1ID")
+        attr(str_out, "actor2ID_vec") <- attr(str_out, "actor2ID")
         actor1 <- list()
         actor2 <- list()
         type <- list()
@@ -327,17 +378,451 @@ remify <- function(edgelist,
               type[[m]] <- attr(str_out,"typeID")[which_time_m]
             }
         }
-        attr(str_out,"actor1ID") <- actor1 
+        attr(str_out,"actor1ID") <- actor1
         attr(str_out,"actor2ID") <- actor2
         attr(str_out,"dyadID") <- dyad
+        str_out$index$dyadID <- dyad
+        str_out$index$actor1ID <- actor1
+        str_out$index$actor2ID <- actor2
         if(active){
           attr(str_out,"dyadIDactive") <- dyadIDactive
+          str_out$index$dyadIDactive <- dyadIDactive
         }
         if(attr(str_out, "with_type")){
           attr(str_out,"typeID") <- type
+          str_out$index$type <- type
         }
         rm(actor1,actor2,type,dyad,dyadIDactive)
     }
+
+    #also store the dyad mapping in remify object to avoid the need to getDyad
+    str_out$index$dyad_map <- remify::getDyad(
+            x = str_out,
+            dyadID = seq_len(str_out$D),
+            active = FALSE
+          )
+    if(active){
+        str_out$index$dyad_map_active <- remify::getDyad(
+            x = str_out,
+            dyadID = seq_len(as.integer(str_out$activeD)[1]),
+            active = TRUE
+          )
+    }
+
+  return(str_out)
+}
+
+
+#' @title Process a Relational Event History
+#'
+#' @description A function that processes raw relational event history data and returns a S3 object of class 'remify' which is used as input in other functions inside 'remverse'.
+#'
+#' @param edgelist the relational event history. An object of class \code{\link[base]{data.frame}} with first three columns corresponding to time, and actors forming the dyad. The first three columns will be re-named "time", "actor1", "actor2" (where, for directed networks, "actor1" corresponds to the sender and "actor2" to the receiver of the relational event). Optional columns that can be supplied are: `type` and `weight`. If one or both exist in \code{edgelist}, they have to be named accordingly.
+#' @param directed logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})
+#' @param ordinal  logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}). (default value is \code{FALSE})
+#' @param model can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.
+#' @param actors [\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.
+#' @param types [\emph{optional}] character vector of event types that may occur in the network. If \code{NULL} (default), types' names will be taken from the input edgelist.
+#' @param riskset [\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user.
+#' @param origin [\emph{optional}] starting time point of the observaton period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}.
+#' @param omit_dyad [\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).
+#' @param ncores [\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).
+#'
+#' @return  'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}.
+#'
+#' @details In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list. For more details about
+#'
+#' @export
+#'
+#' @examples
+#'
+#' # load package and random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#'
+#' # first events in the sequence
+#' head(randomREH$edgelist)
+#'
+#' # actor's names
+#' randomREH$actors
+#'
+#' # event type's names
+#' randomREH$types
+#'
+#' # start time of the study (origin)
+#' randomREH$origin
+#'
+#' # list of changes of the risk set: each one is a list of:
+#' # 'time' (indicating the time window where to apply the risk set reduction)
+#' # 'dyad' (a data.frame describing the dyads to remove from the risk set
+#' # during the time window specified in 'time')
+#' str(randomREH$omit_dyad)
+#'
+#' # -------------------------------------- #
+#' #  processing for tie-oriented modeling  #
+#' # -------------------------------------- #
+#'
+#' tie_randomREH <- remify(edgelist = randomREH$edgelist,
+#'        directed = TRUE,
+#'        ordinal = FALSE,
+#'        model = "tie",
+#'        actors = randomREH$actors,
+#'        types = randomREH$types,
+#'        riskset = "manual",
+#'        origin = randomREH$origin,
+#'        omit_dyad = randomREH$omit_dyad)
+#'
+#' # summary
+#' summary(tie_randomREH)
+#'
+#' # dimensions of the processed network
+#' dim(tie_randomREH)
+#'
+#' # Which ID is assigned to the actors with names "Francesca" and "Kayla"?
+#' getActorID(x = tie_randomREH, actorName = c("Francesca","Kayla"))
+#'
+#' # Which ID is assigned to the event type "conflict"?
+#' getTypeID(x = tie_randomREH, typeName = "conflict")
+#'
+#' # Find dyad composition (names of actor1, actor2 and type) from the dyad ID: c(1,380,760,1140)
+#' getDyad(x = tie_randomREH, dyadID = c(1,380,760,1140))
+#'
+#' # visualize descriptive measures of relational event data
+#' # plot(x = tie_randomREH)
+#'
+#' # -------------------------------------- #
+#' # processing for actor-oriented modeling #
+#' # -------------------------------------- #
+#'
+#' # loading network 'randomREHsmall'
+#' data(randomREHsmall)
+#'
+#' # processing small random network
+#' actor_randomREH <- remify(edgelist = randomREHsmall$edgelist,
+#'        directed = TRUE,
+#'        ordinal = FALSE,
+#'        model = "actor",
+#'        actors = randomREHsmall$actors,
+#'        origin = randomREHsmall$origin)
+#'
+#' # summary
+#' summary(actor_randomREH)
+#'
+#' # dimensions of the processed network
+#' dim(actor_randomREH)
+#'
+#' # ------------------------------------ #
+#' # for more information about remify()  #
+#' # check: vignette(package="remify")    #
+#' # ------------------------------------ #
+#'
+remify2 <- function(edgelist,
+                   directed = TRUE,
+                   ordinal = FALSE,
+                   model = c("tie","actor"),
+                   actors = NULL,
+                   types = NULL,
+                   riskset = c("full","active","manual"),
+                   origin = NULL,
+                   omit_dyad = NULL,
+                   ncores = 1L
+){
+
+  # (1) Checking for 'edgelist' input object
+
+  # Make sure edgelist is a data.frame
+  if(!is.data.frame(edgelist)){
+    stop("`edgelist` must be of class `data.frame`.")
+  }
+
+  # ... ncores
+  if(is.null(ncores)) ncores <- 1L
+  else if(((parallel::detectCores() > 2L) & (ncores > floor(parallel::detectCores()-2L))) | ((parallel::detectCores() == 2L) & (ncores > 1L))){
+    stop("'ncores' is recommended to be set at most to: floor(parallel::detectCores()-2L)")
+  }
+
+
+  # (2) Checking for `edgelist` columns (names and class of time variable)
+  if(dim(edgelist)[2] < 3){
+    stop("`edgelist` must be a data.frame of three columns: one column for the vector of event times, and two columns that describe the actors that form the dyadic event.")
+  }
+
+  # Checking `edgelist$time` column
+  assign_names <- NULL
+  if(!("time" %in% names(edgelist))){
+    #stop("`edgelist` should contain a column named `time` with the timing/order information for the events.")
+    names(edgelist)[1] <- "time"
+  }
+  if(!(class(edgelist$time)[1] %in% c("numeric","integer","Date","POSIXct"))){
+    stop("the class of column `time` in  `edgelist` must be one of the following types: numeric, integer, Date or POSIXct")
+  }
+
+  # Checking `edgelist$actor1` column
+  if(!("actor1" %in% names(edgelist))){
+    #stop("`edgelist` should contain a column named `actor1` with the first actors/senders of the events.")
+    names(edgelist)[2] <- "actor1"
+  }
+
+  # Checking `edgelist$actor2` column
+  if(!("actor2" %in% names(edgelist))){
+    #stop("`edgelist` should contain a column named `actor2` with the second actors/receivers of the events.")
+    names(edgelist)[3] <- "actor2"
+  }
+
+  # checking input argument "model" :
+  if(is.null(model) || all(model==c("tie","actor")) || (length(model)>1)) {
+    model <- "tie"
+    warning("`model` set to `tie` by default")
+  }
+  if(!is.null(model) & !(model %in% c("tie","actor"))) stop("`model` must be set to either `tie` or `actor`.")
+
+  if((model == "actor") & (directed == FALSE)){
+    stop("actor-oriented model can only work with directed networks")
+  }
+
+  # (3) Checking for time variable classes (they must be the same)
+
+  # input `origin` and `time` column in `edgelist`
+  if(!is.null(origin)){
+    if(any(class(origin) != class(edgelist$time)))
+      stop("the class of `origin` and the class of `edgelist$time` must be the same.")
+  }
+
+  # input `omit_dyad` and `time` column in `edgelist`
+  if(!is.null(omit_dyad)){
+    if(!is.list(omit_dyad)){
+      stop("`omit_dyad` must be a list. Check vignette(topic = 'remify', package= 'remify') for more information.")
+    }
+    else{
+      obj_names_check <- unlist(lapply(omit_dyad,function(x) sort(names(x))==c("dyad","time")))
+      if(all(obj_names_check)){
+        class_time_check <- unlist(lapply(omit_dyad, function(x) if(!all(is.na(x$time))) {all(class(x$time) == class(edgelist$time))} else{TRUE}))
+        if(!all(class_time_check)){
+          stop("the class of the time specified in `omit_dyad` and the class of `edgelist$time` must be the same.")
+        }
+      }
+      else{
+        stop("`omit_dyad` must be a collection of lists with two named objects: `dyad` and `time`. Check vignette(topic = 'remify', package= 'remify') for more information.")
+      }
+    }
+  }
+
+  # Checking argument 'riskset'
+
+  if(is.null(riskset)){
+    riskset <- "full"
+  }
+
+  riskset  <- match.arg(arg = riskset, choices = c("full", "active", "manual"), several.ok = FALSE)
+  active <- FALSE
+  if(riskset == "active"){
+    active <- TRUE
+  }
+
+  # Checking for NA's
+
+  ## NA's in `edgelist` :
+  NA_time <- which(is.na(edgelist$time))
+  NA_actor1 <- which(is.na(edgelist$actor1))
+  NA_actor2 <- which(is.na(edgelist$actor2))
+  NA_type <- which(is.na(edgelist$type))
+  NA_weight <- which(is.na(edgelist$weight))
+  to_remove <- c(NA_time,NA_actor1,NA_actor2,NA_type,NA_weight)
+  if(length(to_remove)>0){
+    to_remove <- unique(to_remove)
+    warning("`edgelist` contains missing data: incomplete events are dropped.") # `edgelist` contains missing data: incomplete events (rows) are dropped.
+    if(length(to_remove) == dim(edgelist)[1]){
+      stop("`edgelist` object is empty.")
+    }
+    edgelist <- edgelist[-to_remove,]
+    rm(to_remove)
+  }
+
+  # Pre-processing relational event history (remifyCpp.cpp)
+  out <- tryCatch(remifyCpp(input_edgelist = edgelist,
+                            actors = actors,
+                            types = types,
+                            directed = directed,
+                            ordinal = ordinal,
+                            origin = origin,
+                            omit_dyad = omit_dyad,
+                            model = model,
+                            active = active,
+                            ncores = ncores),error= function(e) e)
+
+  # handling potential errors coming from C++  - stopping function
+  if(any(class(out) %in% c("error"))){
+    stop(out$message)
+  }
+
+  # handling warning messages on R-console
+  if(any(names(out) %in% "warnings")){
+    if(length(out$warnings)>=1)
+      for(w in 1:length(out$warnings)){
+        warning(out$warnings[[w]])
+      }
+  }
+  str_out <- structure(list(M = out$M
+                            ,N = out$N
+                            ,C = out$C
+                            ,D = out$D
+                            ,intereventTime = out$intereventTime
+                            ,edgelist = out$edgelist
+  )
+  ,class="remify")
+  attr(str_out, "with_type") <- out$with_type
+  attr(str_out, "weighted") <- out$weighted
+  attr(str_out, "directed") <- directed
+  attr(str_out, "ordinal") <- ordinal
+  attr(str_out, "model") <- model # useful because tie and actor models have two different ways for handling changing risksets
+  attr(str_out, "riskset") <- riskset
+  attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary)
+  attr(str_out, "origin") <- out$edgelist$time[1]-out$intereventTime[1]
+  attr(str_out, "ncores") <- ncores
+  # instead of using attributes, make them list elements
+  str_out$meta <- list(
+    with_type = out$with_type,
+    weighted = out$weighted,
+    directed = directed,
+    ordinal = ordinal,
+    model = model, # useful because tie and actor models have two different ways for handling changing risksets
+    riskset = riskset,
+    dictionary = list(actors = out$actorsDictionary, types = out$typesDictionary),
+    origin = out$edgelist$time[1]-out$intereventTime[1],
+    ncores = ncores
+  )
+
+  # ID of actors, types and dyads
+  attr(str_out, "dyadID") <- out$dyad
+  attr(str_out,"actor1ID") <- out$actor1_ID
+  attr(str_out,"actor2ID") <- out$actor2_ID
+  if(out$with_type){
+    attr(str_out,"typeID") <- out$type_ID
+  }
+  # build index (event-level ids)
+  str_out$index <- list(
+    dyadID   = out$dyad,
+    actor1ID = out$actor1_ID,
+    actor2ID = out$actor2_ID,
+    type   = if (out$with_type) out$type_ID else NULL
+  )
+
+  # ID's when riskset = "active"
+  if(active){
+    str_out$activeD <- out$omit_dyad$D_active
+    out$omit_dyad$D_active <- NULL
+    if(model == "tie"){
+      attr(str_out, "dyadIDactive") <- out$omit_dyad$dyadIDactive
+      str_out$index$dyadIDactive <- out$omit_dyad$dyadIDactive
+      out$omit_dyad$dyadIDactive <- NULL
+    }
+  }
+
+  # # store dyad mapping via existing encoder (supports types and active riskset)
+  # if (model == "tie") {
+  #   if (riskset == "full") {
+  #     str_out$index$dyad_map <- remify::getDyad(
+  #       x = str_out,
+  #       dyadID = seq_len(str_out$D),
+  #       active = FALSE
+  #     )
+  #   } else if (riskset == "active") {
+  #     str_out$index$dyad_map_active <- remify::getDyad(
+  #       x = str_out,
+  #       dyadID = seq_len(as.integer(str_out$activeD)[1]),
+  #       active = TRUE
+  #     )
+  #     if (!is.null(out$omit_dyad$dyadIDactive)) {
+  #       str_out$index$dyad_map_active$dyadID <- as.integer(out$omit_dyad$dyadIDactive)
+  #       str_out$index$dyadID_full_for_active <- as.integer(out$omit_dyad$dyadIDactive)
+  #     }
+  #   }
+  # }
+
+  str_out$omit_dyad <- out$omit_dyad
+  evenly_spaced_interevent_time <- NULL
+  rows_to_remove <- NULL
+  if(!is.null(out$rows_to_remove)){
+    if(!ordinal){
+      evenly_spaced_interevent_time <- out$evenly_spaced_interevent_time
+    }
+    rows_to_remove <- out$rows_to_remove
+  }
+  out <- NULL # free-ing space [[now]]
+
+  # modifying remify object to account for simultaneous events
+  if(!is.null(rows_to_remove)){
+    if(!ordinal){
+      #attribute intereventTime evenly spaced
+      attr(str_out, "evenly_spaced_interevent_time") <- evenly_spaced_interevent_time
+      # removing zeros from intereventTime
+      str_out$intereventTime <- str_out$intereventTime[-rows_to_remove] # updating interevent time vector
+    }
+    # saving indices of simultaneous events to be removed (for remstimate)
+    attr(str_out, "indices_simultaneous_events") <- rows_to_remove
+    #str_out$intereventTime and str_out$omit_dyad$time are processed in remstimate depending on method=c("pe","pt") from remstats
+    str_out$E <- str_out$M # number of events
+    str_out$M <- str_out$M-length(rows_to_remove) # overwrite (lower) number of time points
+    time_unique <- unique(str_out$edgelist$time)
+
+    # tie-oriented modeling
+    # also store vectorized versions
+    str_out$index$dyadIDactive_vec <- str_out$index$dyadIDactive
+    str_out$index$dyadID_vec <- str_out$index$dyadID
+    str_out$index$actor1ID_vec <- str_out$index$actor1ID
+    str_out$index$actor2ID_vec <- str_out$index$actor2ID
+    str_out$index$type_vec <- str_out$index$type
+    attr(str_out, "dyadIDactive_vec") <- attr(str_out, "dyadIDactive")
+    attr(str_out, "dyadID_vec") <- attr(str_out, "dyadID")
+    attr(str_out, "actor1ID_vec") <- attr(str_out, "actor1ID")
+    attr(str_out, "actor2ID_vec") <- attr(str_out, "actor2ID")
+    actor1 <- list()
+    actor2 <- list()
+    type <- list()
+    dyad <- list()
+    dyadIDactive <- list()
+    for(m in 1:length(time_unique)){
+      which_time_m <- which(str_out$edgelist$time == time_unique[m])
+      actor1[[m]] <- attr(str_out,"actor1ID")[which_time_m]
+      actor2[[m]] <- attr(str_out,"actor2ID")[which_time_m]
+      dyad[[m]] <- attr(str_out, "dyadID")[which_time_m]
+      if(active){
+        dyadIDactive[[m]] <- attr(str_out,"dyadIDactive")[which_time_m]
+      }
+      if(attr(str_out, "with_type")){
+        type[[m]] <- attr(str_out,"typeID")[which_time_m]
+      }
+    }
+    attr(str_out,"actor1ID") <- actor1
+    attr(str_out,"actor2ID") <- actor2
+    attr(str_out,"dyadID") <- dyad
+    str_out$index$dyadID <- dyad
+    str_out$index$actor1ID <- actor1
+    str_out$index$actor2ID <- actor2
+    if(active){
+      attr(str_out,"dyadIDactive") <- dyadIDactive
+      str_out$index$dyadIDactive <- dyadIDactive
+    }
+    if(attr(str_out, "with_type")){
+      attr(str_out,"typeID") <- type
+      str_out$index$type <- type
+    }
+    rm(actor1,actor2,type,dyad,dyadIDactive)
+  }
+
+  #also store the dyad mapping in remify object to avoid the need to getDyad
+  str_out$index$dyad_map <- remify::getDyad(
+    x = str_out,
+    dyadID = seq_len(str_out$D),
+    active = FALSE
+  )
+  if(active){
+    str_out$index$dyad_map_active <- remify::getDyad(
+      x = str_out,
+      dyadID = seq_len(as.integer(str_out$activeD)[1]),
+      active = TRUE
+    )
+  }
 
   return(str_out)
 }
@@ -354,23 +839,23 @@ remify <- function(edgelist,
 #' @description A function that returns a easy-to-read summary of the main characteristics as to the processed relational event sequence.
 #' @param object a \code{remify} object.
 #' @param ... other arguments.
-#' 
+#'
 #' @return prints out the main characteristics of the processed relational event sequence.
-#' 
+#'
 #' @method summary remify
 #' @export
-#' 
-#' @examples 
+#'
+#' @examples
 #'
 #' # processing the random network 'randomREHsmall'
 #' library(remify)
 #' data(randomREHsmall)
 #' reh <- remify(edgelist = randomREHsmall$edgelist,
 #'               model = "tie")
-#' 
+#'
 #' # printing a summary of the processed 'remify' object
 #' summary(reh)
-#' 
+#'
 summary.remify <- function(object,...){
   title <- "Relational Event Network"
   model <- paste("(processed for ",attr(object,"model"),"-oriented modeling):",sep="")
@@ -398,11 +883,11 @@ summary.remify <- function(object,...){
   }
   interevent_time <- NULL
   if(!attr(object,"ordinal")){
-    min_interevent_time <- min(object$intereventTime) 
+    min_interevent_time <- min(object$intereventTime)
     max_interevent_time <- max(object$intereventTime)
     units_minmax <- NULL # in case it is either numeric or integer
     if(inherits(time,"Date")){ # is a Date (until days)
-      units_minmax <- "days"   
+      units_minmax <- "days"
     }
     else if(!is.numeric(time) & !is.integer(time)){ # is a timestamp (until seconds) #[[to check]] it will change based on the new input where the user can define the interevent time to be scaled in seconds, minutes, hours etc..
       units_minmax <- "seconds"
@@ -422,24 +907,24 @@ summary.remify <- function(object,...){
 #' @description print a summary of the event history.
 #' @param x a \code{remify} object.
 #' @param ... further arguments.
-#' 
+#'
 #' @return displays the same information provided by the summary method.
-#' 
+#'
 #' @method print remify
-#' 
+#'
 #' @export
-#' 
-#' @examples 
-#'  
+#'
+#' @examples
+#'
 #' # processing the random network 'randomREHsmall'
 #' library(remify)
 #' data(randomREHsmall)
 #' reh <- remify(edgelist = randomREHsmall$edgelist,
 #'               model = "tie")
-#' 
+#'
 #' # printing a summary of the processed 'remify' object
 #' print(reh)
-#' 
+#'
 print.remify <- function(x,...){
   summary(object=x,...)
 }
@@ -452,22 +937,22 @@ print.remify <- function(x,...){
 #' @description A function that returns the dimension of the temporal network.
 #' @param x a \code{remify} object.
 #' @method dim remify
-#' 
+#'
 #' @return vector of dimensions of the processed event sequence.
-#' 
+#'
 #' @export
-#' 
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' # processing the random network 'randomREHsmall'
 #' library(remify)
 #' data(randomREHsmall)
 #' reh <- remify(edgelist = randomREHsmall$edgelist,
 #'               model = "tie")
-#' 
+#'
 #' # dimensions of the processed 'remify' object
 #' dim(reh)
-#' 
+#'
 dim.remify <- function(x){
   dimensions <- NULL
   if(is.null(x$E)){
@@ -477,7 +962,7 @@ dim.remify <- function(x){
     }
     else{
       dimensions <- c(x$M, x$N, x$D)
-      names(dimensions) <- c("events","actors","dyads") 
+      names(dimensions) <- c("events","actors","dyads")
     }
   }
   else{
@@ -487,8 +972,8 @@ dim.remify <- function(x){
     }
     else{
       dimensions <- c(x$E, x$M, x$N, x$D)
-      names(dimensions) <- c("events","time points","actors","dyads") 
-    } 
+      names(dimensions) <- c("events","time points","actors","dyads")
+    }
   }
   if(attr(x,"riskset")=="active"){
     dimensions <- c(dimensions, "dyads(active)" = x$activeD)
@@ -502,13 +987,13 @@ dim.remify <- function(x){
 #' @title getRiskset
 #' @description This function returns the processed risk set changes specified by the input `omit_dyad`. In such a matrix: value 1 refers to the dyads in the risk set, and 0 otherwise (dyads excluded from the risk set). All the possible risk set modifications are described by row, and the columns identify the dyads. Note: This matrix is the output given by processing the input `omit_dyad`, and the number of rows might be equal to or higher than the number of objects in `omit_dyad`. This might happen because more than one modification of the risk set defined in the input could overlap over time with others. For more details about how the risk set is processed, see \code{vignette(package="remify",topic="riskset")}.
 #' @param x a \code{remify} object.
-#' 
+#'
 #' @return list of objects describing the processed the risk set.
-#' 
+#'
 #' @export
-#' 
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' # processing the random network 'randomREH'
 #' library(remify)
 #' data(randomREH)
@@ -516,10 +1001,10 @@ dim.remify <- function(x){
 #'               model = "tie",
 #'               riskset = "manual",
 #'               omit_dyad = randomREH$omit_dyad)
-#' 
+#'
 #' # structure of the processed risk set
 #' str(getRiskset(reh))
-#' 
+#'
 getRiskset <- function(x){
   UseMethod("getRiskset")
 }
@@ -533,7 +1018,7 @@ getRiskset.remify <- function(x) {
       return(list(riskset = x$omit_dyad$riskset))
       }
     else if(attr(x,"model") == "actor"){
-      return(list(sender = x$omit_dyad$risksetSender, dyad = x$omit_dyad$riskset)) 
+      return(list(sender = x$omit_dyad$risksetSender, dyad = x$omit_dyad$riskset))
     }
   }
   else{
@@ -548,13 +1033,13 @@ getRiskset.remify <- function(x) {
 #' @description A function that given a vector of actor ID's returns the corresponding vector of actor (input) names.
 #' @param x a \code{remify} object.
 #' @param actorID a vector of actor ID's. The ID value can range between \code{1} and \code{N} (number of actors in the network).
-#' 
+#'
 #' @return character vector of actors' names.
-#' 
+#'
 #' @export
-#' 
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' # processing the random network 'randomREH'
 #' library(remify)
 #' data(randomREH)
@@ -562,10 +1047,10 @@ getRiskset.remify <- function(x) {
 #'               model = "tie",
 #'               riskset = "manual",
 #'               omit_dyad = randomREH$omit_dyad)
-#' 
+#'
 #' # find actor name from actor ID
 #' getActorName(x = reh, actorID = c(1,2,8,12))
-#' 
+#'
 getActorName <- function(x, actorID = NULL){
   UseMethod("getActorName")
 }
@@ -576,7 +1061,7 @@ getActorName <- function(x, actorID = NULL){
 getActorName.remify <- function(x, actorID = NULL) {
   names <- NULL
   if(is.null(actorID)) stop("provide at least one actorID.")
-  else{ 
+  else{
     if(!is.numeric(actorID)){
       stop("'actorID' must be numeric or integer.")
     }
@@ -587,7 +1072,7 @@ getActorName.remify <- function(x, actorID = NULL) {
       which_actor <- unlist(which_actor)
       names <- actors$actorName[which_actor]
       if(length(names) == 0) stop("no actorID was found in the dictionary.")
-      else if(length(names) < length(actorID)) warning("some actorID was not found in the dictionary.") 
+      else if(length(names) < length(actorID)) warning("some actorID was not found in the dictionary.")
     }
   }
   return(names)
@@ -600,13 +1085,13 @@ getActorName.remify <- function(x, actorID = NULL) {
 #' @description A function that given a vector of type ID's returns the corresponding vector of type (input) names.
 #' @param x a \code{remify} object.
 #' @param typeID a vector of type ID's. The ID value can range between \code{1} and \code{C} (number of event types in the network).
-#' 
+#'
 #' @return character vector of types' names.
-#' 
+#'
 #' @export
-#' 
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' # processing the random network 'randomREH'
 #' library(remify)
 #' data(randomREH)
@@ -614,10 +1099,10 @@ getActorName.remify <- function(x, actorID = NULL) {
 #'               model = "tie",
 #'               riskset = "manual",
 #'               omit_dyad = randomREH$omit_dyad)
-#' 
+#'
 #' # find type name from type ID
 #' getTypeName(x = reh, typeID = c(1,3))
-#' 
+#'
 getTypeName <- function(x, typeID = NULL){
   UseMethod("getTypeName")
 }
@@ -642,7 +1127,7 @@ getTypeName.remify <- function(x, typeID = NULL) {
       which_type <- unlist(which_type)
       names <- types$typeName[which_type]
       if(length(names) == 0) stop("no typeID was found in the dictionary.")
-      else if(length(names) < length(typeID)) warning("some typeID was not found in the dictionary.")       
+      else if(length(names) < length(typeID)) warning("some typeID was not found in the dictionary.")
     }
   }
   return(names)
@@ -656,13 +1141,13 @@ getTypeName.remify <- function(x, typeID = NULL) {
 #' @param x a \code{remify} object.
 #' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).
 #' @param active logical, whether to consider the input \code{dyadID} as a vector of ID's of active dyads (\code{active = TRUE}) or dyads from the full risk set (\code{active = FALSE}).
-#' 
+#'
 #' @return a data.frame with "actor1", "actor2" and "type" names corresponding to the vector \code{dyadID}.
-#' 
+#'
 #' @export
-#' 
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' # processing the random network 'randomREH'
 #' library(remify)
 #' data(randomREH)
@@ -670,10 +1155,10 @@ getTypeName.remify <- function(x, typeID = NULL) {
 #'               model = "tie",
 #'               riskset = "manual",
 #'               omit_dyad = randomREH$omit_dyad)
-#' 
+#'
 #' # find dyad composition (names of actor1, actor2 and type) from the dyad ID
 #' getDyad(x = reh, dyadID = c(450,239,900))
-#' 
+#'
 getDyad <- function(x, dyadID, active = FALSE){
   UseMethod("getDyad")
 }
@@ -691,7 +1176,7 @@ getDyad.remify <- function(x, dyadID, active = FALSE) {
   }
   out <- NULL
   dyadID <- as.integer(dyadID) # if the ID supplied is 124.8, the ID considered will be 124
-  
+
   # check for duplicates in dyadID
   length_orig <- length(dyadID)
   dyadID <- unique(dyadID)
@@ -702,9 +1187,18 @@ getDyad.remify <- function(x, dyadID, active = FALSE) {
   # apply function getEventsComposition
   dict_loc <- attr(x,"dictionary")
   dyadID_full <- dyadID
-  if(active){
-    for(d in 1:length(dyadID)){
-      dyadID_full[d] <- attr(x,"dyadID")[which(attr(x,"dyadIDactive")==dyadID[d])[1]]
+  if (active) {
+    dyadIDactive_map <- attr(x, "dyadIDactive")
+    if (is.list(dyadIDactive_map)) dyadIDactive_map <- attr(x, "dyadIDactive_vec")
+    dyadIDactive_map <- as.integer(dyadIDactive_map)
+
+    dyadID_map_full <- attr(x, "dyadID")
+    if (is.list(dyadID_map_full)) dyadID_map_full <- attr(x, "dyadID_vec")
+    dyadID_map_full <- as.integer(dyadID_map_full)
+
+    for (d in seq_along(dyadID)) {
+      pos <- which(dyadIDactive_map == dyadID[d])[1]
+      dyadID_full[d] <- dyadID_map_full[pos]
     }
   }
   composition <- getEventsComposition(dyads = dyadID_full, N = x$N, D = x$D,directed = attr(x,"directed"), ncores  = attr(x,"ncores"))
@@ -715,15 +1209,15 @@ getDyad.remify <- function(x, dyadID, active = FALSE) {
   }
 
   if(attr(x,"with_type")){ # output with 'type' column
-    out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]], type = dict_loc$types$typeName[composition[,3]])  
+    out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]], type = dict_loc$types$typeName[composition[,3]])
   }
   else{ # output without 'type' column (for sequences with one or none event type)
-    out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]]) 
+    out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]])
   }
   if(active){
     names(out)[1] <- "dyadIDactive"
   }
-  
+
   rm(composition)
 
   return(out)
@@ -736,13 +1230,13 @@ getDyad.remify <- function(x, dyadID, active = FALSE) {
 #' @description A function that given a vector of actor names returns the corresponding vector of ID's.
 #' @param x a \code{remify} object.
 #' @param actorName a vector of actor names. The same names in the input edgelist.
-#' 
+#'
 #' @return actor ID as integer value.
-#' 
+#'
 #' @export
-#' 
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' # processing the random network 'randomREH'
 #' library(remify)
 #' data(randomREH)
@@ -750,10 +1244,10 @@ getDyad.remify <- function(x, dyadID, active = FALSE) {
 #'               model = "tie",
 #'               riskset = "manual",
 #'               omit_dyad = randomREH$omit_dyad)
-#' 
+#'
 #' # find actor ID from the actor name
 #' getActorID(x = reh, actorName = c("Francesca","Kayla"))
-#' 
+#'
 getActorID <- function(x, actorName = NULL){
   UseMethod("getActorID")
 }
@@ -764,15 +1258,15 @@ getActorID <- function(x, actorName = NULL){
 getActorID.remify <- function(x, actorName = NULL) {
   IDs <- NULL
   if(is.null(actorName)) stop("provide at least one actorName.")
-  else{ 
+  else{
       actorName <- as.character(actorName)
       actors <- attr(x, "dictionary")$actors
       which_actor <- sapply(actorName, function(y) which(actors$actorName == y))
       which_actor <- unlist(which_actor)
       IDs <- actors$actorID[which_actor]
       if(length(IDs) == 0) stop("no actorName was found in the dictionary.")
-      else if(length(IDs) < length(actorName)) warning("some actorName was not found in the dictionary.") 
-    
+      else if(length(IDs) < length(actorName)) warning("some actorName was not found in the dictionary.")
+
   }
   return(IDs)
 }
@@ -784,13 +1278,13 @@ getActorID.remify <- function(x, actorName = NULL) {
 #' @description A function that given a vector of type names returns the corresponding vector of ID's.
 #' @param x a \code{remify} object.
 #' @param typeName a vector of type names. The same names in the input edgelist.
-#' 
+#'
 #' @return type ID as integer value.
-#' 
+#'
 #' @export
-#' 
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' # processing the random network 'randomREH'
 #' library(remify)
 #' data(randomREH)
@@ -798,10 +1292,10 @@ getActorID.remify <- function(x, actorName = NULL) {
 #'               model = "tie",
 #'               riskset = "manual",
 #'               omit_dyad = randomREH$omit_dyad)
-#' 
+#'
 #' # find type ID from the type name
 #' getTypeID(x = reh, typeName = c("conflict","cooperation"))
-#' 
+#'
 getTypeID <- function(x, typeName = NULL){
   UseMethod("getTypeID")
 }
@@ -822,7 +1316,7 @@ getTypeID.remify <- function(x, typeName = NULL) {
     which_type <- unlist(which_type)
     IDs <- types$typeID[which_type]
     if(length(IDs) == 0) stop("no typeName was found in the dictionary.")
-    else if(length(IDs) < length(typeName)) warning("some typeName was not found in the dictionary.")       
+    else if(length(IDs) < length(typeName)) warning("some typeName was not found in the dictionary.")
   }
   return(IDs)
 }
@@ -833,16 +1327,16 @@ getTypeID.remify <- function(x, typeName = NULL) {
 #' @title getDyadID
 #' @description A function that given a vector of names as to actor1, actor2 and type returns the corresponding dyad ID. The names to supply are the original input names of the edgelist before the processing via the function \code{remify::remify()}.
 #' @param x a \code{remify} object.
-#' @param actor1 [character] name of actor1. 
+#' @param actor1 [character] name of actor1.
 #' @param actor2 [character] name of actor2.
 #' @param type [character] name of type.
-#' 
+#'
 #' @return dyad ID as integer value.
-#' 
+#'
 #' @export
-#' 
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' # processing the random network 'randomREH'
 #' library(remify)
 #' data(randomREH)
@@ -850,10 +1344,10 @@ getTypeID.remify <- function(x, typeName = NULL) {
 #'               model = "tie",
 #'               riskset = "manual",
 #'               omit_dyad = randomREH$omit_dyad)
-#' 
+#'
 #' # find dyad ID from dyad composition (names of actor1, actor2 and type)
 #' getDyadID(x = reh, actor1 = "Francesca", actor2 = "Kayla", type = "conflict")
-#' 
+#'
 getDyadID <- function(x, actor1, actor2, type){
   UseMethod("getDyadID")
 }
@@ -883,7 +1377,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
   # finding actors from the dictionary of names (attribute of the reh object)
   actor1_id <- which(dict_loc$actors$actorName == actor1)
   actor2_id <- which(dict_loc$actors$actorName == actor2)
-  check_on_actors <- (c(length(actor1_id),length(actor2_id))==0) 
+  check_on_actors <- (c(length(actor1_id),length(actor2_id))==0)
   if(any(check_on_actors)){
     stop(paste("input ",ifelse(sum(check_on_actors)==1,c("'actor1' "," 'actor2' ")[check_on_actors],c("'actor1' and 'actor2' ")),"not found in the 'remify' object",sep=""))
   }
@@ -908,7 +1402,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
       dyad_id <- c(dyad_id,ifelse(length(select_loc>0),attr(x,"dyadIDactive")[select_loc],NA))
       names(dyad_id) <- c("dyadID","dyadIDactive")
     }
-  }                                 
+  }
 
   return(dyad_id)
 }
@@ -932,9 +1426,9 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
 #' @param igraph.edge.color color of the edges in visualization of the network with vertices and nodes. The user can specify the hex value of a color, the color name or use the function\code{grDevices::rgb()} which returns the hex value.
 #' @param igraph.vertex.color color of the vertices in visualization of the network with vertices and nodes. The user can specify the hex value of a color, the color name or use the function \code{grDevices::rgb()} which returns the hex value.
 #' @param ... other graphical parameters
-#' 
+#'
 #' @return no return value, called for plotting descriptives on the relational event history data.
-#' 
+#'
 #' @method plot remify
 #' @export
 plot.remify <- function(x,
@@ -961,7 +1455,7 @@ plot.remify <- function(x,
   if(is.null(palette)) palette <- "Purples" else palette <- as.character(palette)
   if(is.null(n_intervals)) n_intervals <- 3L else n_intervals <- as.integer(n_intervals)
   if(is.null(rev)) rev <- TRUE else rev <- as.logical(rev)
-  
+
   # pch.degree
   if(is.null(pch.degree)){
     pch.degree <- 20
@@ -971,7 +1465,7 @@ plot.remify <- function(x,
       pch.degree <- 20
     }
     pch.degree <- as.integer(pch.degree)
-  } 
+  }
 
   # igraph.edge.color and igraph.vertex.color
   if(is.null(igraph.edge.color)){
@@ -1003,7 +1497,7 @@ plot.remify <- function(x,
   else{
     # check if 'actors' contains names that are not in the dictionary
     actors <- sort(unique(as.character(actors)))
-    check_actors <- sapply(actors , function(y) y %in% dict$actors$actorName) 
+    check_actors <- sapply(actors , function(y) y %in% dict$actors$actorName)
     if(any(!check_actors)){
       stop("one or more actors' names ('actors') are not found in the remify object 'x'.")
     }
@@ -1011,8 +1505,8 @@ plot.remify <- function(x,
   }
 
   # limiting the number of actors to N = 50 (when x$N > 50)
-  if((x$N > 50) & (length(actors)>50)){ 
-    if(length(actors) < x$N){ 
+  if((x$N > 50) & (length(actors)>50)){
+    if(length(actors) < x$N){
       # only when length(actors)>50 but less than x$N, the function does its best by selecting the 50 most active actors out of the subset defined by the input "actors"
       events_to_select <- which((x$edgelist$actor1 %in% actors) & (x$edgelist$actor2 %in% actors))
       if(length(events_to_select) == 0){
@@ -1032,14 +1526,14 @@ plot.remify <- function(x,
         actors_until_d_loc <-sapply(names(dyads_freq_sorted[1:d_loc]), function(y) (unlist(strsplit(x = y,  split = "_",fixed=TRUE))))
         actors_loc <- length(unique(as.vector(actors_until_d_loc)))
         d_loc <- d_loc + 1
-       
+
     }
     # updating vector of actors' names after selecting the 50 most active actors
     actors <- sort(unique(as.vector(actors_until_d_loc)))
 
     # finding vector of events including only the 50 most active actors and sub-setting the x$edgelist
     events_to_select <- which((x$edgelist$actor1 %in% actors) & (x$edgelist$actor2 %in% actors))
-    x$edgelist <- x$edgelist[events_to_select,] 
+    x$edgelist <- x$edgelist[events_to_select,]
     x$N <- actors_loc # can be 49-50-51, not always exaclty 50
     x$D <- ifelse(attr(x,"directed"),x$N*(x$N-1),x$N*(x$N-1)/2)
 
@@ -1050,11 +1544,11 @@ plot.remify <- function(x,
     warning(paste("Too many actors for rendering plots with a good quality: the 50 most active actors are selected (descriptives on dyads and actors may differ from the descriptives conducted on the whole set of actors)"))
   }
   else{ # when x$N <= 50
-    if(length(actors) < x$N){ 
+    if(length(actors) < x$N){
       # when length(actors) is less than x$N (analysis on a subset of actors that is smaller than 50 actors)
       x$N <- length(actors)
       x$D <- ifelse(attr(x,"directed"),x$N*(x$N-1),x$N*(x$N-1)/2)
-      events_to_select <- which((x$edgelist$actor1 %in% actors) & (x$edgelist$actor2 %in% actors))     
+      events_to_select <- which((x$edgelist$actor1 %in% actors) & (x$edgelist$actor2 %in% actors))
       if(length(events_to_select) == 0){
         stop("no events found when selecting the set of actors (supplied via the argument 'actors').")
       }
@@ -1062,7 +1556,7 @@ plot.remify <- function(x,
       rm(events_to_select)
     }
   }
-  
+
   # dyads, in-degree, out-degree and total-degree
   dyads <- paste(x$edgelist$actor1,x$edgelist$actor2,sep="_")
   if(attr(x,"directed")){
@@ -1088,12 +1582,12 @@ plot.remify <- function(x,
   }
 
   if(any(which[c(2L,5L)])){
-    # ... frequencies dyads (sorted from large to small frequency values) 
+    # ... frequencies dyads (sorted from large to small frequency values)
     dyad_freq <- table(dyads)
 
     # [incomplete] matrix of dyad frequencies by [actor1-actor2] (some dyads may not be included at this stage, only observed one are included)
     if(attr(x,"directed")){
-      X <- matrix(NA, nrow=length(dyad_freq),ncol=3) 
+      X <- matrix(NA, nrow=length(dyad_freq),ncol=3)
       X[,3] <- as.integer(dyad_freq)
       for(d in 1:length(dyad_freq)){
         X[d,1:2] <- unlist(strsplit(x = names(dyad_freq[d]),  split = "_"))
@@ -1101,15 +1595,15 @@ plot.remify <- function(x,
       X <- X[order(X[,1],X[,2]),]
     }
 
-    dyad_no_direction_freq <- table(dyad_no_direction_freq) 
-    X_dyad <- matrix(NA, nrow=length(dyad_no_direction_freq),ncol=3) 
+    dyad_no_direction_freq <- table(dyad_no_direction_freq)
+    X_dyad <- matrix(NA, nrow=length(dyad_no_direction_freq),ncol=3)
     X_dyad[,3] <- as.integer(dyad_no_direction_freq)
     for(d in 1:length(dyad_no_direction_freq)){
       X_dyad[d,1:2] <- unlist(strsplit(x = names(dyad_no_direction_freq[d]),split = "_"))
     }
     X_dyad <- X_dyad[order(X_dyad[,1],X_dyad[,2]),]
     rm(dyad_no_direction_freq)
-    if(!attr(x,"directed")){ 
+    if(!attr(x,"directed")){
       # only for undirected networks (if undirected, X and X_dyad are the same)
       X <- X_dyad
     }
@@ -1128,7 +1622,7 @@ plot.remify <- function(x,
   #on.exit(expr = devAskNewPage(ask_new_page))
   op <- par(no.readonly = TRUE)
   on.exit(expr = par(op))
-  
+
   ## [[plot 1]] plotting histogram of the waiting times:
     # y-axis = Frequency (freq=TRUE)
     # x-axis = measurement unit of the waiting time
@@ -1136,10 +1630,10 @@ plot.remify <- function(x,
     time_unit <- NULL
     time_unit <- attr(x$intereventTime,"unit") # [[CHECK!!]] add attribute to x$intereventTime object based on the time scale (default is seconds if time is timestamp, or days if it is a Date )
     #dev.hold()
-    hist(x = x$intereventTime, 
+    hist(x = x$intereventTime,
       breaks = breaks,
-      angle = 45, 
-      col = "lavender", 
+      angle = 45,
+      col = "lavender",
       border = "darkgray",
       main = paste("Distribution of the inter-event times",collapse=""),
       xlab = ifelse(!is.null(time_unit),paste("waiting time (",time_unit,")",sep="", collapse=""),paste("waiting time")),
@@ -1164,32 +1658,32 @@ plot.remify <- function(x,
     }
 
     # [complete] matrix of dyad frequencies
-    X_out <- data.frame(row = egrid[,1],col = egrid[,2], fill = NA)  
+    X_out <- data.frame(row = egrid[,1],col = egrid[,2], fill = NA)
     for(d in 1:dim(X)[1]){
       row_index <- which((X_out$row == X[d,1]) & (X_out$col == X[d,2]))
       X_out$fill[row_index] <- as.integer(X[d,3])
     }
-    
+
     # assigning actors positions on the grid
     X_out[,1:2] <- expand.grid(1:length(actors),1:length(actors)) # for positioning actors on the grid
     X_out[,1:2] <- X_out[,2:1]
 
     # setting up axes measures
     if(attr(x,"directed")){
-      max_upper_plot <- max(unname(in_degree))+2 
-      min_upper_plot <- min(unname(in_degree))-1 
-      max_out_degree <- max(unname(out_degree))+2 
-      min_out_degree <- min(unname(out_degree))-1 
+      max_upper_plot <- max(unname(in_degree))+2
+      min_upper_plot <- min(unname(in_degree))-1
+      max_out_degree <- max(unname(out_degree))+2
+      min_out_degree <- min(unname(out_degree))-1
       total_or_in_degree <- in_degree
     }
-    else{ 
+    else{
       # when the network is undirected use 'total_degree' but keep same name to avoid redundant code
-      max_upper_plot <- max(unname(total_degree))+2 
-      min_upper_plot <- min(unname(total_degree))-1 
+      max_upper_plot <- max(unname(total_degree))+2
+      min_upper_plot <- min(unname(total_degree))-1
       total_or_in_degree <- total_degree
     }
 
-    # creating layout and setting up graphical parameters 
+    # creating layout and setting up graphical parameters
     if(attr(x,"directed")){
       layout_matrix <- matrix(c(3,2,1,4), ncol=2, byrow=TRUE)
     }
@@ -1202,26 +1696,26 @@ plot.remify <- function(x,
     layout(layout_matrix, widths=c(4/5,1/5), heights=c(1/5,4/5))
     par(oma=c(2,2,2,2))
     par(mar =c(6,6,1,1))
-    par(mgp=c(6,1,0)) 
+    par(mgp=c(6,1,0))
 
     # [1] tile plot
     plot.new()
     plot.window(xlim=c(1,x$N),ylim=c(1,x$N))
     with(X_out,{
-      rect(col-0.5,row-0.5,col+0.5,row+0.5,col=hcl.colors(n=max(unique(sort(fill))),palette=palette,rev=rev)[fill],border="#ffffff") 
+      rect(col-0.5,row-0.5,col+0.5,row+0.5,col=hcl.colors(n=max(unique(sort(fill))),palette=palette,rev=rev)[fill],border="#ffffff")
       segments(x0=c(1:x$N)+0.5,y0=c(1:x$N)-0.5,x1=c(1:x$N)-0.5,y1=c(1:x$N)+0.5,col="gray")
       segments(x0=0.5,y0=0.5,x1=(x$N+0.5),y1=(x$N+0.5),col="gray")
       # actor names
-      text(x = c(1:x$N), y = 0, labels = actors, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,1), offset = 2.5) 
+      text(x = c(1:x$N), y = 0, labels = actors, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,1), offset = 2.5)
       text(x = 0, y = c(1:x$N), labels = actors, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = 0)
-      # axes names 
+      # axes names
       mtext(text  = tile_plot_x_axis_name, side=1, line=5, outer=FALSE, adj=0, at=floor(x$N/2))
       mtext(text = tile_plot_y_axis_name, side=2, line=5, outer=FALSE, adj=1, at=floor(x$N/2))
     })
 
     # [2] legend of tile plot
     par(mar=c(0,0,1,1))
-    plot(0, 0, type="n", xlim = c(0, 5), ylim = c(0, 7), axes = FALSE, xlab = "", ylab = "")   
+    plot(0, 0, type="n", xlim = c(0, 5), ylim = c(0, 7), axes = FALSE, xlab = "", ylab = "")
     # colors' legend
     rect(xleft = 2, ybottom = seq(0,5,length=max(colors_legend)), xright = 3, ytop = seq(1.25,6.25,length=max(colors_legend)),col = hcl.colors(n=max(colors_legend),palette=palette,rev=rev)[1:max(colors_legend)], border = NA)
     # borders and ticks
@@ -1267,7 +1761,7 @@ plot.remify <- function(x,
       left_mai <- max(strwidth(actors, "inch")+0.4, na.rm = TRUE)
       bottom_mai <- max(strwidth(labels(time), "inch")+2, na.rm = TRUE)
       par(mai =c(bottom_mai,left_mai,1,1))
-      plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time interval", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)  
+      plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time interval", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)
       axis(side = 1, at = c(1:length(tab_s)))
       axis(side = 2, at = seq(1,2*x$N,by=2), labels = as.character(actors),las=2)
       abline(h = seq(0,2*x$N,by=2), lty=2, col="gray")
@@ -1278,15 +1772,15 @@ plot.remify <- function(x,
           scaled_y <-  (as.numeric(tab_s[[l]])-min(as.numeric(tab_s[[l]])))/(max(as.numeric(tab_s[[l]]))-min(as.numeric(tab_s[[l]])))
           if(any(is.nan(scaled_y))) scaled_y[is.nan(scaled_y)] <- 1.0
           points(rep(l,length(tab_s[[l]])),y_loc,type="p",pch=pch.degree,cex=3*scaled_y,col = rgb(red = 80/255, green = 199/255, blue = 199/255, alpha=scaled_y*1))
-        } 
+        }
       }
       title("(normalized) Out-degree per time interval")
       #dev.flush()
 
       # in-degree plot
-      tab_s <- tapply(X =x$edgelist$actor2, INDEX = time, FUN = function(w) table(w)) 
+      tab_s <- tapply(X =x$edgelist$actor2, INDEX = time, FUN = function(w) table(w))
       #dev.hold()
-      plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time interval", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)  
+      plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time interval", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)
       axis(side = 1, at = c(1:length(tab_s)))
       axis(side = 2, at = seq(1,2*x$N,by=2), labels = as.character(actors),las=2)
       abline(h = seq(0,2*x$N,by=2), lty=2, col="gray")
@@ -1299,7 +1793,7 @@ plot.remify <- function(x,
           points(rep(l,length(tab_s[[l]])),y_loc,type="p",pch=pch.degree,cex=3*scaled_y,col = rgb(red = 199/255, green = 121/255, blue = 80/255, alpha=scaled_y*1))
         }
       }
-      title("(normalized) In-degree per time interval")  
+      title("(normalized) In-degree per time interval")
       #dev.flush()
       par(op)
     }
@@ -1313,7 +1807,7 @@ plot.remify <- function(x,
       left_mai <- max(strwidth(actors, "inch")+0.4, na.rm = TRUE)
       bottom_mai <- max(strwidth(labels(time), "inch")+2, na.rm = TRUE)
       par(mai =c(bottom_mai,left_mai,1,1))
-      plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time interval", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)  
+      plot(1:length(y),rep(2*x$N,length(y)), type = "n", ylab = "", xlab = "time interval", ylim = c(0,2*x$N), xaxt = "n", yaxt = "n",)
       axis(side = 1, at = c(1:length(tab_s)))
       axis(side = 2, at = seq(1,2*x$N,by=2), labels = as.character(actors),las=2)
       abline(h = seq(0,2*x$N,by=2), lty=2, col="gray")
@@ -1323,8 +1817,8 @@ plot.remify <- function(x,
           y_loc <- sapply(1:length(y_loc),function(x) x + (x-1) )
           scaled_y <-  (as.numeric(tab_s[[l]])-min(as.numeric(tab_s[[l]])))/(max(as.numeric(tab_s[[l]]))-min(as.numeric(tab_s[[l]])))
           if(any(is.nan(scaled_y))) scaled_y[is.nan(scaled_y)] <- 1.0
-          points(rep(l,length(tab_s[[l]])),y_loc,type="p",pch=pch.degree,cex=3*scaled_y,col = rgb(red = 80/255, green = 199/255, blue = 199/255, alpha=scaled_y*1)) 
-        } 
+          points(rep(l,length(tab_s[[l]])),y_loc,type="p",pch=pch.degree,cex=3*scaled_y,col = rgb(red = 80/255, green = 199/255, blue = 199/255, alpha=scaled_y*1))
+        }
       }
       title("(normalized) Total-degree per time interval")
       #dev.flush()
@@ -1334,7 +1828,7 @@ plot.remify <- function(x,
   # [[plot 4]] plots: quantity per time interval
     ## [1] (# events) per time interval
     ## [2] (proportion of active dyads, as observed dyads / D) per time interval
-  # if directed network:  
+  # if directed network:
     ## [3] (proportion of active senders, as observed senders / N) per time interval
     ## [4] (proportion of active receivers, as observed receivers / N) per time interval
   if(which[4L]){
@@ -1355,24 +1849,24 @@ plot.remify <- function(x,
     if(n_intervals>3) lines(smooth.spline(x=c(1:length(y)),y=as.numeric(y),df=df_spline),col="#cd0303",lwd=2)
 
     # [2] plotting (proportion of active dyads) per time interval
-    prop_dyads <- tapply(X = dyads, INDEX = time, FUN = function(l) length(unique(l))) 
+    prop_dyads <- tapply(X = dyads, INDEX = time, FUN = function(l) length(unique(l)))
     prop_dyads[is.na(prop_dyads)] <- 0
     prop_dyads <- prop_dyads/x$D
     plot(prop_dyads,type=type_plot,cex=0.8,col="#939393",ylab = "active dyads (observed/total)",xlab = "time interval", xaxt="n", lwd = 1.5, main="Active dyads (observed/total) per time interval")
     if(n_intervals>3) lines(smooth.spline(x=c(1:length(y)),y=as.numeric(prop_dyads),df=df_spline),col="#cd0303",lwd=2)
-    
+
     if(attr(x,"directed")){
-      # [3] plotting (proportion of active senders) per time interval   
-      s <- tapply(X = x$edgelist$actor1, INDEX = time, FUN = function(l) length(unique(l))) 
+      # [3] plotting (proportion of active senders) per time interval
+      s <- tapply(X = x$edgelist$actor1, INDEX = time, FUN = function(l) length(unique(l)))
       s[is.na(s)] <- 0
       s <- s/x$N
-      plot(s,type=type_plot,cex=0.8,col="#939393",ylab = "active senders (observed/total)",xlab = "time interval", xaxt="n", lwd = 1.5,main="Active senders (observed/total) per time interval") 
+      plot(s,type=type_plot,cex=0.8,col="#939393",ylab = "active senders (observed/total)",xlab = "time interval", xaxt="n", lwd = 1.5,main="Active senders (observed/total) per time interval")
       if(n_intervals>3) lines(smooth.spline(x=c(1:length(y)),y=as.numeric(s),df=df_spline),col="#cd0303",lwd=2)
-      # [4] plotting (proportion of active receivers) per time interval   
-      s <- tapply(X = x$edgelist$actor2, INDEX = time, FUN = function(l) length(unique(l))) 
+      # [4] plotting (proportion of active receivers) per time interval
+      s <- tapply(X = x$edgelist$actor2, INDEX = time, FUN = function(l) length(unique(l)))
       s[is.na(s)] <- 0
       s <- s/x$N
-      plot(s,type=type_plot,cex=0.8,col="#939393",ylab = "active receivers (observed/total)",xlab = "time interval", xaxt="n", lwd = 1.5, main="Active receivers (observed/total) per time interval")  
+      plot(s,type=type_plot,cex=0.8,col="#939393",ylab = "active receivers (observed/total)",xlab = "time interval", xaxt="n", lwd = 1.5, main="Active receivers (observed/total) per time interval")
       if(n_intervals>3) lines(smooth.spline(x=c(1:length(y)),y=as.numeric(s),df=df_spline),col="#cd0303",lwd=2)
     }
     #dev.flush()
@@ -1383,28 +1877,28 @@ plot.remify <- function(x,
   if(which[5L]){
     requireNamespace(package="igraph",quietly=TRUE)
     X_dyad[is.na(X_dyad)] <- 0
-    # [1] network of undirected dyad intensity 
+    # [1] network of undirected dyad intensity
     # defining nodes and links
     popularity_table <- table(factor(c(x$edgelist$actor1,x$edgelist$actor2),levels=actors))
     nodes <- data.frame(name= names(popularity_table),popularity =as.vector(popularity_table)) # popularity = total in- and out-degree
     rm(popularity_table)
     links <- data.frame(from = as.character(X_dyad[,1]),to = as.character(X_dyad[,2]), weight = as.numeric(X_dyad[,3]))
     # creating a graph_from_data_frame
-    net_undirected <- igraph::graph_from_data_frame(d=links, vertices=nodes, directed=TRUE) 
+    net_undirected <- igraph::graph_from_data_frame(d=links, vertices=nodes, directed=TRUE)
 
     # setting up vertex and edge attributes
     popularity_scale <- ((nodes$popularity-min(nodes$popularity))/(max(nodes$popularity)-min(nodes$popularity)))
     popularity_scale[is.na(popularity_scale)] <- 0
     links_weight <- (links$weight-min(links$weight))/(max(links$weight)-min(links$weight))
     links_weight[is.na(links_weight)] <- 0
-    igraph::V(net_undirected)$size <- 10 
+    igraph::V(net_undirected)$size <- 10
     # defining transparency of vertices color based on their popularity (in-degree)
     transparency_popularity_levels <- sapply(round(255*popularity_scale), function(l) {
     hc <-rgb(0,0,0, alpha = l,maxColorValue = 255)
     substr(x=hc, nchar(hc)-1, nchar(hc))
     })
     igraph::V(net_undirected)$color <- sapply(transparency_popularity_levels,function(l) paste(igraph.vertex.color,l,sep=""))
-    igraph::V(net_undirected)$frame.color <- NA
+    igraph::V(net_undirected)$frame.color <- "black"
     igraph::E(net_undirected)$arrow.mode <- 0
     igraph::E(net_undirected)$width <- 2
     # defining transparency of edges color based on count
@@ -1412,7 +1906,7 @@ plot.remify <- function(x,
     hc <-rgb(0,0,0, alpha = l,maxColorValue = 255)
     substr(x=hc, nchar(hc)-1, nchar(hc))
     })
-    igraph::E(net_undirected)$color <- sapply(transparency_links_weight_levels,function(l) paste(igraph.edge.color,l,sep="")) 
+    igraph::E(net_undirected)$color <- sapply(transparency_links_weight_levels,function(l) paste(igraph.edge.color,l,sep=""))
     igraph::E(net_undirected)$curved <- 0.1
     igraph::graph_attr(net_undirected, "layout") <- igraph::layout_with_lgl
     if(attr(x,"directed")){
@@ -1425,19 +1919,19 @@ plot.remify <- function(x,
       links <- data.frame(from = as.character(X[,1]),to = as.character(X[,2]), weight = as.numeric(X[,3]))
 
       # creating a graph_from_data_frame
-      net_directed <- igraph::graph_from_data_frame(d=links, vertices=nodes, directed=TRUE) 
+      net_directed <- igraph::graph_from_data_frame(d=links, vertices=nodes, directed=TRUE)
 
       # setting up vertex and edge attributes
       popularity_scale <- ((nodes$popularity-min(nodes$popularity))/(max(nodes$popularity)-min(nodes$popularity)))
       links_weight <- (links$weight-min(links$weight))/(max(links$weight)-min(links$weight))
-      igraph::V(net_directed)$size <- 10 
+      igraph::V(net_directed)$size <- 10
       # defining transparency of vertices color based on their popularity (in-degree)
       transparency_popularity_levels <- sapply(round(255*popularity_scale), function(l) {
       hc <-rgb(0,0,0, alpha = ifelse(is.na(l),0,l),maxColorValue = 255)
       substr(x=hc, nchar(hc)-1, nchar(hc))
       })
       igraph::V(net_directed)$color <- sapply(transparency_popularity_levels,function(l) paste(igraph.vertex.color,l,sep=""))
-      igraph::V(net_directed)$frame.color <- NA
+      igraph::V(net_directed)$frame.color <- "black"
       igraph::E(net_directed)$arrow.size <- 0.3
       igraph::E(net_directed)$width <- 2
       # defining transparency of edges color based on count
@@ -1445,7 +1939,7 @@ plot.remify <- function(x,
       hc <-rgb(0,0,0, alpha = ifelse(is.na(l),0,l),maxColorValue = 255)
       substr(x=hc, nchar(hc)-1, nchar(hc))
       })
-      igraph::E(net_directed)$color <- sapply(transparency_links_weight_levels,function(l) paste(igraph.edge.color,l,sep="")) 
+      igraph::E(net_directed)$color <- sapply(transparency_links_weight_levels,function(l) paste(igraph.edge.color,l,sep=""))
       igraph::E(net_directed)$curved <- 0.1
       igraph::graph_attr(net_directed, "layout") <- igraph::layout_with_lgl
       # plotting network
