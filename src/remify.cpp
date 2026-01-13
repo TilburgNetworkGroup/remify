@@ -1929,11 +1929,12 @@ Rcpp::List remify2relventrem(arma::vec actor1,
 
 
     // (2) converting omit_dyad output object to the 'supplist' argument in relevent::rem()
-    arma::umat supplist(M,D,arma::fill::ones);
+    arma::umat supplist(M, D, arma::fill::ones);
+
     if (omit_dyad.size() > 1) {
 
       arma::vec omit_dyad_time = Rcpp::as<arma::vec>(omit_dyad["time"]);
-      Rcpp::RObject rsi = omit_dyad["riskset_idx"];  // can be IntegerVector OR List
+      Rcpp::RObject rsi = omit_dyad["riskset_idx"];  // IntegerVector OR List
 
 #ifdef _OPENMP
       omp_set_dynamic(0);
@@ -1945,24 +1946,24 @@ Rcpp::List remify2relventrem(arma::vec actor1,
         int t = (int) omit_dyad_time(m);
         if (t == -1) continue;
 
-        // build the dense row for this t
-        arma::rowvec riskrow(D, arma::fill::zeros);
+        // set row to 0 then set included dyads to 1
+        supplist.row(m).zeros();
 
         if (Rf_isNewList(rsi)) {
-          // time-varying: list of integer vectors (1-based)
           Rcpp::List rsi_list(rsi);
-          Rcpp::IntegerVector idx = rsi_list[t];     // t is assumed 0-based row index as before
-          for (int k = 0; k < idx.size(); k++) riskrow(idx[k] - 1) = 1.0;
-
+          Rcpp::IntegerVector idx = rsi_list[t];           // 1-based dyad indices
+          for (int k = 0; k < idx.size(); k++) {
+            supplist(m, idx[k] - 1) = 1;
+          }
         } else {
-          // single riskset: integer vector (1-based)
-          Rcpp::IntegerVector idx(rsi);
-          for (int k = 0; k < idx.size(); k++) riskrow(idx[k] - 1) = 1.0;
+          Rcpp::IntegerVector idx(rsi);                    // 1-based dyad indices
+          for (int k = 0; k < idx.size(); k++) {
+            supplist(m, idx[k] - 1) = 1;
+          }
         }
-
-        supplist.row(m) = riskrow;
       }
     }
+
 
     out["supplist"] = supplist;
 
