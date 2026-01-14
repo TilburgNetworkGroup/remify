@@ -2,7 +2,7 @@
 #define MESSAGES_H
 
 //' warningMessage
-std::string warningMessage(int cond){
+inline std::string warningMessage(int cond){
       std::string message = "undefined";
       switch(cond){
             case 0:
@@ -16,14 +16,14 @@ std::string warningMessage(int cond){
                   break;
             case 3:
                   message = "\nWarning: one or more actors/types supplied in `omit_dyad` were not found in the edgelist. Therefore the corresponding dyads defined in the `omit_dyad` object were ignored.\n";
-                  break;            
+                  break;
       }
       return message;
 }
 
 
 //' errorMessage
-std::string errorMessage(int cond){
+inline std::string errorMessage(int cond){
       std::string message = "undefiend";
       switch(cond){
             case 0:
@@ -34,10 +34,10 @@ std::string errorMessage(int cond){
                   break;
             case 2:
                   message = "either start or stop in one of the elements in the list 'omit_dyad' are not found in the edgelist. Please, provide observed time points as start and stop values";
-                  break;        
+                  break;
             case 3:
                   message = "actors' and types' names cannot be empty strings";
-                  break; 
+                  break;
       }
       return message;
 }

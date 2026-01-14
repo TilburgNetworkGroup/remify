@@ -8,7 +8,7 @@
 #define REMIFY_H
 
 namespace remify{
-        int getDyadIndex(double actor1, double actor2, double type, int N, bool directed) {
+          inline int getDyadIndex(double actor1, double actor2, double type, int N, bool directed) {
 
             int dyad = -999; // returning impossible index if the dyad is a self-edge (i.e., sender and receiver are the same actor)
             if(actor1 != actor2){
@@ -28,7 +28,7 @@ namespace remify{
                         dyad = static_cast<int>(dyad_loc);
                     }
                 }
-                else{ 
+                else{
                     // when directed == TRUE (we do not sort) (actor1 = sender, actor2 = receiver)
                     double dyad_loc = N*(N-1)*type+(N-1)*actor1+actor2;
                     if(actor2>actor1){
@@ -43,7 +43,7 @@ namespace remify{
 
 
 
-        arma::ivec getDyadComposition(int d, int N, bool directed) {
+        inline arma::ivec getDyadComposition(int d, int N, bool directed) {
 
         // Note on the internal routine getDyadComposition:
         // (1) this function assumes that all the possible dyads are in the stats object
@@ -75,11 +75,11 @@ namespace remify{
 
         // Add errors and checks? No, because:
         // This function is not intended to be used by the final user.
-        // Adding further checks (warnings or errors on number of event types, C, or maximum number of dyads, D) 
+        // Adding further checks (warnings or errors on number of event types, C, or maximum number of dyads, D)
         // would cause an increase of the computational time required by the C++ algorithms in which
         // the function getDyadComposition() is called multiple times
         }
 
     }
 
-#endif 
+#endif
