@@ -1936,6 +1936,7 @@ Rcpp::List remify2relventrem(arma::vec actor1,
       arma::vec omit_dyad_time = Rcpp::as<arma::vec>(omit_dyad["time"]);
       Rcpp::RObject rsi = omit_dyad["riskset_idx"];  // IntegerVector OR List
 
+
 #ifdef _OPENMP
       omp_set_dynamic(0);
       omp_set_num_threads(ncores);
