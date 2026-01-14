@@ -67,7 +67,7 @@ randomREH$origin
 
 # list of changes of the risk set: each one is a list of:
 # 'time' (indicating the time window where to apply the risk set reduction)
-# 'dyad' (a data.frame describing the dyads to remove from the risk set
+# 'dyad' (a data.frame describing the dyads to remove from the risk set 
 # during the time window specified in 'time')
 str(randomREH$omit_dyad)
 
@@ -117,7 +117,7 @@ actor_randomREH <- remify(edgelist = randomREHsmall$edgelist,
        model = "actor",
        actors = randomREHsmall$actors,
        origin = randomREHsmall$origin)
-
+       
 # summary
 summary(actor_randomREH)
 
@@ -128,5 +128,5 @@ dim(actor_randomREH)
 # for more information about remify()  #
 # check: vignette(package="remify")    #
 # ------------------------------------ #
-
+ 
 }

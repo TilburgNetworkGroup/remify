@@ -18,7 +18,7 @@ displays the same information provided by the summary method.
 print a summary of the event history.
 }
 \examples{
-
+ 
 # processing the random network 'randomREHsmall'
 library(remify)
 data(randomREHsmall)

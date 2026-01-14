@@ -395,17 +395,18 @@ remify2 <- function(edgelist,
     rm(actor1,actor2,type,dyad,dyadIDactive)
   }
 
-  #also store the dyad mapping in remify object to avoid the need to getDyad
-  str_out$index$dyad_map <- remify::getDyad2(
-    x = str_out,
-    dyadID = seq_len(str_out$D),
-    active = FALSE
-  )
+  #store the dyad mapping in remify object to avoid the need to getDyad
   if(active){
-    str_out$index$dyad_map_active <- remify::getDyad2(
+    str_out$index$dyad_map_active <- getDyad2(
       x = str_out,
       dyadID = seq_len(as.integer(str_out$activeD)[1]),
       active = TRUE
+    )
+  }else{
+    str_out$index$dyad_map <- getDyad2(
+      x = str_out,
+      dyadID = seq_len(str_out$D),
+      active = FALSE
     )
   }
 
@@ -414,42 +415,7 @@ remify2 <- function(edgelist,
 
 
 
-
-
-#######################################################################################
-#######################################################################################
-
-#' @title getDyad2
-#' @description A function that given a vector of one or more dyad ID's returns the corresponding dyad composition of "actor1", "actor2" and "type" (if event types are present). The ID's to supply must range between 1 and D (largest risk set size).
-#' @param x a \code{remify} object.
-#' @param dyadID a vector of one or more dyad ID's, each one ranging from 1 to D (largest risk set size).
-#' @param active logical, whether to consider the input \code{dyadID} as a vector of ID's of active dyads (\code{active = TRUE}) or dyads from the full risk set (\code{active = FALSE}).
-#'
-#' @return a data.frame with "actor1", "actor2" and "type" names corresponding to the vector \code{dyadID}.
-#'
-#' @export
-#'
-#' @examples
-#'
-#' # processing the random network 'randomREH'
-#' library(remify)
-#' data(randomREH)
-#' reh <- remify(edgelist = randomREH$edgelist,
-#'               model = "tie",
-#'               riskset = "manual",
-#'               omit_dyad = randomREH$omit_dyad)
-#'
-#' # find dyad composition (names of actor1, actor2 and type) from the dyad ID
-#' getDyad(x = reh, dyadID = c(450,239,900))
-#'
-getDyad2 <- function(x, dyadID, active = FALSE){
-  UseMethod("getDyad2")
-}
-
-#' @describeIn getDyad2 return dyad composition in actor1, actor2 and type from one (or more) dyad ID
-#' @method getDyad2 remify
-#' @export
-getDyad2.remify <- function(x, dyadID, active = FALSE) {
+getDyad2 <- function(x, dyadID, active = FALSE) {
 
   if(active & attr(x,"riskset") != "active"){
     stop("'active' = TRUE works only for attr(x,'riskset') = 'active'")
