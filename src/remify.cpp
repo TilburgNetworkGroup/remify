@@ -1964,7 +1964,6 @@ Rcpp::List remify2relventrem(arma::vec actor1,
       }
     }
 
-
     out["supplist"] = supplist;
 
     // return processed eventlist and supplist
