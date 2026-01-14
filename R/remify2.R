@@ -345,6 +345,7 @@ remify2 <- function(edgelist,
     }
     # saving indices of simultaneous events to be removed (for remstimate)
     attr(str_out, "indices_simultaneous_events") <- rows_to_remove
+    str_out$indices_simultaneous_events <- rows_to_remove
     #str_out$intereventTime and str_out$omit_dyad$time are processed in remstimate depending on method=c("pe","pt") from remstats
     str_out$E <- str_out$M # number of events
     str_out$M <- str_out$M-length(rows_to_remove) # overwrite (lower) number of time points
