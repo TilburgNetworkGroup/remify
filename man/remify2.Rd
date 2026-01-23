@@ -12,8 +12,9 @@ remify2(
   actors = NULL,
   types = NULL,
   riskset = c("full", "active", "manual"),
+  manual.riskset = NULL,
   origin = NULL,
-  omit_dyad = NULL,
+  time.units = c("auto", "secs", "mins", "hours", "days", "weeks"),
   ncores = 1L
 )
 }
@@ -22,7 +23,7 @@ remify2(
 
 \item{directed}{logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})}
 
-\item{ordinal}{logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the waiting time must be considered in the model (\code{FALSE}). (default value is \code{FALSE})}
+\item{ordinal}{logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the exact timing must be considered in the model (\code{FALSE}). (default value is \code{FALSE}). If \code{TRUE}, then the column "time" of \code{edgelist} is still used to extract the order.}
 
 \item{model}{can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.}
 
@@ -34,9 +35,11 @@ remify2(
 
 \item{origin}{[\emph{optional}] starting time point of the observaton period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}.}
 
-\item{omit_dyad}{[\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).}
+\item{time.units}{Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".}
 
 \item{ncores}{[\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).}
+
+\item{omit_dyad}{[\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).}
 }
 \value{
 'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}.
