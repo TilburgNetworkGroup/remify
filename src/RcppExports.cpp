@@ -103,6 +103,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// remifyCpp3
+Rcpp::List remifyCpp3(Rcpp::DataFrame input_edgelist, Rcpp::RObject actors, Rcpp::RObject types, bool directed, bool ordinal, Rcpp::RObject origin, Rcpp::RObject omit_dyad, std::string model, bool active, Rcpp::Nullable<Rcpp::DataFrame> manual_riskset, int ncores);
+RcppExport SEXP _remify_remifyCpp3(SEXP input_edgelistSEXP, SEXP actorsSEXP, SEXP typesSEXP, SEXP directedSEXP, SEXP ordinalSEXP, SEXP originSEXP, SEXP omit_dyadSEXP, SEXP modelSEXP, SEXP activeSEXP, SEXP manual_risksetSEXP, SEXP ncoresSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type input_edgelist(input_edgelistSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type actors(actorsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type types(typesSEXP);
+    Rcpp::traits::input_parameter< bool >::type directed(directedSEXP);
+    Rcpp::traits::input_parameter< bool >::type ordinal(ordinalSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type origin(originSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type omit_dyad(omit_dyadSEXP);
+    Rcpp::traits::input_parameter< std::string >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< bool >::type active(activeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DataFrame> >::type manual_riskset(manual_risksetSEXP);
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(remifyCpp3(input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, manual_riskset, ncores));
+    return rcpp_result_gen;
+END_RCPP
+}
 // remify2relventremIdx
 Rcpp::List remify2relventremIdx(arma::vec actor1, arma::vec actor2, arma::vec type, arma::vec dyad, arma::uword M, arma::uword N, arma::uword D, bool with_type, bool directed, std::string model, Rcpp::List omit_dyad, int ncores);
 RcppExport SEXP _remify_remify2relventremIdx(SEXP actor1SEXP, SEXP actor2SEXP, SEXP typeSEXP, SEXP dyadSEXP, SEXP MSEXP, SEXP NSEXP, SEXP DSEXP, SEXP with_typeSEXP, SEXP directedSEXP, SEXP modelSEXP, SEXP omit_dyadSEXP, SEXP ncoresSEXP) {
@@ -132,6 +153,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_remify_getDyadIndex_cpp", (DL_FUNC) &_remify_getDyadIndex_cpp, 5},
     {"_remify_remify2relventrem", (DL_FUNC) &_remify_remify2relventrem, 12},
     {"_remify_remifyCpp2", (DL_FUNC) &_remify_remifyCpp2, 10},
+    {"_remify_remifyCpp3", (DL_FUNC) &_remify_remifyCpp3, 11},
     {"_remify_remify2relventremIdx", (DL_FUNC) &_remify_remify2relventremIdx, 12},
     {NULL, NULL, 0}
 };

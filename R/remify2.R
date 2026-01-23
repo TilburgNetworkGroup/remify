@@ -263,6 +263,14 @@ remify2 <- function(edgelist,
   }
 
   # --- Manual inclusion-based risk set (fixed over time) -----------------------
+  # Determine typing from edgelist
+  with_type <- ("type" %in% names(edgelist))
+
+  # If typed but types not supplied, infer from edgelist
+  if (with_type && is.null(types)) {
+    types <- sort(unique(as.character(edgelist$type)))
+  }
+
   if(riskset == "manual")
     {
 
@@ -290,12 +298,23 @@ remify2 <- function(edgelist,
     with_type <- !is.null(types) && ("type" %in% names(edgelist))
 
     if (with_type) {
-      if (!("type" %in% names(manual.riskset))) manual.riskset$type <- NA_character_
-      manual.riskset$type <- as.character(manual.riskset$type)
 
-      # validate types if user specified any non-NA
-      bad_t <- setdiff(unique(manual.riskset$type[!is.na(manual.riskset$type)]), types)
-      if (length(bad_t) > 0) stop("`manual.riskset` contains `type` not present in `types`.")
+      if (!("type" %in% names(manual.riskset))) {
+
+        # expand dyads to all types
+        manual.riskset <- merge(
+          manual.riskset,
+          data.frame(type = types, stringsAsFactors = FALSE)
+        )
+
+      } else {
+
+        manual.riskset$type <- as.character(manual.riskset$type)
+
+        bad_t <- setdiff(unique(manual.riskset$type), types)
+        if (length(bad_t) > 0)
+          stop("`manual.riskset$type` contains values not in `types`.")
+      }
     }
 
     # Normalize undirected dyads
@@ -309,23 +328,6 @@ remify2 <- function(edgelist,
       tmp2 <- edgelist$actor1[swap2]
       edgelist$actor1[swap2] <- edgelist$actor2[swap2]
       edgelist$actor2[swap2] <- tmp2
-    }
-
-    # Expand NA type in include list to all types (optional but typically desirable)
-    if (with_type) {
-      inc_na <- is.na(manual.riskset$type)
-      if (any(inc_na)) {
-        base <- manual.riskset[inc_na, c("actor1","actor2"), drop = FALSE]
-        expanded <- merge(base, data.frame(type = types, stringsAsFactors = FALSE))
-        manual.riskset <- rbind(
-          manual.riskset[!inc_na, c("actor1","actor2","type"), drop = FALSE],
-          expanded[, c("actor1","actor2","type"), drop = FALSE]
-        )
-      } else {
-        manual.riskset <- manual.riskset[, c("actor1","actor2","type"), drop = FALSE]
-      }
-    } else {
-      manual.riskset <- manual.riskset[, c("actor1","actor2"), drop = FALSE]
     }
 
     # Ensure observed dyads are included
@@ -364,62 +366,41 @@ remify2 <- function(edgelist,
       manual.riskset <- manual.riskset[!duplicated(key), , drop = FALSE]
     }
 
-    # Build full dyad space to compute omitted dyads
-    if (is.null(actors)) {
-      # safest default: infer from edgelist (since you already canonicalized)
-      actors <- sort(unique(c(edgelist$actor1, edgelist$actor2)))
-    } else {
-      actors <- as.character(actors)
-    }
+    # manual.riskset is now finalized:
+    # - normalized
+    # - type-complete
+    # - deduplicated
+    # - includes all observed dyads
 
-    # full pairs excluding self-ties
-    if (directed) {
-      full_pairs <- expand.grid(actor1 = actors, actor2 = actors, stringsAsFactors = FALSE)
-      full_pairs <- full_pairs[full_pairs$actor1 != full_pairs$actor2, , drop = FALSE]
-    } else {
-      cmb <- utils::combn(actors, 2)
-      full_pairs <- data.frame(actor1 = cmb[1,], actor2 = cmb[2,], stringsAsFactors = FALSE)
-    }
+    omit_dyad <- NULL
 
-    if (with_type) {
-      full_dyads <- merge(full_pairs, data.frame(type = types, stringsAsFactors = FALSE))
-      key_full <- paste(full_dyads$actor1, full_dyads$actor2, full_dyads$type, sep="||")
-      key_inc  <- paste(manual.riskset$actor1, manual.riskset$actor2, manual.riskset$type, sep="||")
-    } else {
-      full_dyads <- full_pairs
-      key_full <- paste(full_dyads$actor1, full_dyads$actor2, sep="||")
-      key_inc  <- paste(manual.riskset$actor1, manual.riskset$actor2, sep="||")
-    }
-
-    excluded <- full_dyads[!(key_full %in% key_inc), , drop = FALSE]
-
-    # Apply for entire window (note: edgelist$time is already numeric at this point)
-    tmin <- min(edgelist$time, na.rm = TRUE)
-    tmax <- max(edgelist$time, na.rm = TRUE)
-
-    # `excluded` is the dyad df we pass to omit_dyad[[1]]$dyad
-    if (!("type" %in% names(excluded))) {
-      excluded$type <- NA
-    }
-    excluded <- excluded[, c("actor1", "actor2", "type"), drop = FALSE]
-
-    omit_dyad <- list(list(time = c(tmin, tmax), dyad = excluded))
   }
 
 
   # Pre-processing relational event history (remifyCpp.cpp)
-  out <- tryCatch(remifyCpp2(input_edgelist = edgelist,
-                            actors = actors,
-                            types = types,
-                            directed = directed,
-                            ordinal = ordinal,
-                            origin = origin,
-                            omit_dyad = omit_dyad,
-                            model = model,
-                            active = active,
-                            ncores = ncores),error= function(e) e)
-
-
+  # out <- tryCatch(remifyCpp2(input_edgelist = edgelist,
+  #                           actors = actors,
+  #                           types = types,
+  #                           directed = directed,
+  #                           ordinal = ordinal,
+  #                           origin = origin,
+  #                           omit_dyad = omit_dyad,
+  #                           model = model,
+  #                           active = active,
+  #                           ncores = ncores),error= function(e) e)
+  out <- remifyCpp3(
+    input_edgelist = edgelist,
+    actors = actors,
+    types = types,
+    directed = directed,
+    ordinal = ordinal,
+    origin = origin,
+    omit_dyad = omit_dyad,
+    model = model,
+    active = active,                    # reuse “active” outputs
+    manual_riskset = manual.riskset,  # new
+    ncores = ncores
+  )
 
   # handling potential errors coming from C++  - stopping function
   if(any(class(out) %in% c("error"))){
@@ -479,7 +460,7 @@ remify2 <- function(edgelist,
   # )
 
   # ID's when riskset = "active"
-  if(active){
+  if(active || riskset == "manual"){
     str_out$activeD <- out$omit_dyad$D_active
     out$omit_dyad$D_active <- NULL
     if(model == "tie"){
@@ -584,18 +565,50 @@ remify2 <- function(edgelist,
   }
 
   #store the dyad mapping in remify object to avoid the need to getDyad
-  if(active){
+  if (active || riskset == "manual") {
     str_out$index$dyad_map_active <- getDyad2(
       x = str_out,
       dyadID = seq_len(as.integer(str_out$activeD)[1]),
       active = TRUE
     )
+
+    if (riskset == "manual") {
+      str_out$index$dyad_map <- NULL
+    }
+
   }else{
     str_out$index$dyad_map <- getDyad2(
       x = str_out,
       dyadID = seq_len(str_out$D),
       active = FALSE
     )
+  }
+
+  if (riskset %in% c("active","manual")) {
+
+    # full dyad ids in the (compressed) riskset
+    rs <- as.integer(out$omit_dyad$riskset_idx)
+
+    # full map (exists for full/manual currently)
+    dm_full <- str_out$index$dyad_map
+
+    # subset and relabel to make dyad_map_active
+    dm_active <- dm_full[match(rs, dm_full$dyadID), , drop = FALSE]
+    dm_active$dyadIDactive <- seq_len(nrow(dm_active))
+
+    # reorder columns to match active mode
+    if ("type" %in% names(dm_active)) {
+      dm_active <- dm_active[, c("dyadIDactive","actor1","actor2","type"), drop = FALSE]
+    } else {
+      dm_active <- dm_active[, c("dyadIDactive","actor1","actor2"), drop = FALSE]
+    }
+
+    str_out$index$dyad_map_active <- dm_active
+
+    # optional: drop full map for manual to be structurally identical
+    if (riskset == "manual") {
+      str_out$index$dyad_map <- NULL
+    }
   }
 
   return(str_out)
@@ -605,7 +618,7 @@ remify2 <- function(edgelist,
 
 getDyad2 <- function(x, dyadID, active = FALSE) {
 
-  if(active & attr(x,"riskset") != "active"){
+  if(active & attr(x,"riskset") == "full"){
     stop("'active' = TRUE works only for attr(x,'riskset') = 'active'")
   }
   if(!is.numeric(dyadID) & !is.integer(dyadID)){
