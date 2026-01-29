@@ -9,7 +9,9 @@
 #' @param actors [\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.
 #' @param types [\emph{optional}] character vector of event types that may occur in the network. If \code{NULL} (default), types' names will be taken from the input edgelist.
 #' @param riskset [\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user.
-#' @param origin [\emph{optional}] starting time point of the observaton period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}.
+#' @param manual.riskset [\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.
+#' @param origin [\emph{optional}] starting time point of the observation period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}. If unsupplied, the origin
+#' is set to the average waiting time in the sequence subtracted from the time of the first event.
 #' @param time.units Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".
 #' @param omit_dyad [\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).
 #' @param ncores [\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).
@@ -20,87 +22,7 @@
 #'
 #' @export
 #'
-#' @examples
 #'
-#' # load package and random network 'randomREH'
-#' library(remify)
-#' data(randomREH)
-#'
-#' # first events in the sequence
-#' head(randomREH$edgelist)
-#'
-#' # actor's names
-#' randomREH$actors
-#'
-#' # event type's names
-#' randomREH$types
-#'
-#' # start time of the study (origin)
-#' randomREH$origin
-#'
-#' # list of changes of the risk set: each one is a list of:
-#' # 'time' (indicating the time window where to apply the risk set reduction)
-#' # 'dyad' (a data.frame describing the dyads to remove from the risk set
-#' # during the time window specified in 'time')
-#' str(randomREH$omit_dyad)
-#'
-#' # -------------------------------------- #
-#' #  processing for tie-oriented modeling  #
-#' # -------------------------------------- #
-#'
-#' tie_randomREH <- remify(edgelist = randomREH$edgelist,
-#'        directed = TRUE,
-#'        ordinal = FALSE,
-#'        model = "tie",
-#'        actors = randomREH$actors,
-#'        types = randomREH$types,
-#'        riskset = "manual",
-#'        origin = randomREH$origin,
-#'        omit_dyad = randomREH$omit_dyad)
-#'
-#' # summary
-#' summary(tie_randomREH)
-#'
-#' # dimensions of the processed network
-#' dim(tie_randomREH)
-#'
-#' # Which ID is assigned to the actors with names "Francesca" and "Kayla"?
-#' getActorID(x = tie_randomREH, actorName = c("Francesca","Kayla"))
-#'
-#' # Which ID is assigned to the event type "conflict"?
-#' getTypeID(x = tie_randomREH, typeName = "conflict")
-#'
-#' # Find dyad composition (names of actor1, actor2 and type) from the dyad ID: c(1,380,760,1140)
-#' getDyad(x = tie_randomREH, dyadID = c(1,380,760,1140))
-#'
-#' # visualize descriptive measures of relational event data
-#' # plot(x = tie_randomREH)
-#'
-#' # -------------------------------------- #
-#' # processing for actor-oriented modeling #
-#' # -------------------------------------- #
-#'
-#' # loading network 'randomREHsmall'
-#' data(randomREHsmall)
-#'
-#' # processing small random network
-#' actor_randomREH <- remify(edgelist = randomREHsmall$edgelist,
-#'        directed = TRUE,
-#'        ordinal = FALSE,
-#'        model = "actor",
-#'        actors = randomREHsmall$actors,
-#'        origin = randomREHsmall$origin)
-#'
-#' # summary
-#' summary(actor_randomREH)
-#'
-#' # dimensions of the processed network
-#' dim(actor_randomREH)
-#'
-#' # ------------------------------------ #
-#' # for more information about remify()  #
-#' # check: vignette(package="remify")    #
-#' # ------------------------------------ #
 #'
 remify2 <- function(edgelist,
                    directed = TRUE,
@@ -190,7 +112,9 @@ remify2 <- function(edgelist,
       # compute mean waiting time on the original time scale
       mean.waitingtime <- mean(difftime(t[-1], t[-length(t)], units = time.units), na.rm = TRUE)
       origin <- t[1] - mean.waitingtime
-      message(paste("Note: origin is set to ", origin))
+      if (!isTRUE(ordinal)){
+        message(paste("Note: origin is set to ", origin))
+      }
     }
 
     edgelist$time <- as.numeric(difftime(t, origin, units = time.units))
@@ -200,10 +124,10 @@ remify2 <- function(edgelist,
 
     # numeric time: difftime is not appropriate
     if (is.null(origin)) {
-      dt <- t[-1] - t[-length(t)]
-      mean.waitingtime <- mean(dt, na.rm = TRUE)
-      origin <- t[1] - mean.waitingtime
-      message(paste("Note: origin is set to ", origin))
+      origin <- 0
+      if (!isTRUE(ordinal)){
+        message(paste("Note: origin is set to ", origin))
+      }
     }
 
     edgelist$time <- as.numeric(t - origin)  # unit is whatever the numeric scale is
@@ -212,6 +136,22 @@ remify2 <- function(edgelist,
   } else {
     stop("Unsupported class for edgelist$time. Use numeric/integer, Date, or POSIXct/POSIXt.")
   }
+  if (isTRUE(ordinal)) {
+    # Convert numeric time to an integer step index over unique time values.
+    # Events with identical times share the same index; indices increase densely.
+    tnum <- edgelist$time
+
+    # Defensive: ensure sorted-by-time assumption holds (optional)
+    # If your pipeline guarantees ordering already, you can omit this check.
+    if (any(is.na(tnum))) stop("edgelist$time contains NA after time translation.")
+    if (is.unsorted(tnum, strictly = FALSE)) {
+      warning("edgelist$time is not nondecreasing; ordinal time indexing will follow sorted unique times.")
+    }
+
+    edgelist$time <- as.integer(match(tnum, sort(unique(tnum))))
+
+  }
+
 
   # input `omit_dyad` and `time` column in `edgelist`
   if(!is.null(omit_dyad)){
@@ -284,7 +224,7 @@ remify2 <- function(edgelist,
     }
 
     if (!is.null(actors)) {
-      warning("`actors` is ignored when `riskset = \"manual\"` and `manual.riskset` is used")
+      message("Note: `actors` is ignored when `riskset = \"manual\"` and `manual.riskset` is used")
       actors <- NULL
     }
 
@@ -362,7 +302,7 @@ remify2 <- function(edgelist,
     }
     ndups <- sum(duplicated(key))
     if (ndups > 0) {
-      warning(sprintf("`manual.riskset` contained %d duplicate entries; duplicates were removed.", ndups))
+      message(sprintf("Note: `manual.riskset` contained %d duplicate entries; duplicates were removed.", ndups))
       manual.riskset <- manual.riskset[!duplicated(key), , drop = FALSE]
     }
 
@@ -374,21 +314,11 @@ remify2 <- function(edgelist,
 
     omit_dyad <- NULL
 
+  }else{
+    manual.riskset <- NULL
   }
 
-
-  # Pre-processing relational event history (remifyCpp.cpp)
-  # out <- tryCatch(remifyCpp2(input_edgelist = edgelist,
-  #                           actors = actors,
-  #                           types = types,
-  #                           directed = directed,
-  #                           ordinal = ordinal,
-  #                           origin = origin,
-  #                           omit_dyad = omit_dyad,
-  #                           model = model,
-  #                           active = active,
-  #                           ncores = ncores),error= function(e) e)
-  out <- remifyCpp3(
+  out <- remifyCpp2(
     input_edgelist = edgelist,
     actors = actors,
     types = types,
@@ -398,7 +328,7 @@ remify2 <- function(edgelist,
     omit_dyad = omit_dyad,
     model = model,
     active = active,                    # reuse “active” outputs
-    manual_riskset = manual.riskset,  # new
+    manual_riskset = manual.riskset,    # new
     ncores = ncores
   )
 
@@ -419,7 +349,8 @@ remify2 <- function(edgelist,
                             ,C = out$C
                             ,D = out$D
                             ,intereventTime = out$intereventTime
-                            ,edgelist = out$edgelist
+                            ,edgelist = out$edgelist,
+                            edgelist_id = NA
   )
   ,class="remify")
   attr(str_out, "with_type") <- out$with_type
@@ -549,7 +480,7 @@ remify2 <- function(edgelist,
     }
     attr(str_out,"actor1ID") <- actor1
     attr(str_out,"actor2ID") <- actor2
-    attr(str_out,"dyadID") <- dyad
+    attr(str_out, "dyadID") <- dyad
     # str_out$index$dyadID <- dyad
     # str_out$index$actor1ID <- actor1
     # str_out$index$actor2ID <- actor2
@@ -611,6 +542,24 @@ remify2 <- function(edgelist,
     }
   }
 
+  # add dyad and actor IDs to edgelist element
+  edgelist_id <- data.frame(
+    time = sort(unique(unique(str_out$edgelist$time))),
+    actor1 = I(attr(str_out, "actor1ID")),
+    actor2 = I(attr(str_out, "actor2ID")),
+    dyad = I(attr(str_out, "dyadID"))
+  )
+  if(isTRUE(attr(str_out, "with_type"))){
+    edgelist_id$type <- I(attr(str_out,"typeID"))
+  }
+  if (isTRUE(attr(str_out, "weighted"))) {
+    w_by_time <- split(str_out$edgelist$weight, str_out$edgelist$time)
+    w_by_time <- unname(w_by_time)
+    edgelist_id$weight <- I(w_by_time)
+  }
+  str_out$edgelist_id <- edgelist_id
+  rm(edgelist_id)
+
   return(str_out)
 }
 
@@ -618,8 +567,8 @@ remify2 <- function(edgelist,
 
 getDyad2 <- function(x, dyadID, active = FALSE) {
 
-  if(active & attr(x,"riskset") == "full"){
-    stop("'active' = TRUE works only for attr(x,'riskset') = 'active'")
+  if (active && attr(x,"riskset") %in% c("full")) {
+    stop("'active' = TRUE works only for attr(x,'riskset') in c('active','manual')")
   }
   if(!is.numeric(dyadID) & !is.integer(dyadID)){
     stop("'dyadID' must be a numeric (or integer) vector")
@@ -638,19 +587,19 @@ getDyad2 <- function(x, dyadID, active = FALSE) {
   dict_loc <- attr(x,"dictionary")
   dyadID_full <- dyadID
   if (active) {
-    dyadIDactive_map <- attr(x, "dyadIDactive")
-    if (is.list(dyadIDactive_map)) dyadIDactive_map <- attr(x, "dyadIDactive_vec")
-    dyadIDactive_map <- as.integer(dyadIDactive_map)
+    rs <- x$omit_dyad$riskset_idx
+    if (is.matrix(rs)) rs <- drop(rs)
+    rs <- as.integer(rs)
 
-    dyadID_map_full <- attr(x, "dyadID")
-    if (is.list(dyadID_map_full)) dyadID_map_full <- attr(x, "dyadID_vec")
-    dyadID_map_full <- as.integer(dyadID_map_full)
+    if (length(rs) == 0L) stop("omit_dyad$riskset_idx is empty.")
 
-    for (d in seq_along(dyadID)) {
-      pos <- which(dyadIDactive_map == dyadID[d])[1]
-      dyadID_full[d] <- dyadID_map_full[pos]
+    if (max(dyadID, na.rm = TRUE) > length(rs)) {
+      stop("Requested dyadIDactive exceeds available active riskset size.")
     }
+
+    dyadID_full <- rs[dyadID]
   }
+
   composition <- getEventsComposition(dyads = dyadID_full, N = x$N, D = x$D,directed = attr(x,"directed"), ncores  = attr(x,"ncores"))
 
   # if at least one dyad is not found (<NA>,<NA>,<NA>), then throw warning

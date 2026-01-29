@@ -1080,6 +1080,7 @@ Rcpp::List convertInputREHIdx( Rcpp::DataFrame input_edgelist,
 
     //[**2**] Processing time variable
     out["order"] = R_NilValue;
+    out["rows_to_remove"] = R_NilValue;
     if(!ordinal){
         std::vector<double> input_time = Rcpp::as<std::vector<double>>(convertedEdgelist["time"]); // converting any time input to a double
         double min_time = *min_element(input_time.begin(), input_time.end());
@@ -1221,7 +1222,7 @@ Rcpp::List convertInputREHIdx( Rcpp::DataFrame input_edgelist,
         distance_time(0) = 1;
         arma::uvec which_interevent_is_zero = arma::find(distance_time <= 0); // can't be negative at this stage of processing
         if(which_interevent_is_zero.n_elem != 0){ // at least one interevent time is equal to 0
-            out["rows_to_remove"] = which_interevent_is_zero;
+            out["rows_to_remove"] = which_interevent_is_zero + 1;
         }
 
         out["intereventTime"] = R_NilValue;
@@ -2169,6 +2170,8 @@ Rcpp::List convertInputREHIdx3(
     arma::uvec which_interevent_is_zero = arma::find(distance_time <= 0); // can't be negative at this stage of processing
     if(which_interevent_is_zero.n_elem != 0){ // at least one interevent time is equal to 0
       out["rows_to_remove"] = which_interevent_is_zero;
+    }else {
+      out["rows_to_remove"] = R_NilValue;                   // or IntegerVector(0)
     }
 
     out["intereventTime"] = R_NilValue;
@@ -2427,166 +2430,7 @@ Rcpp::List convertInputREHIdx3(
 // @return list of objects with processed raw data.
 //
 // [[Rcpp::export]]
-Rcpp::List remifyCpp2(Rcpp::DataFrame input_edgelist,
-                     Rcpp::RObject actors,
-                     Rcpp::RObject types,
-                     bool directed,
-                     bool ordinal,
-                     Rcpp::RObject origin,
-                     Rcpp::List omit_dyad,
-                     std::string model,
-                     bool active = false,
-                     int ncores = 1){
-
-  // Allocating memory for some variables and the output list
-  arma::uword N,C,D; // number of dyads which depends on the directed input value
-  Rcpp::List out = Rcpp::List::create(); // output list
-
-  // cloning some input objects
-  Rcpp::DataFrame edgelist = Rcpp::clone(input_edgelist);
-
-  // START of the processing
-
-  // storing the number of events
-  arma::uword M = edgelist.nrows(); // number of events
-
-  // Processing actor1, actor2, type, weight columns to StringVector or NumericVector
-
-  // actor1
-  edgelist["actor1"] = Rcpp::as<Rcpp::StringVector>(edgelist["actor1"]);
-
-  // actor2
-  edgelist["actor2"] = Rcpp::as<Rcpp::StringVector>(edgelist["actor2"]);
-
-  // type
-  out["with_type"] = false;
-  if(edgelist.containsElementNamed("type")){
-    edgelist["type"] = Rcpp::as<Rcpp::StringVector>(edgelist["type"]);
-    out["with_type"] = true;
-  }
-
-  // Is the network weighted?
-  out["weighted"] = false;
-  if(edgelist.containsElementNamed("weight")){ // if weight is not defined
-    edgelist["weight"] = Rcpp::as<Rcpp::NumericVector>(edgelist["weight"]);
-    out["weighted"] = true;
-  }
-
-  // StringVector of actor1
-  Rcpp::StringVector actor1 = edgelist["actor1"]; // actor1/sender
-
-  // StringVector of actor2
-  Rcpp::StringVector actor2 = edgelist["actor2"]; // actor2/receiver
-
-  //StringVector of actor1 and actor2
-  arma::uword actors_vector_length = 0;
-  Rcpp::StringVector actors_vector;
-  if(!Rf_isNull(actors)){
-    actors_vector = Rcpp::as<Rcpp::StringVector>(actors);
-    actors_vector_length = actors_vector.length();
-  }
-
-  Rcpp::StringVector actor1_and_actor2(actor1.length()+actor2.length()+actors_vector_length);
-  actor1_and_actor2[Rcpp::Range(0,(actor1.length()-1))] = actor1;
-  actor1_and_actor2[Rcpp::Range(actor1.length(),(actor1.length()+actor2.length()-1))] = actor2;
-
-  if(!Rf_isNull(actors)){
-    actor1_and_actor2[Rcpp::Range(actor1.length()+actor2.length(),(actor1_and_actor2.length()-1))] = actors_vector;
-  }
-
-  // Finding unique strings in actor1_and_actor2
-  Rcpp::StringVector actorName = Rcpp::unique(actor1_and_actor2);
-  actorName.sort(); // sorting actors
-  if (std::find(actorName.begin(), actorName.end(), "") != actorName.end())
-  {
-    Rcpp::stop(errorMessage(3));
-  }
-  out["N"] = actorName.length(); // number of actors
-  N = actorName.length();
-
-  // Finding unique strings in event types
-  Rcpp::StringVector typeName;
-  if(out["with_type"]){
-    Rcpp::StringVector type = edgelist["type"];
-    arma::uword types_vector_length = 0;
-    Rcpp::StringVector types_vector;
-
-    if(!Rf_isNull(types)){
-      types_vector = Rcpp::as<Rcpp::StringVector>(types);
-      types_vector_length = types_vector.length();
-    }
-
-    Rcpp::StringVector vector_of_types(type.length()+types_vector_length);
-    vector_of_types[Rcpp::Range(0,type.length()-1)] = type;
-
-    if(!Rf_isNull(types)){
-      vector_of_types[Rcpp::Range(type.length(),vector_of_types.length()-1)] = types_vector;
-    }
-
-    typeName = Rcpp::unique(vector_of_types);
-    typeName.sort(); // sorting types
-    if (std::find(typeName.begin(), typeName.end(), "") != typeName.end())
-    {
-      Rcpp::stop(errorMessage(3));
-    }
-    C = typeName.length();
-    out["C"] = C;
-    if(C == 1){
-      out["C"] = R_NilValue;;
-    }
-  }
-  else{
-    C = 1;
-    out["C"] = R_NilValue;
-  }
-  if(C == 1){
-    out["with_type"] = false;
-  }
-
-  // How many (possible) dyads? if `directed` N*(N-1), N*(N-1)/2 otherwise
-  if(directed){
-    D = N*(N-1)*C;
-  }
-  else{
-    D = ((N*(N-1))/2)*C;
-  }
-
-
-  // Creating a dictionary for actors and event types, that is like: 'string_name' = integer (IDentifier)
-  Rcpp::DataFrame actorsDictionary = Rcpp::DataFrame::create(Rcpp::Named("actorName") = actorName, Rcpp::Named("actorID") = Rcpp::Range(1,N));
-  out["actorsDictionary"] = actorsDictionary;
-
-  Rcpp::DataFrame typesDictionary;
-  if(out["with_type"]){
-    typesDictionary = Rcpp::DataFrame::create(Rcpp::Named("typeName") = typeName, Rcpp::Named("typeID") = Rcpp::Range(1,C));
-    out["typesDictionary"] = typesDictionary;
-  }
-
-  // Processing time variable, converting input edgelist and omit_dyad list according to the new id's for both actors and event types
-  Rcpp::List convertedInput = convertInputREHIdx(edgelist,origin,actorsDictionary,typesDictionary,M,D,directed,omit_dyad,model,out["weighted"],ordinal,C,active,ncores);
-
-  out["warnings"] = convertedInput["warnings"]; // exporting warnings list
-  out["D"] = D; // number of dyads (this dimension is the largest possible and doesn't account for the dynamic riskset)
-  out["dyad"] = convertedInput["dyad"];
-  out["actor1_ID"] = convertedInput["actor1_ID"];
-  out["actor2_ID"] = convertedInput["actor2_ID"];
-  if(out["with_type"]){
-    out["type_ID"] = convertedInput["type_ID"];
-  }
-  out["edgelist"] = convertedInput["edgelist"];
-  out["M"] = convertedInput["M"]; // if there are self-loops the number of events decreases
-  out["omit_dyad"] = convertedInput["omit_dyad"];
-  out["intereventTime"] = convertedInput["intereventTime"];
-  out["evenly_spaced_interevent_time"] = convertedInput["evenly_spaced_interevent_time"];
-  out["rows_to_remove"] = convertedInput["rows_to_remove"];
-  out["order"] = convertedInput["order"];
-
-  // END of the processing and returning output
-  return out;
-}
-
-// [[Rcpp::export]]
-Rcpp::List remifyCpp3(
+Rcpp::List remifyCpp2(
     Rcpp::DataFrame input_edgelist,
     Rcpp::RObject actors,
     Rcpp::RObject types,

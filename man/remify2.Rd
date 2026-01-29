@@ -33,7 +33,10 @@ remify2(
 
 \item{riskset}{[\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user.}
 
-\item{origin}{[\emph{optional}] starting time point of the observaton period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}.}
+\item{manual.riskset}{[\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.}
+
+\item{origin}{[\emph{optional}] starting time point of the observation period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}. If unsupplied, the origin
+is set to the average waiting time in the sequence subtracted from the time of the first event.}
 
 \item{time.units}{Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".}
 
@@ -49,87 +52,4 @@ A function that processes raw relational event history data and returns a S3 obj
 }
 \details{
 In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list. For more details about
-}
-\examples{
-
-# load package and random network 'randomREH'
-library(remify)
-data(randomREH)
-
-# first events in the sequence
-head(randomREH$edgelist)
-
-# actor's names
-randomREH$actors
-
-# event type's names
-randomREH$types
-
-# start time of the study (origin)
-randomREH$origin
-
-# list of changes of the risk set: each one is a list of:
-# 'time' (indicating the time window where to apply the risk set reduction)
-# 'dyad' (a data.frame describing the dyads to remove from the risk set
-# during the time window specified in 'time')
-str(randomREH$omit_dyad)
-
-# -------------------------------------- #
-#  processing for tie-oriented modeling  #
-# -------------------------------------- #
-
-tie_randomREH <- remify(edgelist = randomREH$edgelist,
-       directed = TRUE,
-       ordinal = FALSE,
-       model = "tie",
-       actors = randomREH$actors,
-       types = randomREH$types,
-       riskset = "manual",
-       origin = randomREH$origin,
-       omit_dyad = randomREH$omit_dyad)
-
-# summary
-summary(tie_randomREH)
-
-# dimensions of the processed network
-dim(tie_randomREH)
-
-# Which ID is assigned to the actors with names "Francesca" and "Kayla"?
-getActorID(x = tie_randomREH, actorName = c("Francesca","Kayla"))
-
-# Which ID is assigned to the event type "conflict"?
-getTypeID(x = tie_randomREH, typeName = "conflict")
-
-# Find dyad composition (names of actor1, actor2 and type) from the dyad ID: c(1,380,760,1140)
-getDyad(x = tie_randomREH, dyadID = c(1,380,760,1140))
-
-# visualize descriptive measures of relational event data
-# plot(x = tie_randomREH)
-
-# -------------------------------------- #
-# processing for actor-oriented modeling #
-# -------------------------------------- #
-
-# loading network 'randomREHsmall'
-data(randomREHsmall)
-
-# processing small random network
-actor_randomREH <- remify(edgelist = randomREHsmall$edgelist,
-       directed = TRUE,
-       ordinal = FALSE,
-       model = "actor",
-       actors = randomREHsmall$actors,
-       origin = randomREHsmall$origin)
-
-# summary
-summary(actor_randomREH)
-
-# dimensions of the processed network
-dim(actor_randomREH)
-
-# ------------------------------------ #
-# for more information about remify()  #
-# check: vignette(package="remify")    #
-# ------------------------------------ #
-
 }

@@ -17,12 +17,8 @@ remify2relventrem <- function(actor1, actor2, type, dyad, M, N, D, with_type, di
     .Call(`_remify_remify2relventrem`, actor1, actor2, type, dyad, M, N, D, with_type, directed, model, omit_dyad, ncores)
 }
 
-remifyCpp2 <- function(input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active = FALSE, ncores = 1L) {
-    .Call(`_remify_remifyCpp2`, input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, ncores)
-}
-
-remifyCpp3 <- function(input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, manual_riskset, ncores = 1L) {
-    .Call(`_remify_remifyCpp3`, input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, manual_riskset, ncores)
+remifyCpp2 <- function(input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, manual_riskset, ncores = 1L) {
+    .Call(`_remify_remifyCpp2`, input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, manual_riskset, ncores)
 }
 
 remify2relventremIdx <- function(actor1, actor2, type, dyad, M, N, D, with_type, directed, model, omit_dyad, ncores = 1L) {
