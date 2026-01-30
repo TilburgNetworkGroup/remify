@@ -1,3 +1,8 @@
+# helper for %||% (put once near top of file, not inside function ideally)
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
+
+
 #' @title Process a Relational Event History
 #'
 #' @description A function that processes raw relational event history data and returns a S3 object of class 'remify' which is used as input in other functions inside 'remverse'.
@@ -13,8 +18,27 @@
 #' @param origin [\emph{optional}] starting time point of the observation period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}. If unsupplied, the origin
 #' is set to the average waiting time in the sequence subtracted from the time of the first event.
 #' @param time.units Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".
-#' @param omit_dyad [\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).
+#' @param attach_riskset Logical. If \code{TRUE}, attaches a list \code{riskset_info}
+#'   to the returned \code{remify} object. The list contains the effective risk set
+#'   representation used for estimation (e.g., \code{riskset_idx}, \code{dyadIDactive},
+#'   dictionaries, and basic risk set metadata). This is intended to make the
+#'   returned object self-describing and easier to inspect/debug.
+#' @param riskset_decode Character. Controls how (and whether) the included risk set
+#'   dyads are decoded and attached in \code{riskset_info$included}.
+#'   \describe{
+#'     \item{\code{"labels"}}{Attach a decoded dyad table including actor (and type)
+#'       labels (e.g., \code{actor1}, \code{actor2}, and optional \code{type}).}
+#'     \item{\code{"ids"}}{Attach a decoded dyad table with integer IDs only
+#'       (e.g., \code{actor1ID}, \code{actor2ID}, optional \code{typeID}, and \code{dyadID}).}
+#'     \item{\code{"none"}}{Do not attach a decoded dyad table.}
+#'   }
+#' @param riskset_max_decode Integer. Maximum number of included dyads (i.e.,
+#'   \code{length(riskset_idx)} / \code{D_active}) for which \code{riskset_decode="labels"}
+#'   is allowed. If the included risk set exceeds this threshold, decoding to labels
+#'   is skipped (typically falling back to \code{"ids"} with a warning) to avoid large
+#'   memory usage.
 #' @param ncores [\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).
+#' @param omit_dyad Deprecated. Set to \code{NULL}.
 #'
 #' @return  'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}.
 #'
@@ -35,18 +59,25 @@ remify2 <- function(edgelist,
                    origin = NULL,
                    time.units = c("auto", "secs", "mins",
                              "hours", "days", "weeks"),
-                   #omit_dyad = NULL,
-                   ncores = 1L
+                   attach_riskset = TRUE,
+                   riskset_decode = c("labels","ids","none"),
+                   riskset_max_decode = 200000L,
+                   ncores = 1L,
+                   omit_dyad = NULL
 ){
 
   # (1) Checking for 'edgelist' input object
-
+  if(!is.null(omit_dyad)) {
+    warning("`omit_dyad` is decrecated. It is set to `NULL`.")
+  }
   omit_dyad <- NULL
 
   # Make sure edgelist is a data.frame
   if(!is.data.frame(edgelist)){
     stop("`edgelist` must be of class `data.frame`.")
   }
+
+  riskset_decode <- match.arg(riskset_decode, choices = c("labels","ids","none"))
 
   # ... ncores
   if(is.null(ncores)) ncores <- 1L
@@ -315,6 +346,9 @@ remify2 <- function(edgelist,
     omit_dyad <- NULL
 
   }else{
+    if(!is.null(manual.riskset)){
+      warning("`manual.riskset` is ignored unless `riskset = \"manual\"`.", call. = FALSE)
+    }
     manual.riskset <- NULL
   }
 
@@ -331,6 +365,21 @@ remify2 <- function(edgelist,
     manual_riskset = manual.riskset,    # new
     ncores = ncores
   )
+
+  if (!isTRUE(directed)) {
+    swap <- out$actor1_ID > out$actor2_ID
+    if (any(swap)) {
+      # swap integer actor IDs used downstream by tomstats/prepare_tomstats
+      tmp <- out$actor1_ID[swap]
+      out$actor1_ID[swap] <- out$actor2_ID[swap]
+      out$actor2_ID[swap] <- tmp
+
+      # also swap the original actor labels in out$edgelist for readability/consistency
+      tmpn <- out$edgelist$actor1[swap]
+      out$edgelist$actor1[swap] <- out$edgelist$actor2[swap]
+      out$edgelist$actor2[swap] <- tmpn
+    }
+  }
 
   # handling potential errors coming from C++  - stopping function
   if(any(class(out) %in% c("error"))){
@@ -358,7 +407,13 @@ remify2 <- function(edgelist,
   attr(str_out, "directed") <- directed
   attr(str_out, "ordinal") <- ordinal
   attr(str_out, "model") <- model # useful because tie and actor models have two different ways for handling changing risksets
-  attr(str_out, "riskset") <- riskset
+  if (riskset == "manual") { # manual should be further treated as if it was 'active' to simply compatibility with remstimate
+    attr(str_out, "riskset") <- "active"
+    attr(str_out, "riskset_source") <- "manual"
+  } else {
+    attr(str_out, "riskset") <- riskset
+    attr(str_out, "riskset_source") <- riskset
+  }
   attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary)
   attr(str_out, "origin") <- out$edgelist$time[1]-out$intereventTime[1]
   attr(str_out, "ncores") <- ncores
@@ -431,7 +486,6 @@ remify2 <- function(edgelist,
     }
     rows_to_remove <- out$rows_to_remove
   }
-  out <- NULL # free-ing space [[now]]
 
   # modifying remify object to account for simultaneous events
   if(!is.null(rows_to_remove)){
@@ -541,6 +595,7 @@ remify2 <- function(edgelist,
       str_out$index$dyad_map <- NULL
     }
   }
+  out <- NULL # free-ing space [[now]]
 
   # add dyad and actor IDs to edgelist element
   edgelist_id <- data.frame(
@@ -559,6 +614,131 @@ remify2 <- function(edgelist,
   }
   str_out$edgelist_id <- edgelist_id
   rm(edgelist_id)
+
+  # add riskset info
+  decode_dyad_id <- function(dyadID, N, directed = TRUE, C = 1L) {
+    dyadID <- as.integer(dyadID)
+    d0 <- dyadID - 1L
+
+    if (directed) {
+      D0 <- N * (N - 1L)
+      type0 <- d0 %/% D0
+      r <- d0 - type0 * D0
+
+      a10 <- r %/% (N - 1L)
+      which2 <- r - a10 * (N - 1L)
+      a20 <- ifelse(which2 >= a10, which2 + 1L, which2)
+
+    } else {
+      D0 <- N * (N - 1L) %/% 2L
+      type0 <- d0 %/% D0
+      r <- d0 - type0 * D0
+
+      b <- 2L * N - 1L
+      disc <- b*b - 8L * r
+      i0 <- floor((b - sqrt(disc)) / 2)
+
+      cum_i <- i0 * (2L * N - i0 - 1L) %/% 2L
+      within <- r - cum_i
+      a10 <- i0
+      a20 <- i0 + 1L + within
+    }
+
+    data.frame(
+      actor1ID = a10 + 1L,
+      actor2ID = a20 + 1L,
+      typeID   = type0 + 1L
+    )
+  }
+
+  if (isTRUE(attach_riskset)) {
+
+    dict <- attr(str_out, "dictionary")
+    actors_df <- dict$actors
+    types_df  <- dict$types
+
+    N <- nrow(actors_df)
+    with_type <- !is.null(types_df)
+    C <- if (with_type) nrow(types_df) else 1L
+    directed <- isTRUE(attr(str_out, "directed"))
+
+    D_full <- if (directed) N*(N-1L)*C else (N*(N-1L)%/%2L)*C
+
+    mode <- as.character(attr(str_out, "riskset"))  # "full"/"active"/"manual" (or manual-as-active)
+
+    dyad_full_vec <- as.integer(attr(str_out, "dyadID_vec") %||% unlist(attr(str_out, "dyadID")))
+
+    riskset_idx <- switch(
+      mode,
+      full   = seq_len(D_full),
+      active = sort(unique(dyad_full_vec)),
+      manual = as.integer(str_out$omit_dyad$riskset_idx[,1]),
+      stop("Unknown riskset mode: ", mode)
+    )
+
+    # per-event mapping into included set
+    dyadIDactive <- switch(
+      mode,
+      full   = dyad_full_vec,
+      active = match(dyad_full_vec, riskset_idx),
+      manual = as.integer(str_out$omit_dyad$dyadIDactive[,1])
+    )
+
+    rs <- list(
+      mode = mode,
+      directed = directed,
+      with_type = with_type,
+      N = N, C = C,
+      D_full = D_full,
+      D_active = length(riskset_idx),
+      riskset_idx = riskset_idx,
+      dyadIDactive = dyadIDactive,
+      actors = actors_df,
+      types  = types_df
+    )
+
+    # ---- decoding policy: labels -> ids fallback when too large -----------------
+    n_dyads <- length(riskset_idx)
+
+    decode_eff <- riskset_decode
+    if (riskset_decode == "labels" && n_dyads > riskset_max_decode) {
+      warning("Risk set has ", n_dyads, " dyads; attaching ID-only dyad table (threshold ",
+              riskset_max_decode, " for labels).", call. = FALSE)
+      decode_eff <- "ids"
+    }
+
+    if (decode_eff %in% c("ids","labels")) {
+      comp <- decode_dyad_id(riskset_idx, N = N, directed = directed, C = C)
+      comp$dyadID <- riskset_idx
+
+      if (decode_eff == "labels") {
+        comp$actor1 <- actors_df$actorName[comp$actor1ID]
+        comp$actor2 <- actors_df$actorName[comp$actor2ID]
+        if (with_type) comp$type <- types_df$typeName[comp$typeID]
+      }
+
+      if (with_type) {
+        if (decode_eff == "labels") {
+          keep <- c("actor1","actor2","type","dyadID","actor1ID","actor2ID","typeID")
+        } else {
+          keep <- c("dyadID","actor1ID","actor2ID","typeID")
+        }
+      } else {
+        if (decode_eff == "labels") {
+          keep <- c("actor1","actor2","dyadID","actor1ID","actor2ID")
+        } else {
+          keep <- c("dyadID","actor1ID","actor2ID")
+        }
+      }
+
+      rs$included <- comp[, keep, drop = FALSE]
+      rs$decode <- decode_eff
+    } else {
+      rs$decode <- "none"
+    }
+
+    str_out$riskset_info <- rs
+  }
 
   return(str_out)
 }

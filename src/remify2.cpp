@@ -99,6 +99,7 @@ Rcpp::List getOmitDyadActiveRiskSet2(std::string model,
 
   return out;
 }
+// [[Rcpp::export]]
 Rcpp::List getOmitDyadManualRiskSet3(std::string model,
                                      arma::uvec actor1,
                                      arma::uvec actor2,
@@ -113,7 +114,20 @@ Rcpp::List getOmitDyadManualRiskSet3(std::string model,
 
   arma::uword M = actor1.size();
 
-  // ---- 1) Convert manual_riskset actor/type strings to 0-based IDs ----
+  // ---- 0) Determine indexing base of incoming event IDs -----------------------
+  // actor1/actor2 (and type) coming from convertInputREHIdx2 may be 1-based.
+  // We align manual_riskset mapping to the same base.
+  int actor_base = (actor1.min() == 0 || actor2.min() == 0) ? 0 : 1;
+
+  int type_base = 0;
+  if (type.n_elem > 0) {
+    type_base = (type.min() == 0) ? 0 : 1;
+  }
+
+  // Typed iff more than one type level exists
+  bool typed = (typeName.size() > 1);
+
+  // ---- 1) Read manual_riskset columns ----------------------------------------
   if (!manual_riskset.containsElementNamed("actor1") ||
       !manual_riskset.containsElementNamed("actor2")) {
       Rcpp::stop("`manual_riskset` must contain columns `actor1` and `actor2`.");
@@ -122,20 +136,27 @@ Rcpp::List getOmitDyadManualRiskSet3(std::string model,
   Rcpp::StringVector mr_a1 = Rcpp::as<Rcpp::StringVector>(manual_riskset["actor1"]);
   Rcpp::StringVector mr_a2 = Rcpp::as<Rcpp::StringVector>(manual_riskset["actor2"]);
 
-  bool has_type_col = manual_riskset.containsElementNamed("type") && (typeName.size() > 0);
+  bool has_type_col = typed && manual_riskset.containsElementNamed("type");
   Rcpp::StringVector mr_t;
-  if (has_type_col) {
+  if (typed) {
+    if (!has_type_col) {
+      Rcpp::stop("Typed model detected but `manual_riskset` has no `type` column.");
+    }
     mr_t = Rcpp::as<Rcpp::StringVector>(manual_riskset["type"]);
+    if (mr_t.size() != mr_a1.size()) {
+      Rcpp::stop("`manual_riskset$type` must have the same length as `manual_riskset$actor1`.");
+    }
   }
 
-  arma::uword K = mr_a1.size(); // number of manual rows
-
+  arma::uword K = mr_a1.size();
   std::vector<int> active_dyads_vec;
   active_dyads_vec.reserve(K);
 
+  // ---- 2) Convert manual dyads to full dyad IDs (0-based) --------------------
+  // Note: remify::getDyadIndex expects 0-based actor/type IDs in your codebase
+  // (consistent with later call using actor1(m)-1 etc).
   for (arma::uword i = 0; i < K; ++i) {
 
-    // actor1 lookup
     std::string a1s = Rcpp::as<std::string>(mr_a1[i]);
     std::string a2s = Rcpp::as<std::string>(mr_a2[i]);
 
@@ -146,41 +167,46 @@ Rcpp::List getOmitDyadManualRiskSet3(std::string model,
       Rcpp::stop("`manual_riskset` contains actor(s) not found in the actor dictionary.");
     }
 
-    int a1_id0 = (int)(it1 - actorName.begin()); // 0-based
-    int a2_id0 = (int)(it2 - actorName.begin()); // 0-based
+    // Convert to the SAME base as event actor vectors, then convert to 0-based for getDyadIndex
+    int a1_id = (int)(it1 - actorName.begin()) + actor_base;
+    int a2_id = (int)(it2 - actorName.begin()) + actor_base;
 
-    int t_id0 = 0;
-    if (typeName.size() > 0) {
-      if (!has_type_col) {
-        Rcpp::stop("Typed model detected but `manual_riskset` has no `type` column (R-side expansion should prevent this).");
-      }
+    if (!directed && a1_id > a2_id) std::swap(a1_id, a2_id);
+
+    if (a1_id == a2_id) {
+      Rcpp::stop("`manual_riskset` may not contain self-loops (actor1 == actor2).");
+    }
+
+    int t_id = type_base; // first type level if typed==false
+    if (typed) {
       std::string ts = Rcpp::as<std::string>(mr_t[i]);
       auto itt = std::find(typeName.begin(), typeName.end(), ts);
       if (itt == typeName.end()) {
         Rcpp::stop("`manual_riskset$type` contains a type not found in the type dictionary.");
       }
-      t_id0 = (int)(itt - typeName.begin()); // 0-based
+      t_id = (int)(itt - typeName.begin()) + type_base;
     }
 
-    // self-loop protection (optional; you likely disallow them elsewhere)
-    if (a1_id0 == a2_id0) {
-      Rcpp::stop("`manual_riskset` may not contain self-loops (actor1 == actor2).");
-    }
+    // 0-based ids for dyad indexer
+    int a1_0 = a1_id - actor_base;
+    int a2_0 = a2_id - actor_base;
+    int t_0  = typed ? (t_id - type_base) : 0;
 
-    int dyad_i = remify::getDyadIndex(a1_id0, a2_id0, t_id0, N, directed);
+    int dyad_i = remify::getDyadIndex(a1_0, a2_0, t_0, N, directed);
     active_dyads_vec.push_back(dyad_i);
   }
 
-  // ---- 2) Sort + unique active dyads (0-based full dyad indices) ----
+  // ---- 3) Sort + unique active dyads (0-based) --------------------------------
   std::sort(active_dyads_vec.begin(), active_dyads_vec.end());
-  active_dyads_vec.erase(std::unique(active_dyads_vec.begin(),
-                                     active_dyads_vec.end()),
-                                     active_dyads_vec.end());
+  active_dyads_vec.erase(std::unique(active_dyads_vec.begin(), active_dyads_vec.end()),
+                         active_dyads_vec.end());
 
   arma::uvec active_dyads(active_dyads_vec.size());
-  for (arma::uword i = 0; i < active_dyads.n_elem; ++i)
-    active_dyads(i) = active_dyads_vec[i];
+  for (arma::uword i = 0; i < active_dyads.n_elem; ++i) {
+    active_dyads(i) = (arma::uword)active_dyads_vec[i];
+  }
 
+  // In this manual-riskset approach, riskset is fixed over time
   arma::vec which_time(M, arma::fill::zeros);
 
   Rcpp::List out = Rcpp::List::create(
@@ -190,33 +216,48 @@ Rcpp::List getOmitDyadManualRiskSet3(std::string model,
   );
 
   if (model == "actor") {
+    // actor1 is in base actor_base; unique() keeps same base
     arma::umat riskset_sender(1, N, arma::fill::zeros);
     arma::uvec which_sender = arma::unique(actor1);
-    riskset_sender.cols(which_sender - 1).fill(1);
+    // convert sender IDs to 0-based column indices
+    riskset_sender.cols(which_sender - actor_base).fill(1);
     out["risksetSender"] = riskset_sender;
   }
 
-  // ---- 3) Map each event dyad into active index (dyadIDactive) ----
+  // ---- 4) Map each observed event dyad into the active index ------------------
   arma::uvec dyadIDactive(M, arma::fill::zeros);
 
 #ifdef _OPENMP
 #pragma omp parallel for if(ncores>1)
 #endif
   for (arma::uword m = 0; m < M; m++) {
-    int dyad_m = remify::getDyadIndex(actor1(m)-1, actor2(m)-1, type(m)-1, N, directed);
+
+    // Convert event ids to 0-based for getDyadIndex
+    int a1_0 = (int)actor1(m) - actor_base;
+    int a2_0 = (int)actor2(m) - actor_base;
+
+    int t_0 = 0;
+    if (typed) {
+      t_0 = (int)type(m) - type_base;
+    }
+
+    int dyad_m = remify::getDyadIndex(a1_0, a2_0, t_0, N, directed);
+
+    // Find dyad_m within active set
     arma::uvec idx = arma::find(active_dyads == (arma::uword)dyad_m);
 
     if (idx.n_elem == 0) {
       Rcpp::stop("An observed event dyad is not included in `manual_riskset`.");
     }
 
-    dyadIDactive(m) = idx(0) + 1; // 1-based
+    dyadIDactive(m) = idx(0) + 1; // 1-based index into active set for R
   }
 
   out["dyadIDactive"] = dyadIDactive;
 
   return out;
 }
+
 
 
 
@@ -1432,7 +1473,7 @@ Rcpp::List convertInputREHIdx( Rcpp::DataFrame input_edgelist,
 
     return out;
 }
-Rcpp::List convertInputREHIdx3(
+Rcpp::List convertInputREHIdx2(
     Rcpp::DataFrame input_edgelist,
     Rcpp::RObject input_origin,
     Rcpp::DataFrame actorsDictionary,
@@ -2614,7 +2655,7 @@ Rcpp::List remifyCpp2(
   }
 
   // Processing time variable, converting input edgelist and omit_dyad list according to the new id's for both actors and event types
-  Rcpp::List convertedInput = convertInputREHIdx3(
+  Rcpp::List convertedInput = convertInputREHIdx2(
     edgelist,
     origin,
     actorsDictionary,
@@ -2631,7 +2672,6 @@ Rcpp::List remifyCpp2(
        manual_riskset,
        ncores
   );
-
 
   out["warnings"] = convertedInput["warnings"]; // exporting warnings list
   out["D"] = D; // number of dyads (this dimension is the largest possible and doesn't account for the dynamic riskset)

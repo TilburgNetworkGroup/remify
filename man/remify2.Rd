@@ -15,7 +15,11 @@ remify2(
   manual.riskset = NULL,
   origin = NULL,
   time.units = c("auto", "secs", "mins", "hours", "days", "weeks"),
-  ncores = 1L
+  attach_riskset = TRUE,
+  riskset_decode = c("labels", "ids", "none"),
+  riskset_max_decode = 200000L,
+  ncores = 1L,
+  omit_dyad = NULL
 )
 }
 \arguments{
@@ -40,9 +44,31 @@ is set to the average waiting time in the sequence subtracted from the time of t
 
 \item{time.units}{Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".}
 
+\item{attach_riskset}{Logical. If \code{TRUE}, attaches a list \code{riskset_info}
+to the returned \code{remify} object. The list contains the effective risk set
+representation used for estimation (e.g., \code{riskset_idx}, \code{dyadIDactive},
+dictionaries, and basic risk set metadata). This is intended to make the
+returned object self-describing and easier to inspect/debug.}
+
+\item{riskset_decode}{Character. Controls how (and whether) the included risk set
+dyads are decoded and attached in \code{riskset_info$included}.
+\describe{
+  \item{\code{"labels"}}{Attach a decoded dyad table including actor (and type)
+    labels (e.g., \code{actor1}, \code{actor2}, and optional \code{type}).}
+  \item{\code{"ids"}}{Attach a decoded dyad table with integer IDs only
+    (e.g., \code{actor1ID}, \code{actor2ID}, optional \code{typeID}, and \code{dyadID}).}
+  \item{\code{"none"}}{Do not attach a decoded dyad table.}
+}}
+
+\item{riskset_max_decode}{Integer. Maximum number of included dyads (i.e.,
+\code{length(riskset_idx)} / \code{D_active}) for which \code{riskset_decode="labels"}
+is allowed. If the included risk set exceeds this threshold, decoding to labels
+is skipped (typically falling back to \code{"ids"} with a warning) to avoid large
+memory usage.}
+
 \item{ncores}{[\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).}
 
-\item{omit_dyad}{[\emph{optional}] list of lists. Each list refers to one risk set modification and must have two objects: a first object named `time`, that is a vector of two values defining the first and last time point of the time window where to apply the change to the risk set and a second object, named `dyad`, which is a \code{\link[base]{data.frame}} where dyads to be removed are supplied in the format \code{actor1,actor2,type} (by row). The \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list (see Details).}
+\item{omit_dyad}{Deprecated. Set to \code{NULL}.}
 }
 \value{
 'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}.
