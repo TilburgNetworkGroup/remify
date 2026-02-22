@@ -9,17 +9,20 @@ remify2(
   directed = TRUE,
   ordinal = FALSE,
   model = c("tie", "actor"),
+  thin = 1,
   actors = NULL,
-  types = NULL,
   riskset = c("full", "active", "manual"),
   manual.riskset = NULL,
+  event_type = NULL,
   origin = NULL,
   time.units = c("auto", "secs", "mins", "hours", "days", "weeks"),
   attach_riskset = TRUE,
   riskset_decode = c("labels", "ids", "none"),
   riskset_max_decode = 200000L,
+  event_covariates = NULL,
   ncores = 1L,
-  omit_dyad = NULL
+  omit_dyad = NULL,
+  types = NULL
 )
 }
 \arguments{
@@ -31,13 +34,31 @@ remify2(
 
 \item{model}{can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.}
 
-\item{actors}{[\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.}
+\item{thin}{Integer >= 1. Event-time thinning based on unique time points.
+Keeps every \code{thin}-th unique event time (after time translation) and
+maps each event time to the next kept time point (i.e., ceiling to the kept grid).
+This reduces the number of unique time points (and thus memory/computation in later steps).}
 
-\item{types}{[\emph{optional}] character vector of event types that may occur in the network. If \code{NULL} (default), types' names will be taken from the input edgelist.}
+\item{actors}{[\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.}
 
 \item{riskset}{[\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user.}
 
 \item{manual.riskset}{[\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.}
+
+\item{event_type}{Optional. Either \code{NULL} (default) or a single character
+  string giving the name of the column in \code{edgelist} that contains event
+  types (marks).
+
+  If \code{event_type} is \code{NULL}, \code{remify2()} uses \code{edgelist$type}
+  if it exists; otherwise events are treated as untyped.
+
+  If \code{event_type} is a column name, that column is used as the event-type
+  mark. If a column named \code{type} already exists and \code{event_type != "type"},
+  the existing \code{edgelist$type} is overridden (with a warning).
+
+  When event types are present (via \code{edgelist$type} or \code{event_type}),
+  the dyadic risk set is extended over types, i.e., each dyad is duplicated for
+  each event type (dyad \eqn{\times} type).}
 
 \item{origin}{[\emph{optional}] starting time point of the observation period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}. If unsupplied, the origin
 is set to the average waiting time in the sequence subtracted from the time of the first event.}
@@ -66,9 +87,25 @@ is allowed. If the included risk set exceeds this threshold, decoding to labels
 is skipped (typically falling back to \code{"ids"} with a warning) to avoid large
 memory usage.}
 
+\item{event_covariates}{Optional character vector of column names in
+  \code{edgelist} to retain as additional event-level variables in the
+  returned \code{reh} object.
+
+  These columns are stored as \code{reh$event_covariates} together with the
+  corresponding \code{time}, \code{actor1}, and \code{actor2} columns (and an
+  internal \code{.event_id}). This is useful when downstream functions (e.g.,
+  in \pkg{remstats}) need access to event-level marks/covariates that are not
+  part of the core \code{reh$edgelist} produced by \code{remify2()}.
+
+  Note: \code{event_covariates} does not affect risk set construction or type
+  handling in \code{remify2()}; it only preserves additional columns for later
+  use.}
+
 \item{ncores}{[\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).}
 
 \item{omit_dyad}{Deprecated. Set to \code{NULL}.}
+
+\item{types}{Deprecated. Set to \code{NULL}.}
 }
 \value{
 'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}.

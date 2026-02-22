@@ -11,10 +11,27 @@
 #' @param directed logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})
 #' @param ordinal logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the exact timing must be considered in the model (\code{FALSE}). (default value is \code{FALSE}). If \code{TRUE}, then the column "time" of \code{edgelist} is still used to extract the order.
 #' @param model can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.
+#' @param thin Integer >= 1. Event-time thinning based on unique time points.
+#'   Keeps every \code{thin}-th unique event time (after time translation) and
+#'   maps each event time to the next kept time point (i.e., ceiling to the kept grid).
+#'   This reduces the number of unique time points (and thus memory/computation in later steps).
 #' @param actors [\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.
-#' @param types [\emph{optional}] character vector of event types that may occur in the network. If \code{NULL} (default), types' names will be taken from the input edgelist.
 #' @param riskset [\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user.
 #' @param manual.riskset [\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.
+#' @param event_type Optional. Either \code{NULL} (default) or a single character
+#'   string giving the name of the column in \code{edgelist} that contains event
+#'   types (marks).
+#'
+#'   If \code{event_type} is \code{NULL}, \code{remify2()} uses \code{edgelist$type}
+#'   if it exists; otherwise events are treated as untyped.
+#'
+#'   If \code{event_type} is a column name, that column is used as the event-type
+#'   mark. If a column named \code{type} already exists and \code{event_type != "type"},
+#'   the existing \code{edgelist$type} is overridden (with a warning).
+#'
+#'   When event types are present (via \code{edgelist$type} or \code{event_type}),
+#'   the dyadic risk set is extended over types, i.e., each dyad is duplicated for
+#'   each event type (dyad \eqn{\times} type).
 #' @param origin [\emph{optional}] starting time point of the observation period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}. If unsupplied, the origin
 #' is set to the average waiting time in the sequence subtracted from the time of the first event.
 #' @param time.units Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".
@@ -37,8 +54,22 @@
 #'   is allowed. If the included risk set exceeds this threshold, decoding to labels
 #'   is skipped (typically falling back to \code{"ids"} with a warning) to avoid large
 #'   memory usage.
+#' @param event_covariates Optional character vector of column names in
+#'   \code{edgelist} to retain as additional event-level variables in the
+#'   returned \code{reh} object.
+#'
+#'   These columns are stored as \code{reh$event_covariates} together with the
+#'   corresponding \code{time}, \code{actor1}, and \code{actor2} columns (and an
+#'   internal \code{.event_id}). This is useful when downstream functions (e.g.,
+#'   in \pkg{remstats}) need access to event-level marks/covariates that are not
+#'   part of the core \code{reh$edgelist} produced by \code{remify2()}.
+#'
+#'   Note: \code{event_covariates} does not affect risk set construction or type
+#'   handling in \code{remify2()}; it only preserves additional columns for later
+#'   use.
 #' @param ncores [\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).
 #' @param omit_dyad Deprecated. Set to \code{NULL}.
+#' @param types Deprecated. Set to \code{NULL}.
 #'
 #' @return  'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}.
 #'
@@ -52,25 +83,28 @@ remify2 <- function(edgelist,
                    directed = TRUE,
                    ordinal = FALSE,
                    model = c("tie","actor"),
+                   thin = 1,
                    actors = NULL,
-                   types = NULL,
                    riskset = c("full","active","manual"),
                    manual.riskset = NULL,
+                   event_type = NULL,
                    origin = NULL,
                    time.units = c("auto", "secs", "mins",
                              "hours", "days", "weeks"),
                    attach_riskset = TRUE,
                    riskset_decode = c("labels","ids","none"),
                    riskset_max_decode = 200000L,
+                   event_covariates = NULL,
                    ncores = 1L,
-                   omit_dyad = NULL
+                   omit_dyad = NULL,
+                   types = NULL
 ){
 
   # (1) Checking for 'edgelist' input object
   if(!is.null(omit_dyad)) {
     warning("`omit_dyad` is decrecated. It is set to `NULL`.")
   }
-  omit_dyad <- NULL
+  omit_dyad <- types <- NULL
 
   # Make sure edgelist is a data.frame
   if(!is.data.frame(edgelist)){
@@ -111,6 +145,34 @@ remify2 <- function(edgelist,
   if(!("actor2" %in% names(edgelist))){
     #stop("`edgelist` should contain a column named `actor2` with the second actors/receivers of the events.")
     names(edgelist)[3] <- "actor2"
+  }
+
+  if (!is.null(event_type)) {
+    if (!is.character(event_type) || length(event_type) != 1L) {
+      stop("`event_type` must be NULL or a single column name.")
+    }
+    if (!(event_type %in% names(edgelist))) {
+      stop("`event_type` not found in `edgelist`: ", event_type)
+    }
+
+    if (event_type != "type") {
+      if ("type" %in% names(edgelist)) {
+        warning("`event_type = '", event_type,
+                "'` overrides existing `edgelist$type` for event typing.",
+                call. = FALSE)
+      }
+      edgelist$type <- edgelist[[event_type]]
+    }
+  }
+
+  # validate event_covariates
+  if (!is.null(event_covariates)) {
+    if (!is.character(event_covariates)) stop("`event_covariates` must be a character vector of column names.")
+    event_covariates <- unique(event_covariates)
+    missing <- setdiff(event_covariates, names(edgelist))
+    if (length(missing)) stop("`event_covariates` not found in `edgelist`: ", paste(missing, collapse = ", "))
+    event_covariates <- setdiff(event_covariates, c("time","actor1","actor2","type","weight"))
+    if (!length(event_covariates)) event_covariates <- NULL
   }
 
   # checking input argument "model" :
@@ -181,6 +243,32 @@ remify2 <- function(edgelist,
 
     edgelist$time <- as.integer(match(tnum, sort(unique(tnum))))
 
+  }
+
+  # --- thinning (event-grid thinning: keep every `thin`-th unique time) --------
+  if (!is.null(thin) && length(thin) == 1L) {
+    if (!is.numeric(thin) || is.na(thin) || thin < 1) {
+      stop("`thin` must be a single numeric value >= 1.")
+    }
+    thin <- as.integer(thin)
+
+    if (thin > 1L) {
+      tt <- edgelist$time
+      if (anyNA(tt)) stop("edgelist$time contains NA before thinning.")
+
+      u <- sort(unique(tt))
+      keep_idx <- seq.int(from = thin, to = length(u), by = thin)
+      kept <- u[keep_idx]
+
+      # map each time to the next kept time >= tt, preserving exact matches
+      j <- findInterval(tt, kept, left.open = TRUE) + 1L
+      j[j > length(kept)] <- length(kept)
+      edgelist$time <- kept[j]
+
+      if (isTRUE(ordinal)) {
+        edgelist$time <- as.integer(match(edgelist$time, sort(unique(edgelist$time))))
+      }
+    }
   }
 
 
@@ -352,6 +440,13 @@ remify2 <- function(edgelist,
     manual.riskset <- NULL
   }
 
+  # capture event covariates before C++
+  event_covariates_df <- NULL
+  if (!is.null(event_covariates)) {
+    event_covariates_df <- edgelist[, c("time","actor1","actor2", event_covariates), drop = FALSE]
+    event_covariates_df$.event_id <- seq_len(nrow(event_covariates_df))
+  }
+
   out <- remifyCpp2(
     input_edgelist = edgelist,
     actors = actors,
@@ -429,6 +524,43 @@ remify2 <- function(edgelist,
     origin = out$edgelist$time[1]-out$intereventTime[1],
     ncores = ncores
   )
+  # append event covariates into reh$edgelist
+if (!is.null(event_covariates_df)) {
+  # drop the duplicated core columns; keep only the extra covariate columns
+  extra <- event_covariates_df[, event_covariates, drop = FALSE]
+
+  # sanity: same number/order of rows as out$edgelist (should hold in your current pipeline)
+  if (nrow(extra) != nrow(str_out$edgelist)) {
+    warning("`event_covariates` could not be attached to `reh$edgelist` (row mismatch). Storing as `reh$event_covariates` instead.",
+            call. = FALSE)
+    str_out$event_covariates <- event_covariates_df
+  } else {
+    # avoid name collisions: disallow overwriting core columns
+    bad <- intersect(names(extra), names(str_out$edgelist))
+    if (length(bad)) {
+      stop("`event_covariates` collide with existing `reh$edgelist` columns: ",
+           paste(bad, collapse = ", "))
+    }
+    str_out$edgelist <- cbind(str_out$edgelist, extra)
+    attr(str_out, "event_covariates") <- event_covariates
+  }
+}
+
+  # after constructing str_out and after undirected swap on out$edgelist, canonicalize stored event covariates too
+  if (!isTRUE(directed) && !is.null(event_covariates_df)) {
+    swapx <- event_covariates_df$actor1 > event_covariates_df$actor2
+    if (any(swapx)) {
+      tmp <- event_covariates_df$actor1[swapx]
+      event_covariates_df$actor1[swapx] <- event_covariates_df$actor2[swapx]
+      event_covariates_df$actor2[swapx] <- tmp
+    }
+  }
+
+  # attach to output
+  if (!is.null(event_covariates_df)) {
+    #str_out$event_covariates <- event_covariates_df
+    attr(str_out, "event_covariates") <- event_covariates
+  }
 
   # ID of actors, types and dyads
   attr(str_out, "dyadID") <- out$dyad
@@ -437,6 +569,7 @@ remify2 <- function(edgelist,
   if(out$with_type){
     attr(str_out,"typeID") <- out$type_ID
   }
+
   # # build index (event-level ids)
   # str_out$index <- list(
   #   dyadID   = out$dyad,
@@ -525,7 +658,7 @@ remify2 <- function(edgelist,
       actor1[[m]] <- attr(str_out,"actor1ID")[which_time_m]
       actor2[[m]] <- attr(str_out,"actor2ID")[which_time_m]
       dyad[[m]] <- attr(str_out, "dyadID")[which_time_m]
-      if(active){
+      if(active || riskset == "manual"){
         dyadIDactive[[m]] <- attr(str_out,"dyadIDactive")[which_time_m]
       }
       if(attr(str_out, "with_type")){
@@ -549,8 +682,9 @@ remify2 <- function(edgelist,
     rm(actor1,actor2,type,dyad,dyadIDactive)
   }
 
-  #store the dyad mapping in remify object to avoid the need to getDyad
+  # store the dyad mapping in remify object to avoid the need to getDyad
   if (active || riskset == "manual") {
+
     str_out$index$dyad_map_active <- getDyad2(
       x = str_out,
       dyadID = seq_len(as.integer(str_out$activeD)[1]),
@@ -558,10 +692,12 @@ remify2 <- function(edgelist,
     )
 
     if (riskset == "manual") {
-      str_out$index$dyad_map <- NULL
+      # treat manual like active for downstream code: expose the included set as dyad_map
+      str_out$index$dyad_map <- str_out$index$dyad_map_active
     }
 
-  }else{
+  } else {
+
     str_out$index$dyad_map <- getDyad2(
       x = str_out,
       dyadID = seq_len(str_out$D),
@@ -569,32 +705,32 @@ remify2 <- function(edgelist,
     )
   }
 
-  if (riskset %in% c("active","manual")) {
-
-    # full dyad ids in the (compressed) riskset
-    rs <- as.integer(out$omit_dyad$riskset_idx)
-
-    # full map (exists for full/manual currently)
-    dm_full <- str_out$index$dyad_map
-
-    # subset and relabel to make dyad_map_active
-    dm_active <- dm_full[match(rs, dm_full$dyadID), , drop = FALSE]
-    dm_active$dyadIDactive <- seq_len(nrow(dm_active))
-
-    # reorder columns to match active mode
-    if ("type" %in% names(dm_active)) {
-      dm_active <- dm_active[, c("dyadIDactive","actor1","actor2","type"), drop = FALSE]
-    } else {
-      dm_active <- dm_active[, c("dyadIDactive","actor1","actor2"), drop = FALSE]
-    }
-
-    str_out$index$dyad_map_active <- dm_active
-
-    # optional: drop full map for manual to be structurally identical
-    if (riskset == "manual") {
-      str_out$index$dyad_map <- NULL
-    }
-  }
+  # if (riskset %in% c("manual")) {
+  #
+  #   # full dyad ids in the (compressed) riskset
+  #   rs <- as.integer(out$omit_dyad$riskset_idx)
+  #
+  #   # full map (exists for full/manual currently)
+  #   dm_full <- str_out$index$dyad_map
+  #
+  #   # subset and relabel to make dyad_map_active
+  #   dm_active <- dm_full[match(rs, dm_full$dyadID), , drop = FALSE]
+  #   dm_active$dyadIDactive <- seq_len(nrow(dm_active))
+  #
+  #   # reorder columns to match active mode
+  #   if ("type" %in% names(dm_active)) {
+  #     dm_active <- dm_active[, c("dyadIDactive","actor1","actor2","type"), drop = FALSE]
+  #   } else {
+  #     dm_active <- dm_active[, c("dyadIDactive","actor1","actor2"), drop = FALSE]
+  #   }
+  #
+  #   str_out$index$dyad_map_active <- dm_active
+  #
+  #   # optional: drop full map for manual to be structurally identical
+  #   if (riskset == "manual") {
+  #     str_out$index$dyad_map <- NULL
+  #   }
+  # }
   out <- NULL # free-ing space [[now]]
 
   # add dyad and actor IDs to edgelist element
