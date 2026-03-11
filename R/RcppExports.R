@@ -21,8 +21,8 @@ getOmitDyadManualRiskSet3 <- function(model, actor1, actor2, type, manual_riskse
     .Call(`_remify_getOmitDyadManualRiskSet3`, model, actor1, actor2, type, manual_riskset, actorName, typeName, D, N, directed, ncores)
 }
 
-remifyCpp2 <- function(input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, manual_riskset, ncores = 1L) {
-    .Call(`_remify_remifyCpp2`, input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, manual_riskset, ncores)
+remifyCpp2 <- function(input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, manual_riskset, extend_riskset_by_type = TRUE, ncores = 1L) {
+    .Call(`_remify_remifyCpp2`, input_edgelist, actors, types, directed, ordinal, origin, omit_dyad, model, active, manual_riskset, extend_riskset_by_type, ncores)
 }
 
 remify2relventremIdx <- function(actor1, actor2, type, dyad, M, N, D, with_type, directed, model, omit_dyad, ncores = 1L) {

@@ -13,6 +13,7 @@ remify2(
   actors = NULL,
   riskset = c("full", "active", "manual"),
   manual.riskset = NULL,
+  extend_riskset_by_type = TRUE,
   event_type = NULL,
   origin = NULL,
   time.units = c("auto", "secs", "mins", "hours", "days", "weeks"),

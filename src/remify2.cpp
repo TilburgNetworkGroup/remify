@@ -110,6 +110,7 @@ Rcpp::List getOmitDyadManualRiskSet3(std::string model,
                                      int D,
                                      int N,
                                      bool directed,
+                                     bool extend_riskset_by_type,
                                      int ncores){
 
   arma::uword M = actor1.size();
@@ -125,7 +126,7 @@ Rcpp::List getOmitDyadManualRiskSet3(std::string model,
   }
 
   // Typed iff more than one type level exists
-  bool typed = (typeName.size() > 1);
+  bool typed = (typeName.size() > 1) && extend_riskset_by_type;
 
   // ---- 1) Read manual_riskset columns ----------------------------------------
   if (!manual_riskset.containsElementNamed("actor1") ||
@@ -1485,9 +1486,10 @@ Rcpp::List convertInputREHIdx2(
     std::string model,
     bool weighted,
     bool ordinal,
-    arma::uword C,
+    arma::uword C_event,
     bool active,
     Rcpp::Nullable<Rcpp::DataFrame> manual_riskset,
+    bool extend_riskset_by_type,
     int ncores
 ){
 
@@ -1521,7 +1523,6 @@ Rcpp::List convertInputREHIdx2(
   int N = actorName.size(); // number of actors
   std::vector<int> actorID = Rcpp::as<std::vector<int>>(actorsDictionary["actorID"]);
 
-
   //(1) Converting `edgelist`
   // we run here a long (and redundant) code to first select (via ifelse) the characteristics of the network and then apply the conversion of the 'edgelist'
   // The sequence of ifelse will be about: [1] weighted/not weighted, [2] C>1 / C = 1, [3] tie / actor model, [4] class of time variable
@@ -1533,7 +1534,7 @@ Rcpp::List convertInputREHIdx2(
   // - carefully reduce the size of the event sequence when self-loops need to be removed (this influences all the points above)
 
 
-  std::vector<std::string> typeName(C,"0"); // initialize typeName because it will also be used later when omit_dyad will be processed
+  std::vector<std::string> typeName(C_event,"0"); // initialize typeName because it will also be used later when omit_dyad will be processed
   int INFTY_DYAD = 0; // creating a reference constant to remove self-loops from the 'dyad' vector
   double INFTY_TIME = *max_element(time_loc.begin(), time_loc.end()) + 1.0; // creating a reference constant to remove self-loops from the 'time'vector
   std::vector<int> convertedActor1_ID(M,0); // initialize vector of actor1 IDs
@@ -1543,7 +1544,7 @@ Rcpp::List convertInputREHIdx2(
   if(weighted){
     std::vector<double> weight = Rcpp::as<std::vector<double>>(edgelist["weight"]);
     double INFTY_WEIGHT = *max_element(weight.begin(), weight.end()) + 1.0; // creating a reference constant to remove self-loops from the 'weight' vector
-    if(C>1){
+    if(C_event>1){
       std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]); // get type column from edgelist
       typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
       std::vector<int> typeID = Rcpp::as<std::vector<int>>(typesDictionary["typeID"]);
@@ -1553,7 +1554,7 @@ Rcpp::List convertInputREHIdx2(
 #ifdef _OPENMP
         omp_set_dynamic(0);
         omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
-#pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,N,directed,dyad,weight,time_loc)
+#pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,N,directed,dyad,weight,time_loc,C_event,extend_riskset_by_type)
 #endif
         for(m = 0; m < M; m++){
           // m-th event in the edgelist input:
@@ -1572,7 +1573,18 @@ Rcpp::List convertInputREHIdx2(
             convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c));
 
             // getting dyad index
-            dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D
+            //dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D
+            int type0      = (C_event > 1) ? (convertedType_ID[m] - 1) : 0;
+            int risk_type0 = extend_riskset_by_type ? type0 : 0;
+
+            dyad[m] = remify::getDyadIndex(
+              convertedActor1_ID[m]-1,
+              convertedActor2_ID[m]-1,
+              risk_type0,
+              N,
+              directed
+            ) + 1;
+
           }
           else{ // m-th event is a self-loop
             dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -1708,6 +1720,7 @@ Rcpp::List convertInputREHIdx2(
 
             // getting dyad index
             dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D
+
           }
           else{ // m-th event is a self-loop
             dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -1810,7 +1823,7 @@ Rcpp::List convertInputREHIdx2(
     }
   }
   else{ // no 'weight' column in 'edgelist'
-    if(C>1){ // two or more event types
+    if(C_event>1){ // two or more event types
       std::vector<std::string> stringType = Rcpp::as<std::vector<std::string>>(edgelist["type"]); // get type column from edgelist
       typeName = Rcpp::as<std::vector<std::string>>(typesDictionary["typeName"]);
       std::vector<int> typeID = Rcpp::as<std::vector<int>>(typesDictionary["typeID"]);
@@ -1819,7 +1832,7 @@ Rcpp::List convertInputREHIdx2(
 #ifdef _OPENMP
         omp_set_dynamic(0);
         omp_set_num_threads(ncores); // number of threads for all consecutive parallel regions
-#pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,N,directed,dyad,time_loc)
+#pragma omp parallel for if(ncores>1) private(m) shared(M,stringActor1,stringActor2,stringType,actorName,typeName,actorID,typeID,convertedActor1_ID,convertedActor2_ID,convertedType_ID,N,directed,dyad,time_loc,C_event,extend_riskset_by_type)
 #endif
         for(m = 0; m < M; m++){
           // m-th event in the edgelist input:
@@ -1837,7 +1850,18 @@ Rcpp::List convertInputREHIdx2(
             convertedType_ID[m] = typeID.at(std::distance(typeName.begin(), c));
 
             // getting dyad index
-            dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D
+            //dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,convertedType_ID[m]-1,N,directed)+1; // dyads from 1 to D
+            int type0      = (C_event > 1) ? (convertedType_ID[m] - 1) : 0;
+            int risk_type0 = extend_riskset_by_type ? type0 : 0;
+
+            dyad[m] = remify::getDyadIndex(
+              convertedActor1_ID[m]-1,
+              convertedActor2_ID[m]-1,
+              risk_type0,
+              N,
+              directed
+            ) + 1;
+
           }
           else{ // m-th event is a self-loop
             dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -1966,6 +1990,7 @@ Rcpp::List convertInputREHIdx2(
 
             // getting dyad index
             dyad[m] = remify::getDyadIndex(convertedActor1_ID[m]-1,convertedActor2_ID[m]-1,0,N,directed)+1; // dyads from 1 to D
+
           }
           else{ // m-th event is a self-loop
             dyad[m] = INFTY_DYAD; // dyad = 0 means self-loop that will be removed
@@ -2228,8 +2253,11 @@ Rcpp::List convertInputREHIdx2(
     // manual inclusion-based fixed riskset: treat as "active semantics" with user-specified universe
 
     arma::uvec type_loc(M, arma::fill::zeros);
-    if (C > 1) {
+    if (C_event > 1) {
       type_loc = Rcpp::as<arma::uvec>(out["type_ID"]);
+    }
+    if (!extend_riskset_by_type) {
+      type_loc.zeros();
     }
 
     // function will implement (manual analogue of getOmitDyadActiveRiskSet2)
@@ -2243,7 +2271,9 @@ Rcpp::List convertInputREHIdx2(
       a1, a2, type_loc,
       mr,
       actorName, typeName,
-      D, N, directed, ncores
+      D, N, directed,
+      extend_riskset_by_type,
+      ncores
     );
 
     out["omit_dyad"] = outOmitDyad;
@@ -2425,7 +2455,12 @@ Rcpp::List convertInputREHIdx2(
     }
 
     //(4) processing (converted to id's and to -1 when NA) omit_dyad
-    Rcpp::List outOmitDyad = processOmitDyad(convertedOmitDyad,convertedOmitDyad_time,M,C,D,N,directed,model);
+    //Rcpp::List outOmitDyad = processOmitDyad(convertedOmitDyad,convertedOmitDyad_time,M,C_event,D,N,directed,model);
+    int C_risk_local = extend_riskset_by_type ? static_cast<int>(C_event) : 1;
+
+    Rcpp::List outOmitDyad = processOmitDyad(
+      convertedOmitDyad, convertedOmitDyad_time, M, C_risk_local, D, N, directed, model
+    );
 
     // (??) Storing the converted `omit_dyad`
     out["omit_dyad"] = outOmitDyad;
@@ -2433,8 +2468,11 @@ Rcpp::List convertInputREHIdx2(
   }
   else if(active){ // If the input list `omit_dyad` is NULL and active=true, then compute the "active" risk set
     arma::uvec type_loc(M,arma::fill::ones);
-    if(C>1){
+    if(C_event>1){
       type_loc = Rcpp::as<arma::uvec>(out["type_ID"]);
+    }
+    if (!extend_riskset_by_type) {
+      type_loc.ones();
     }
     Rcpp::List outOmitDyad = getOmitDyadActiveRiskSet2(model,out["actor1_ID"],out["actor2_ID"],type_loc,D,N,directed,ncores);
     out["omit_dyad"] = outOmitDyad;
@@ -2482,6 +2520,7 @@ Rcpp::List remifyCpp2(
     std::string model,
     bool active,
     Rcpp::Nullable<Rcpp::DataFrame> manual_riskset,
+    bool extend_riskset_by_type = true,
     int ncores = 1
 ){
 
@@ -2489,7 +2528,10 @@ Rcpp::List remifyCpp2(
   bool has_manual_riskset = manual_riskset.isNotNull();
 
   // Allocating memory for some variables and the output list
-  arma::uword N,C,D; // number of dyads which depends on the directed input value
+  arma::uword N,D; // number of dyads which depends on the directed input value
+  //arma::uword C
+  arma::uword C_event = 1;
+  arma::uword C_risk  = 1;
   Rcpp::List out = Rcpp::List::create(); // output list
 
   // cloning some input objects
@@ -2599,49 +2641,59 @@ Rcpp::List remifyCpp2(
 
   // Finding unique strings in event types
   Rcpp::StringVector typeName;
-  if(out["with_type"]){
+
+  if (out["with_type"]) {
     Rcpp::StringVector type = edgelist["type"];
+
     arma::uword types_vector_length = 0;
     Rcpp::StringVector types_vector;
 
-    if(!Rf_isNull(types)){
+    if (!Rf_isNull(types)) {
       types_vector = Rcpp::as<Rcpp::StringVector>(types);
       types_vector_length = types_vector.length();
     }
 
-    Rcpp::StringVector vector_of_types(type.length()+types_vector_length);
-    vector_of_types[Rcpp::Range(0,type.length()-1)] = type;
+    Rcpp::StringVector vector_of_types(type.length() + types_vector_length);
+    vector_of_types[Rcpp::Range(0, type.length() - 1)] = type;
 
-    if(!Rf_isNull(types)){
-      vector_of_types[Rcpp::Range(type.length(),vector_of_types.length()-1)] = types_vector;
+    if (!Rf_isNull(types)) {
+      vector_of_types[Rcpp::Range(type.length(), vector_of_types.length() - 1)] = types_vector;
     }
 
     typeName = Rcpp::unique(vector_of_types);
-    typeName.sort(); // sorting types
-    if (std::find(typeName.begin(), typeName.end(), "") != typeName.end())
-    {
+    typeName.sort();
+
+    if (std::find(typeName.begin(), typeName.end(), "") != typeName.end()) {
       Rcpp::stop(errorMessage(3));
     }
-    C = typeName.length();
-    out["C"] = C;
-    if(C == 1){
-      out["C"] = R_NilValue;;
+
+    C_event = typeName.length();
+    C_risk  = extend_riskset_by_type ? C_event : 1;
+
+    // expose event-type info
+    if (C_event > 1) {
+      out["C"] = C_event;
+    } else {
+      out["C"] = R_NilValue;
+      out["with_type"] = false;  // single type => treat as untyped (existing behavior)
     }
-  }
-  else{
-    C = 1;
+
+    // expose riskset-typing info
+    out["C_riskset"] = C_risk;
+    out["with_type_riskset"] = (extend_riskset_by_type && (C_event > 1));
+
+  } else {
     out["C"] = R_NilValue;
-  }
-  if(C == 1){
-    out["with_type"] = false;
+    out["C_riskset"] = 1;
+    out["with_type_riskset"] = false;
   }
 
+  // from here on, use C_risk for D, and C_event for event typing.
   // How many (possible) dyads? if `directed` N*(N-1), N*(N-1)/2 otherwise
-  if(directed){
-    D = N*(N-1)*C;
-  }
-  else{
-    D = ((N*(N-1))/2)*C;
+  if (directed) {
+    D = N * (N - 1) * C_risk;
+  } else {
+    D = ((N * (N - 1)) / 2) * C_risk;
   }
 
   // Creating a dictionary for actors and event types, that is like: 'string_name' = integer (IDentifier)
@@ -2649,8 +2701,12 @@ Rcpp::List remifyCpp2(
   out["actorsDictionary"] = actorsDictionary;
 
   Rcpp::DataFrame typesDictionary;
-  if(out["with_type"]){
-    typesDictionary = Rcpp::DataFrame::create(Rcpp::Named("typeName") = typeName, Rcpp::Named("typeID") = Rcpp::Range(1,C));
+  if (out["with_type"]) {
+    // C_event is the number of event-type levels
+    typesDictionary = Rcpp::DataFrame::create(
+      Rcpp::Named("typeName") = typeName,
+      Rcpp::Named("typeID")   = Rcpp::Range(1, C_event)
+    );
     out["typesDictionary"] = typesDictionary;
   }
 
@@ -2666,11 +2722,12 @@ Rcpp::List remifyCpp2(
     omit_dyad,
     model,
     out["weighted"],
-       ordinal,
-       C,
-       active,
-       manual_riskset,
-       ncores
+    ordinal,
+    C_event,
+    active,
+    manual_riskset,
+    extend_riskset_by_type,
+    ncores
   );
 
   out["warnings"] = convertedInput["warnings"]; // exporting warnings list

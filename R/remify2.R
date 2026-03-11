@@ -1,4 +1,4 @@
-# helper for %||% (put once near top of file, not inside function ideally)
+# helper for %||%
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 
 
@@ -87,6 +87,7 @@ remify2 <- function(edgelist,
                    actors = NULL,
                    riskset = c("full","active","manual"),
                    manual.riskset = NULL,
+                   extend_riskset_by_type = TRUE,
                    event_type = NULL,
                    origin = NULL,
                    time.units = c("auto", "secs", "mins",
@@ -456,8 +457,9 @@ remify2 <- function(edgelist,
     origin = origin,
     omit_dyad = omit_dyad,
     model = model,
-    active = active,                    # reuse “active” outputs
-    manual_riskset = manual.riskset,    # new
+    active = active,
+    manual_riskset = manual.riskset,
+    extend_riskset_by_type = extend_riskset_by_type,
     ncores = ncores
   )
 
@@ -498,6 +500,8 @@ remify2 <- function(edgelist,
   )
   ,class="remify")
   attr(str_out, "with_type") <- out$with_type
+  attr(str_out, "with_type_riskset") <- isTRUE(out$with_type_riskset)
+  attr(str_out, "C_riskset") <- out$C_riskset
   attr(str_out, "weighted") <- out$weighted
   attr(str_out, "directed") <- directed
   attr(str_out, "ordinal") <- ordinal
@@ -515,6 +519,8 @@ remify2 <- function(edgelist,
   # instead of using attributes, make them list elements
   str_out$meta <- list(
     with_type = out$with_type,
+    with_type_riskset = isTRUE(out$with_type_riskset),
+    C_riskset = out$C_riskset,
     weighted = out$weighted,
     directed = directed,
     ordinal = ordinal,
@@ -525,26 +531,26 @@ remify2 <- function(edgelist,
     ncores = ncores
   )
   # append event covariates into reh$edgelist
-if (!is.null(event_covariates_df)) {
-  # drop the duplicated core columns; keep only the extra covariate columns
-  extra <- event_covariates_df[, event_covariates, drop = FALSE]
+  if (!is.null(event_covariates_df)) {
+    # drop the duplicated core columns; keep only the extra covariate columns
+    extra <- event_covariates_df[, event_covariates, drop = FALSE]
 
-  # sanity: same number/order of rows as out$edgelist (should hold in your current pipeline)
-  if (nrow(extra) != nrow(str_out$edgelist)) {
-    warning("`event_covariates` could not be attached to `reh$edgelist` (row mismatch). Storing as `reh$event_covariates` instead.",
-            call. = FALSE)
-    str_out$event_covariates <- event_covariates_df
-  } else {
-    # avoid name collisions: disallow overwriting core columns
-    bad <- intersect(names(extra), names(str_out$edgelist))
-    if (length(bad)) {
-      stop("`event_covariates` collide with existing `reh$edgelist` columns: ",
-           paste(bad, collapse = ", "))
+    # sanity: same number/order of rows as out$edgelist (should hold in your current pipeline)
+    if (nrow(extra) != nrow(str_out$edgelist)) {
+      warning("`event_covariates` could not be attached to `reh$edgelist` (row mismatch). Storing as `reh$event_covariates` instead.",
+              call. = FALSE)
+      str_out$event_covariates <- event_covariates_df
+    } else {
+      # avoid name collisions: disallow overwriting core columns
+      bad <- intersect(names(extra), names(str_out$edgelist))
+      if (length(bad)) {
+        stop("`event_covariates` collide with existing `reh$edgelist` columns: ",
+             paste(bad, collapse = ", "))
+      }
+      str_out$edgelist <- cbind(str_out$edgelist, extra)
+      attr(str_out, "event_covariates") <- event_covariates
     }
-    str_out$edgelist <- cbind(str_out$edgelist, extra)
-    attr(str_out, "event_covariates") <- event_covariates
   }
-}
 
   # after constructing str_out and after undirected swap on out$edgelist, canonicalize stored event covariates too
   if (!isTRUE(directed) && !is.null(event_covariates_df)) {
@@ -798,7 +804,7 @@ if (!is.null(event_covariates_df)) {
     C <- if (with_type) nrow(types_df) else 1L
     directed <- isTRUE(attr(str_out, "directed"))
 
-    D_full <- if (directed) N*(N-1L)*C else (N*(N-1L)%/%2L)*C
+    D_full <- str_out$D #D_full <- if (directed) N*(N-1L)*C else (N*(N-1L)%/%2L)*C
 
     mode <- as.character(attr(str_out, "riskset"))  # "full"/"active"/"manual" (or manual-as-active)
 
@@ -844,7 +850,8 @@ if (!is.null(event_covariates_df)) {
     }
 
     if (decode_eff %in% c("ids","labels")) {
-      comp <- decode_dyad_id(riskset_idx, N = N, directed = directed, C = C)
+      C_risk <- if (!is.null(out$C_riskset)) out$C_riskset else C
+      comp <- decode_dyad_id(riskset_idx, N = N, directed = directed, C = C_risk)
       comp$dyadID <- riskset_idx
 
       if (decode_eff == "labels") {
