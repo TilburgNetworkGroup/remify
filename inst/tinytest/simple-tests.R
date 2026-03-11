@@ -16,14 +16,14 @@ key2 <- function(a1, a2)     paste(a1, a2, sep = "||")
 
 # 1) FULL untyped: exact dyad universe size and no type col
 reh <- remify::remify2(history, model="tie", riskset="full", event_type=NULL)
-expect_false(isTRUE(attr(reh, "with_type")))
+expect_false(isTRUE(reh$meta$with_type))
 expect_false("type" %in% names(reh$index$dyad_map))
 expect_equal(nrow(reh$index$dyad_map), D_DYAD)
 
 # 2) FULL typed: dyad universe replicated over all observed types (exact coverage)
 reh <- remify::remify2(history, model="tie", riskset="full", event_type="setting")
 dm <- reh$index$dyad_map
-expect_true(isTRUE(attr(reh, "with_type")))
+expect_true(isTRUE(reh$meta$with_type))
 expect_equal(nrow(dm), D_DYAD * C_TYPES)
 expect_equal(sort(unique(dm$type)), TYPES)
 
@@ -47,7 +47,7 @@ expect_equal(
 mr <- unique(history[, c("actor1","actor2")])
 reh <- remify::remify2(history, model="tie", riskset="manual", manual.riskset=mr, event_type="setting")
 dm <- reh$index$dyad_map
-expect_true(isTRUE(attr(reh, "with_type")))
+expect_true(isTRUE(reh$meta$with_type))
 expect_false(anyNA(dm))
 
 expected_keys <- as.vector(outer(
@@ -62,5 +62,5 @@ expect_equal(sort(actual_keys), sort(expected_keys))
 # 5) MANUAL dyads-only, untyped: must equal exactly the manual dyads
 reh <- remify::remify2(history, model="tie", riskset="manual", manual.riskset=mr, event_type=NULL)
 dm <- reh$index$dyad_map
-expect_false(isTRUE(attr(reh, "with_type")))
+expect_false(isTRUE(reh$meta$with_type))
 expect_equal(sort(key2(dm$actor1, dm$actor2)), sort(key2(mr$actor1, mr$actor2)))

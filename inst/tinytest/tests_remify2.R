@@ -43,25 +43,25 @@ make_edgelist <- function(typed = FALSE, directed = TRUE, simultaneous = FALSE, 
 }
 
 get_dyad_vec <- function(reh) {
-  dv <- attr(reh, "dyadID_vec")
+  dv <- reh$ids$dyad_vec
   if (!is.null(dv)) return(as.integer(dv))
-  as.integer(unlist(attr(reh, "dyadID")))
+  as.integer(unlist(reh$ids$dyad))
 }
 
 get_a1_vec <- function(reh) {
-  v <- attr(reh, "actor1ID_vec")
+  v <- reh$ids$actor1_vec
   if (!is.null(v)) return(as.integer(v))
-  as.integer(unlist(attr(reh, "actor1ID")))
+  as.integer(unlist(reh$ids$actor1))
 }
 get_a2_vec <- function(reh) {
-  v <- attr(reh, "actor2ID_vec")
+  v <- reh$ids$actor2_vec
   if (!is.null(v)) return(as.integer(v))
-  as.integer(unlist(attr(reh, "actor2ID")))
+  as.integer(unlist(reh$ids$actor2))
 }
 get_t_vec <- function(reh) {
-  v <- attr(reh, "typeID_vec")
+  v <- reh$ids$type_vec
   if (!is.null(v)) return(as.integer(v))
-  tv <- attr(reh, "typeID")
+  tv <- reh$ids$type
   if (is.null(tv)) return(NULL)
   as.integer(unlist(tv))
 }
@@ -82,13 +82,13 @@ expect_true(inherits(reh, "remify"))
 expect_true(is.data.frame(reh$edgelist))
 expect_true(is.numeric(reh$intereventTime))
 
-expect_true(isTRUE(attr(reh, "directed")))
-expect_true(!isTRUE(attr(reh, "with_type")))
-expect_true(isTRUE(attr(reh, "weighted")))
-expect_equal(attr(reh, "riskset"), "full")
-expect_equal(attr(reh, "model"), "tie")
+expect_true(isTRUE(reh$meta$directed))
+expect_true(!isTRUE(reh$meta$with_type))
+expect_true(isTRUE(reh$meta$weighted))
+expect_equal(reh$meta$riskset, "full")
+expect_equal(reh$meta$model, "tie")
 
-dict <- attr(reh, "dictionary")
+dict <- reh$meta$dictionary
 expect_true(is.data.frame(dict$actors))
 expect_true(is.null(dict$types))
 
@@ -166,7 +166,7 @@ rehT <- remify::remify2(
   riskset_decode = "labels"
 )
 
-dictT <- attr(rehT, "dictionary")
+dictT <- rehT$meta$dictionary
 expect_true(is.data.frame(dictT$types))
 expect_true(all(c("typeName","typeID") %in% names(dictT$types)))
 
@@ -189,8 +189,8 @@ rehS <- remify::remify2(
   riskset_decode = "ids"
 )
 
-expect_true(!is.null(attr(rehS, "indices_simultaneous_events")))
-expect_true(!is.null(attr(rehS, "dyadID_vec")))
+expect_true(!is.null(rehS$simultaneous$indices))
+expect_true(!is.null(rehS$ids$dyad_vec))
 
 rsS <- rehS$riskset_info
 dyadS <- get_dyad_vec(rehS)

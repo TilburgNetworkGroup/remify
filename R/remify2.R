@@ -490,220 +490,167 @@ remify2 <- function(edgelist,
         warning(out$warnings[[w]])
       }
   }
-  str_out <- structure(list(M = out$M
-                            ,N = out$N
-                            ,C = out$C
-                            ,D = out$D
-                            ,intereventTime = out$intereventTime
-                            ,edgelist = out$edgelist,
-                            edgelist_id = NA
-  )
-  ,class="remify")
-  attr(str_out, "with_type") <- out$with_type
-  attr(str_out, "with_type_riskset") <- isTRUE(out$with_type_riskset)
-  attr(str_out, "C_riskset") <- out$C_riskset
-  attr(str_out, "weighted") <- out$weighted
-  attr(str_out, "directed") <- directed
-  attr(str_out, "ordinal") <- ordinal
-  attr(str_out, "model") <- model # useful because tie and actor models have two different ways for handling changing risksets
-  if (riskset == "manual") { # manual should be further treated as if it was 'active' to simply compatibility with remstimate
-    attr(str_out, "riskset") <- "active"
-    attr(str_out, "riskset_source") <- "manual"
-  } else {
-    attr(str_out, "riskset") <- riskset
-    attr(str_out, "riskset_source") <- riskset
-  }
-  attr(str_out, "dictionary") <- list(actors = out$actorsDictionary, types = out$typesDictionary)
-  attr(str_out, "origin") <- out$edgelist$time[1]-out$intereventTime[1]
-  attr(str_out, "ncores") <- ncores
-  # instead of using attributes, make them list elements
-  str_out$meta <- list(
-    with_type = out$with_type,
-    with_type_riskset = isTRUE(out$with_type_riskset),
-    C_riskset = out$C_riskset,
-    weighted = out$weighted,
-    directed = directed,
-    ordinal = ordinal,
-    model = model, # useful because tie and actor models have two different ways for handling changing risksets
-    riskset = riskset,
-    dictionary = list(actors = out$actorsDictionary, types = out$typesDictionary),
-    origin = out$edgelist$time[1]-out$intereventTime[1],
-    ncores = ncores
-  )
-  # append event covariates into reh$edgelist
-  if (!is.null(event_covariates_df)) {
-    # drop the duplicated core columns; keep only the extra covariate columns
-    extra <- event_covariates_df[, event_covariates, drop = FALSE]
+  # ---- Build output object (no attributes, everything as list elements) --------
 
-    # sanity: same number/order of rows as out$edgelist (should hold in your current pipeline)
+  str_out <- structure(
+    list(
+      M             = out$M,
+      N             = out$N,
+      C             = out$C,
+      D             = out$D,
+      intereventTime = out$intereventTime,
+      edgelist      = out$edgelist,
+      edgelist_id   = NA   # filled in below
+    ),
+    class = "remify"
+  )
+
+  # ---- $meta: all metadata (replaces all attr() calls) -----------------------
+  str_out$meta <- list(
+    model            = model,
+    directed         = directed,
+    ordinal          = ordinal,
+    weighted         = out$weighted,
+    with_type        = out$with_type,
+    with_type_riskset = isTRUE(out$with_type_riskset),
+    C_riskset        = out$C_riskset %||% 1L,
+    riskset          = if (riskset == "manual") "active" else riskset,
+    riskset_source   = riskset,   # "full" / "active" / "manual"
+    origin           = out$edgelist$time[1] - out$intereventTime[1],
+    ncores           = ncores,
+    dictionary       = list(actors = out$actorsDictionary, types = out$typesDictionary),
+    event_covariates = NULL   # filled in below if supplied
+  )
+
+  # ---- event covariates -------------------------------------------------------
+  if (!is.null(event_covariates_df)) {
+    # canonicalize actor order for undirected networks
+    if (!isTRUE(directed)) {
+      swapx <- event_covariates_df$actor1 > event_covariates_df$actor2
+      if (any(swapx)) {
+        tmp <- event_covariates_df$actor1[swapx]
+        event_covariates_df$actor1[swapx] <- event_covariates_df$actor2[swapx]
+        event_covariates_df$actor2[swapx] <- tmp
+      }
+    }
+    extra <- event_covariates_df[, event_covariates, drop = FALSE]
     if (nrow(extra) != nrow(str_out$edgelist)) {
       warning("`event_covariates` could not be attached to `reh$edgelist` (row mismatch). Storing as `reh$event_covariates` instead.",
               call. = FALSE)
       str_out$event_covariates <- event_covariates_df
     } else {
-      # avoid name collisions: disallow overwriting core columns
       bad <- intersect(names(extra), names(str_out$edgelist))
       if (length(bad)) {
         stop("`event_covariates` collide with existing `reh$edgelist` columns: ",
              paste(bad, collapse = ", "))
       }
       str_out$edgelist <- cbind(str_out$edgelist, extra)
-      attr(str_out, "event_covariates") <- event_covariates
     }
+    str_out$meta$event_covariates <- event_covariates
   }
 
-  # after constructing str_out and after undirected swap on out$edgelist, canonicalize stored event covariates too
-  if (!isTRUE(directed) && !is.null(event_covariates_df)) {
-    swapx <- event_covariates_df$actor1 > event_covariates_df$actor2
-    if (any(swapx)) {
-      tmp <- event_covariates_df$actor1[swapx]
-      event_covariates_df$actor1[swapx] <- event_covariates_df$actor2[swapx]
-      event_covariates_df$actor2[swapx] <- tmp
-    }
-  }
+  # ---- $ids: per-event integer IDs (replaces dyadID/actor1ID/etc. attrs) -----
+  str_out$ids <- list(
+    dyad       = out$dyad,
+    actor1     = out$actor1_ID,
+    actor2     = out$actor2_ID,
+    type       = if (isTRUE(out$with_type)) out$type_ID else NULL,
+    dyad_active = NULL,   # filled in below if active/manual
+    # vectorized versions for simultaneous events (filled in below)
+    dyad_vec        = NULL,
+    actor1_vec      = NULL,
+    actor2_vec      = NULL,
+    type_vec        = NULL,
+    dyad_active_vec = NULL
+  )
 
-  # attach to output
-  if (!is.null(event_covariates_df)) {
-    #str_out$event_covariates <- event_covariates_df
-    attr(str_out, "event_covariates") <- event_covariates
-  }
-
-  # ID of actors, types and dyads
-  attr(str_out, "dyadID") <- out$dyad
-  attr(str_out,"actor1ID") <- out$actor1_ID
-  attr(str_out,"actor2ID") <- out$actor2_ID
-  if(out$with_type){
-    attr(str_out,"typeID") <- out$type_ID
-  }
-
-  # # build index (event-level ids)
-  # str_out$index <- list(
-  #   dyadID   = out$dyad,
-  #   actor1ID = out$actor1_ID,
-  #   actor2ID = out$actor2_ID,
-  #   type   = if (out$with_type) out$type_ID else NULL
-  # )
-
-  # ID's when riskset = "active"
-  if(active || riskset == "manual"){
+  # ---- active / manual riskset IDs -------------------------------------------
+  if (active || riskset == "manual") {
     str_out$activeD <- out$omit_dyad$D_active
     out$omit_dyad$D_active <- NULL
-    if(model == "tie"){
-      attr(str_out, "dyadIDactive") <- out$omit_dyad$dyadIDactive
-      # str_out$index$dyadIDactive <- out$omit_dyad$dyadIDactive
-      # out$omit_dyad$dyadIDactive <- NULL
+    if (model == "tie") {
+      str_out$ids$dyad_active <- out$omit_dyad$dyadIDactive
     }
   }
 
-  # # store dyad mapping via existing encoder (supports types and active riskset)
-  # if (model == "tie") {
-  #   if (riskset == "full") {
-  #     str_out$index$dyad_map <- remify::getDyad(
-  #       x = str_out,
-  #       dyadID = seq_len(str_out$D),
-  #       active = FALSE
-  #     )
-  #   } else if (riskset == "active") {
-  #     str_out$index$dyad_map_active <- remify::getDyad(
-  #       x = str_out,
-  #       dyadID = seq_len(as.integer(str_out$activeD)[1]),
-  #       active = TRUE
-  #     )
-  #     if (!is.null(out$omit_dyad$dyadIDactive)) {
-  #       str_out$index$dyad_map_active$dyadID <- as.integer(out$omit_dyad$dyadIDactive)
-  #       str_out$index$dyadID_full_for_active <- as.integer(out$omit_dyad$dyadIDactive)
-  #     }
-  #   }
-  # }
-
   str_out$omit_dyad <- out$omit_dyad
+
+  # ---- simultaneous events ---------------------------------------------------
   evenly_spaced_interevent_time <- NULL
   rows_to_remove <- NULL
-  if(!is.null(out$rows_to_remove)){
-    if(!ordinal){
+  if (!is.null(out$rows_to_remove)) {
+    if (!ordinal) {
       evenly_spaced_interevent_time <- out$evenly_spaced_interevent_time
     }
     rows_to_remove <- out$rows_to_remove
   }
 
-  # modifying remify object to account for simultaneous events
-  if(!is.null(rows_to_remove)){
-    if(!ordinal){
-      #attribute intereventTime evenly spaced
-      attr(str_out, "evenly_spaced_interevent_time") <- evenly_spaced_interevent_time
-      # removing zeros from intereventTime
-      str_out$intereventTime <- str_out$intereventTime[-rows_to_remove] # updating interevent time vector
-    }
-    # saving indices of simultaneous events to be removed (for remstimate)
-    attr(str_out, "indices_simultaneous_events") <- rows_to_remove
+  if (!is.null(rows_to_remove)) {
+    # store simultaneous event info in its own sublist
+    str_out$simultaneous <- list(
+      indices                    = rows_to_remove,
+      interevent_evenly_spaced   = evenly_spaced_interevent_time
+    )
+    # also keep top-level for remstimate compatibility
     str_out$indices_simultaneous_events <- rows_to_remove
-    #str_out$intereventTime and str_out$omit_dyad$time are processed in remstimate depending on method=c("pe","pt") from remstats
-    str_out$E <- str_out$M # number of events
-    str_out$M <- str_out$M-length(rows_to_remove) # overwrite (lower) number of time points
+
+    if (!ordinal) {
+      str_out$intereventTime <- str_out$intereventTime[-rows_to_remove]
+    }
+
+    str_out$E <- str_out$M
+    str_out$M <- str_out$M - length(rows_to_remove)
     time_unique <- unique(str_out$edgelist$time)
 
-    # tie-oriented modeling
-    # also store vectorized versions
-    # str_out$index$dyadIDactive_vec <- str_out$index$dyadIDactive
-    # str_out$index$dyadID_vec <- str_out$index$dyadID
-    # str_out$index$actor1ID_vec <- str_out$index$actor1ID
-    # str_out$index$actor2ID_vec <- str_out$index$actor2ID
-    # str_out$index$type_vec <- str_out$index$type
-    attr(str_out, "dyadIDactive_vec") <- attr(str_out, "dyadIDactive")
-    attr(str_out, "dyadID_vec") <- attr(str_out, "dyadID")
-    attr(str_out, "actor1ID_vec") <- attr(str_out, "actor1ID")
-    attr(str_out, "actor2ID_vec") <- attr(str_out, "actor2ID")
-    attr(str_out, "typeID_vec") <- attr(str_out, "typeID")
-    actor1 <- list()
-    actor2 <- list()
-    type <- list()
-    dyad <- list()
-    dyadIDactive <- list()
-    for(m in 1:length(time_unique)){
-      which_time_m <- which(str_out$edgelist$time == time_unique[m])
-      actor1[[m]] <- attr(str_out,"actor1ID")[which_time_m]
-      actor2[[m]] <- attr(str_out,"actor2ID")[which_time_m]
-      dyad[[m]] <- attr(str_out, "dyadID")[which_time_m]
-      if(active || riskset == "manual"){
-        dyadIDactive[[m]] <- attr(str_out,"dyadIDactive")[which_time_m]
+    # save flat vectorized versions before converting to per-time-point lists
+    str_out$ids$dyad_vec        <- str_out$ids$dyad
+    str_out$ids$actor1_vec      <- str_out$ids$actor1
+    str_out$ids$actor2_vec      <- str_out$ids$actor2
+    str_out$ids$type_vec        <- str_out$ids$type
+    str_out$ids$dyad_active_vec <- str_out$ids$dyad_active
+
+    # convert to per-time-point lists
+    actor1_list      <- vector("list", length(time_unique))
+    actor2_list      <- vector("list", length(time_unique))
+    dyad_list        <- vector("list", length(time_unique))
+    type_list        <- vector("list", length(time_unique))
+    dyad_active_list <- vector("list", length(time_unique))
+
+    for (m in seq_along(time_unique)) {
+      idx <- which(str_out$edgelist$time == time_unique[m])
+      actor1_list[[m]] <- str_out$ids$actor1[idx]
+      actor2_list[[m]] <- str_out$ids$actor2[idx]
+      dyad_list[[m]]   <- str_out$ids$dyad[idx]
+      if (active || riskset == "manual") {
+        dyad_active_list[[m]] <- str_out$ids$dyad_active[idx]
       }
-      if(attr(str_out, "with_type")){
-        type[[m]] <- attr(str_out,"typeID")[which_time_m]
+      if (isTRUE(str_out$meta$with_type)) {
+        type_list[[m]] <- str_out$ids$type[idx]
       }
     }
-    attr(str_out,"actor1ID") <- actor1
-    attr(str_out,"actor2ID") <- actor2
-    attr(str_out, "dyadID") <- dyad
-    # str_out$index$dyadID <- dyad
-    # str_out$index$actor1ID <- actor1
-    # str_out$index$actor2ID <- actor2
-    if(active){
-      attr(str_out,"dyadIDactive") <- dyadIDactive
-      # str_out$index$dyadIDactive <- dyadIDactive
+
+    str_out$ids$actor1     <- actor1_list
+    str_out$ids$actor2     <- actor2_list
+    str_out$ids$dyad       <- dyad_list
+    if (active || riskset == "manual") {
+      str_out$ids$dyad_active <- dyad_active_list
     }
-    if(attr(str_out, "with_type")){
-      attr(str_out,"typeID") <- type
-      # str_out$index$type <- type
+    if (isTRUE(str_out$meta$with_type)) {
+      str_out$ids$type <- type_list
     }
-    rm(actor1,actor2,type,dyad,dyadIDactive)
   }
 
-  # store the dyad mapping in remify object to avoid the need to getDyad
+  # ---- dyad map (index) -------------------------------------------------------
   if (active || riskset == "manual") {
-
     str_out$index$dyad_map_active <- getDyad2(
       x = str_out,
       dyadID = seq_len(as.integer(str_out$activeD)[1]),
       active = TRUE
     )
-
     if (riskset == "manual") {
-      # treat manual like active for downstream code: expose the included set as dyad_map
       str_out$index$dyad_map <- str_out$index$dyad_map_active
     }
-
   } else {
-
     str_out$index$dyad_map <- getDyad2(
       x = str_out,
       dyadID = seq_len(str_out$D),
@@ -711,48 +658,21 @@ remify2 <- function(edgelist,
     )
   }
 
-  # if (riskset %in% c("manual")) {
-  #
-  #   # full dyad ids in the (compressed) riskset
-  #   rs <- as.integer(out$omit_dyad$riskset_idx)
-  #
-  #   # full map (exists for full/manual currently)
-  #   dm_full <- str_out$index$dyad_map
-  #
-  #   # subset and relabel to make dyad_map_active
-  #   dm_active <- dm_full[match(rs, dm_full$dyadID), , drop = FALSE]
-  #   dm_active$dyadIDactive <- seq_len(nrow(dm_active))
-  #
-  #   # reorder columns to match active mode
-  #   if ("type" %in% names(dm_active)) {
-  #     dm_active <- dm_active[, c("dyadIDactive","actor1","actor2","type"), drop = FALSE]
-  #   } else {
-  #     dm_active <- dm_active[, c("dyadIDactive","actor1","actor2"), drop = FALSE]
-  #   }
-  #
-  #   str_out$index$dyad_map_active <- dm_active
-  #
-  #   # optional: drop full map for manual to be structurally identical
-  #   if (riskset == "manual") {
-  #     str_out$index$dyad_map <- NULL
-  #   }
-  # }
-  out <- NULL # free-ing space [[now]]
+  out <- NULL  # free memory
 
-  # add dyad and actor IDs to edgelist element
+  # ---- edgelist_id (per-time-point summary) -----------------------------------
   edgelist_id <- data.frame(
-    time = sort(unique(unique(str_out$edgelist$time))),
-    actor1 = I(attr(str_out, "actor1ID")),
-    actor2 = I(attr(str_out, "actor2ID")),
-    dyad = I(attr(str_out, "dyadID"))
+    time   = sort(unique(str_out$edgelist$time)),
+    actor1 = I(str_out$ids$actor1),
+    actor2 = I(str_out$ids$actor2),
+    dyad   = I(str_out$ids$dyad)
   )
-  if(isTRUE(attr(str_out, "with_type"))){
-    edgelist_id$type <- I(attr(str_out,"typeID"))
+  if (isTRUE(str_out$meta$with_type)) {
+    edgelist_id$type <- I(str_out$ids$type)
   }
-  if (isTRUE(attr(str_out, "weighted"))) {
+  if (isTRUE(str_out$meta$weighted)) {
     w_by_time <- split(str_out$edgelist$weight, str_out$edgelist$time)
-    w_by_time <- unname(w_by_time)
-    edgelist_id$weight <- I(w_by_time)
+    edgelist_id$weight <- I(unname(w_by_time))
   }
   str_out$edgelist_id <- edgelist_id
   rm(edgelist_id)
@@ -795,20 +715,22 @@ remify2 <- function(edgelist,
 
   if (isTRUE(attach_riskset)) {
 
-    dict <- attr(str_out, "dictionary")
+    dict      <- str_out$meta$dictionary
     actors_df <- dict$actors
     types_df  <- dict$types
 
     N <- nrow(actors_df)
-    with_type <- !is.null(types_df)
-    C <- if (with_type) nrow(types_df) else 1L
-    directed <- isTRUE(attr(str_out, "directed"))
+    with_type         <- isTRUE(str_out$meta$with_type)           # events are typed
+    with_type_riskset <- isTRUE(str_out$meta$with_type_riskset)   # riskset is typed
+    C <- if (with_type_riskset) nrow(types_df) else 1L
+    directed  <- isTRUE(str_out$meta$directed)
 
-    D_full <- str_out$D #D_full <- if (directed) N*(N-1L)*C else (N*(N-1L)%/%2L)*C
+    D_full <- str_out$D
 
-    mode <- as.character(attr(str_out, "riskset"))  # "full"/"active"/"manual" (or manual-as-active)
 
-    dyad_full_vec <- as.integer(attr(str_out, "dyadID_vec") %||% unlist(attr(str_out, "dyadID")))
+    mode <- str_out$meta$riskset
+
+    dyad_full_vec <- as.integer(str_out$ids$dyad_vec %||% unlist(str_out$ids$dyad))
 
     riskset_idx <- switch(
       mode,
@@ -829,7 +751,7 @@ remify2 <- function(edgelist,
     rs <- list(
       mode = mode,
       directed = directed,
-      with_type = with_type,
+      with_type = with_type_riskset,
       N = N, C = C,
       D_full = D_full,
       D_active = length(riskset_idx),
@@ -850,17 +772,16 @@ remify2 <- function(edgelist,
     }
 
     if (decode_eff %in% c("ids","labels")) {
-      C_risk <- if (!is.null(out$C_riskset)) out$C_riskset else C
-      comp <- decode_dyad_id(riskset_idx, N = N, directed = directed, C = C_risk)
+      comp <- decode_dyad_id(riskset_idx, N = N, directed = directed, C = C)
       comp$dyadID <- riskset_idx
 
       if (decode_eff == "labels") {
         comp$actor1 <- actors_df$actorName[comp$actor1ID]
         comp$actor2 <- actors_df$actorName[comp$actor2ID]
-        if (with_type) comp$type <- types_df$typeName[comp$typeID]
+        if (with_type_riskset) comp$type <- types_df$typeName[comp$typeID]
       }
 
-      if (with_type) {
+      if (with_type_riskset) {
         if (decode_eff == "labels") {
           keep <- c("actor1","actor2","type","dyadID","actor1ID","actor2ID","typeID")
         } else {
@@ -890,58 +811,67 @@ remify2 <- function(edgelist,
 
 getDyad2 <- function(x, dyadID, active = FALSE) {
 
-  if (active && attr(x,"riskset") %in% c("full")) {
-    stop("'active' = TRUE works only for attr(x,'riskset') in c('active','manual')")
+  if (active && x$meta$riskset %in% c("full")) {
+    stop("'active' = TRUE works only for riskset in c('active','manual')")
   }
-  if(!is.numeric(dyadID) & !is.integer(dyadID)){
+  if (!is.numeric(dyadID) & !is.integer(dyadID)) {
     stop("'dyadID' must be a numeric (or integer) vector")
   }
   out <- NULL
-  dyadID <- as.integer(dyadID) # if the ID supplied is 124.8, the ID considered will be 124
+  dyadID <- as.integer(dyadID)
 
   # check for duplicates in dyadID
   length_orig <- length(dyadID)
   dyadID <- unique(dyadID)
-  if(length_orig > length(dyadID)){
+  if (length_orig > length(dyadID)) {
     warning("'dyadID' contains ID's that are repeated more than once. Such ID's will be processed once")
   }
 
-  # apply function getEventsComposition
-  dict_loc <- attr(x,"dictionary")
+  dict_loc <- x$meta$dictionary
   dyadID_full <- dyadID
+
   if (active) {
     rs <- x$omit_dyad$riskset_idx
     if (is.matrix(rs)) rs <- drop(rs)
     rs <- as.integer(rs)
 
     if (length(rs) == 0L) stop("omit_dyad$riskset_idx is empty.")
-
     if (max(dyadID, na.rm = TRUE) > length(rs)) {
       stop("Requested dyadIDactive exceeds available active riskset size.")
     }
-
     dyadID_full <- rs[dyadID]
   }
 
-  composition <- getEventsComposition(dyads = dyadID_full, N = x$N, D = x$D,directed = attr(x,"directed"), ncores  = attr(x,"ncores"))
+  composition <- getEventsComposition(
+    dyads   = dyadID_full,
+    N       = x$N,
+    D       = x$D,
+    directed = x$meta$directed,
+    ncores  = x$meta$ncores
+  )
 
-  # if at least one dyad is not found (<NA>,<NA>,<NA>), then throw warning
-  if(any(is.na(composition))){
+  if (any(is.na(composition))) {
     warning("one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D. NA's are returned for such ID's")
   }
 
-  if(attr(x,"with_type")){ # output with 'type' column
-    out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]], type = dict_loc$types$typeName[composition[,3]])
+  if (isTRUE(x$meta$with_type)) {
+    out <- data.frame(
+      dyadID = dyadID,
+      actor1 = dict_loc$actors$actorName[composition[, 1]],
+      actor2 = dict_loc$actors$actorName[composition[, 2]],
+      type   = dict_loc$types$typeName[composition[, 3]]
+    )
+  } else {
+    out <- data.frame(
+      dyadID = dyadID,
+      actor1 = dict_loc$actors$actorName[composition[, 1]],
+      actor2 = dict_loc$actors$actorName[composition[, 2]]
+    )
   }
-  else{ # output without 'type' column (for sequences with one or none event type)
-    out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]])
-  }
-  if(active){
-    names(out)[1] <- "dyadIDactive"
-  }
+
+  if (active) names(out)[1] <- "dyadIDactive"
 
   rm(composition)
-
   return(out)
 }
 

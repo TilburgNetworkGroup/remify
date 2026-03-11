@@ -11,7 +11,7 @@
   palette = "Purples",
   n_intervals = 4L,
   rev = TRUE,
-  actors = attr(x, "dictionary")$actors$actorName,
+  actors = NULL,
   pch.degree = 20,
   igraph.edge.color = "#4daa89",
   igraph.vertex.color = "#5AAFC8",
@@ -31,7 +31,7 @@
 
 \item{rev}{default is TRUE (reverse order of the color specified in \code{palette})}
 
-\item{actors}{default is the set of actors in the network (see \code{attr(x,"dictionary")[["actors"]]}). The user can specify a subset of actors on which to run the descriptive plots. If the set contains more than 50 actors, then the function will select the 50 most active actors from the set provided.}
+\item{actors}{default is the set of actors in the network (see \code{.dict[["actors"]]}). The user can specify a subset of actors on which to run the descriptive plots. If the set contains more than 50 actors, then the function will select the 50 most active actors from the set provided.}
 
 \item{pch.degree}{default is 20. Shape of the points for the degree plots (in-degree, out-degree, total-degree).}
 

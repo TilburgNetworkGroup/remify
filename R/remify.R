@@ -372,48 +372,65 @@ remify <- function(edgelist,
 #' summary(reh)
 #'
 summary.remify <- function(object,...){
+  # support both old remify (attributes) and new remify2 ($meta) structure
+  if (!is.null(object$meta)) {
+    .model     <- object$meta$model
+    .with_type <- isTRUE(object$meta$with_type)
+    .riskset   <- object$meta$riskset
+    .directed  <- object$meta$directed
+    .ordinal   <- object$meta$ordinal
+    .weighted  <- object$meta$weighted
+    .origin    <- object$meta$origin
+  } else {
+    .model     <- attr(object, "model")
+    .with_type <- isTRUE(attr(object, "with_type"))
+    .riskset   <- attr(object, "riskset")
+    .directed  <- attr(object, "directed")
+    .ordinal   <- attr(object, "ordinal")
+    .weighted  <- attr(object, "weighted")
+    .origin    <- attr(object, "origin")
+  }
+
   title <- "Relational Event Network"
-  model <- paste("(processed for ",attr(object,"model"),"-oriented modeling):",sep="")
-  if(is.null(object$E)){
-    events <- paste("\t> events = ",object$M,sep="")
+  model <- paste("(processed for ", .model, "-oriented modeling):", sep = "")
+  if (is.null(object$E)) {
+    events <- paste("\t> events = ", object$M, sep = "")
+  } else {
+    events <- paste("\t> events = ", object$E, " (time points = ", object$M, ")", sep = "")
   }
-  else{
-    events <- paste("\t> events = ",object$E," (time points = ",object$M,")",sep="")
+  actors <- paste("\t> actors = ", object$N, sep = "")
+  types  <- if (!.with_type) NULL else paste("\t> (event) types = ", object$C, sep = "")
+  riskset <- paste("\t> riskset = ", .riskset, sep = "")
+  if (.riskset == "active" | !is.null(object$activeD)) {
+    riskset <- c(riskset, paste("\t\t>> active dyads = ", object$activeD, " (full risk set size = ", object$D, " dyads)", sep = ""))
+  } else {
+    riskset <- c(riskset, paste("\t\t>> included dyads = ", object$D, sep = ""))
   }
-  actors <- paste("\t> actors = ",object$N,sep="")
-  types <- if(!attr(object,"with_type")) NULL else {paste("\t> (event) types = ",object$C,sep="")}
-  riskset <- paste("\t> riskset = ",attr(object,"riskset"),sep="")
-  if(attr(object,"riskset")=="active" | !is.null(object$activeD)){
-    riskset <- c(riskset,paste("\t\t>> active dyads = ",object$activeD," (full risk set size = ",object$D," dyads)",sep=""))
-  }else{
-    riskset <- c(riskset,paste("\t\t>> included dyads = ",object$D,sep=""))
-  }
-  directed <- paste("\t> directed = ",attr(object,"directed"),sep="")
-  ordinal <- paste("\t> ordinal = ",attr(object,"ordinal"),sep="")
-  weighted <- paste("\t> weighted = ",attr(object,"weighted"),sep="")
+  directed <- paste("\t> directed = ", .directed, sep = "")
+  ordinal  <- paste("\t> ordinal = ",  .ordinal,  sep = "")
+  weighted <- paste("\t> weighted = ", .weighted, sep = "")
   time_length <- NULL
   time <- object$edgelist$time
-  origin <- attr(object, "time")$origin
-  if(!attr(object,"ordinal")){
-    time_length <- time[length(time)] - attr(object,"origin")
-    time_length <- paste("\t> time length ~ ",round(time_length)," ",attr(time_length, "units"),sep="")
+  if (!.ordinal) {
+    time_length <- time[length(time)] - .origin
+    time_length <- paste("\t> time length ~ ", round(time_length), " ", attr(time_length, "units"), sep = "")
   }
   interevent_time <- NULL
-  if(!attr(object,"ordinal")){
+  if (!.ordinal) {
     min_interevent_time <- min(object$intereventTime)
     max_interevent_time <- max(object$intereventTime)
-    units_minmax <- NULL # in case it is either numeric or integer
-    if(inherits(time,"Date")){ # is a Date (until days)
+    units_minmax <- NULL
+    if (inherits(time, "Date")) {
       units_minmax <- "days"
-    }
-    else if(!is.numeric(time) & !is.integer(time)){ # is a timestamp (until seconds) #[[to check]] it will change based on the new input where the user can define the interevent time to be scaled in seconds, minutes, hours etc..
+    } else if (!is.numeric(time) & !is.integer(time)) {
       units_minmax <- "seconds"
     }
-    interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ",round(min_interevent_time,4)," ",units_minmax,"\n\t\t >> maximum ~ ",round(max_interevent_time,4)," ",units_minmax,"\n",sep="")
+    interevent_time <- paste("\t> interevent time \n\t\t >> minimum ~ ", round(min_interevent_time, 4), " ", units_minmax,
+                             "\n\t\t >> maximum ~ ", round(max_interevent_time, 4), " ", units_minmax, "\n", sep = "")
   }
-  out_summary <- c(title,model,events,actors,types,riskset,directed,ordinal,weighted,time_length,interevent_time)
+  out_summary <- c(title, model, events, actors, types, riskset, directed, ordinal, weighted, time_length, interevent_time)
   out_summary <- out_summary[!is.null(out_summary)]
-  cat(paste(out_summary,collapse="\n"))
+  cat(paste(out_summary, collapse = "\n"))
 }
 
 #######################################################################################
@@ -471,28 +488,33 @@ print.remify <- function(x,...){
 #' dim(reh)
 #'
 dim.remify <- function(x){
+  # support both old remify (attributes) and new remify2 ($meta) structure
+  if (!is.null(x$meta)) {
+    .with_type <- isTRUE(x$meta$with_type)
+    .riskset   <- x$meta$riskset
+  } else {
+    .with_type <- isTRUE(attr(x, "with_type"))
+    .riskset   <- attr(x, "riskset")
+  }
   dimensions <- NULL
-  if(is.null(x$E)){
-    if(attr(x,"with_type")){
+  if (is.null(x$E)) {
+    if (.with_type) {
       dimensions <- c(x$M, x$N, x$C, x$D)
       names(dimensions) <- c("events","actors","types","dyads")
-    }
-    else{
+    } else {
       dimensions <- c(x$M, x$N, x$D)
       names(dimensions) <- c("events","actors","dyads")
     }
-  }
-  else{
-    if(attr(x,"with_type")){
+  } else {
+    if (.with_type) {
       dimensions <- c(x$E, x$M, x$N, x$C, x$D)
       names(dimensions) <- c("events","time points","actors","types","dyads")
-    }
-    else{
+    } else {
       dimensions <- c(x$E, x$M, x$N, x$D)
       names(dimensions) <- c("events","time points","actors","dyads")
     }
   }
-  if(attr(x,"riskset")=="active"){
+  if (.riskset == "active") {
     dimensions <- c(dimensions, "dyads(active)" = x$activeD)
   }
   return(dimensions)
@@ -530,15 +552,15 @@ getRiskset <- function(x){
 #' @method getRiskset remify
 #' @export
 getRiskset.remify <- function(x) {
-  if(attr(x, "riskset") != "full"){
-    if(attr(x,"model") == "tie"){
+  .riskset <- if (!is.null(x$meta)) x$meta$riskset else attr(x, "riskset")
+  .model   <- if (!is.null(x$meta)) x$meta$model   else attr(x, "model")
+  if (.riskset != "full") {
+    if (.model == "tie") {
       return(list(riskset = x$omit_dyad$riskset))
-      }
-    else if(attr(x,"model") == "actor"){
+    } else if (.model == "actor") {
       return(list(sender = x$omit_dyad$risksetSender, dyad = x$omit_dyad$riskset))
     }
-  }
-  else{
+  } else {
     stop("risk set is neither 'active' nor 'manual'.")
   }
 }
@@ -584,7 +606,8 @@ getActorName.remify <- function(x, actorID = NULL) {
     }
     else{
       actorID <- as.integer(actorID)
-      actors <- attr(x, "dictionary")$actors
+      dict_loc <- if (!is.null(x$meta)) x$meta$dictionary else attr(x, "dictionary")
+      actors <- dict_loc$actors
       which_actor <- sapply(actorID, function(y) which(actors$actorID == y))
       which_actor <- unlist(which_actor)
       names <- actors$actorName[which_actor]
@@ -639,7 +662,8 @@ getTypeName.remify <- function(x, typeID = NULL) {
     }
     else{
       typeID <- as.integer(typeID)
-      types <- attr(x, "dictionary")$types
+      dict_loc <- if (!is.null(x$meta)) x$meta$dictionary else attr(x, "dictionary")
+      types <- dict_loc$types
       which_type <- sapply(typeID, function(y) which(types$typeID == y))
       which_type <- unlist(which_type)
       names <- types$typeName[which_type]
@@ -684,45 +708,60 @@ getDyad <- function(x, dyadID, active = FALSE){
 #' @method getDyad remify
 #' @export
 getDyad.remify <- function(x, dyadID, active = FALSE) {
-
-  if(active & attr(x,"riskset") != "active"){
-    stop("'active' = TRUE works only for attr(x,'riskset') = 'active'")
+  # support both old remify (attributes) and new remify2 ($meta/$ids) structure
+  if (!is.null(x$meta)) {
+    .riskset   <- x$meta$riskset
+    .with_type <- isTRUE(x$meta$with_type)
+    .directed  <- x$meta$directed
+    .ncores    <- x$meta$ncores
+    .dict      <- x$meta$dictionary
+    .dyadID    <- x$ids$dyad
+    .dyadIDactive <- x$ids$dyad_active
+  } else {
+    .riskset   <- attr(x, "riskset")
+    .with_type <- isTRUE(attr(x, "with_type"))
+    .directed  <- attr(x, "directed")
+    .ncores    <- attr(x, "ncores")
+    .dict      <- attr(x, "dictionary")
+    .dyadID    <- attr(x, "dyadID")
+    .dyadIDactive <- attr(x, "dyadIDactive")
   }
-  if(!is.numeric(dyadID) & !is.integer(dyadID)){
+
+  if (active & !(.riskset %in% c("active", "manual"))) {
+    stop("'active' = TRUE works only for riskset in c('active','manual')")
+  }
+  if (!is.numeric(dyadID) & !is.integer(dyadID)) {
     stop("'dyadID' must be a numeric (or integer) vector")
   }
   out <- NULL
-  dyadID <- as.integer(dyadID) # if the ID supplied is 124.8, the ID considered will be 124
+  dyadID <- as.integer(dyadID)
 
   # check for duplicates in dyadID
   length_orig <- length(dyadID)
   dyadID <- unique(dyadID)
-  if(length_orig > length(dyadID)){
+  if (length_orig > length(dyadID)) {
     warning("'dyadID' contains ID's that are repeated more than once. Such ID's will be processed once")
   }
 
-  # apply function getEventsComposition
-  dict_loc <- attr(x,"dictionary")
+  dict_loc <- .dict
   dyadID_full <- dyadID
-  if(active){
-    for(d in 1:length(dyadID)){
-      dyadID_full[d] <- attr(x,"dyadID")[which(attr(x,"dyadIDactive")==dyadID[d])[1]]
+  if (active) {
+    for (d in 1:length(dyadID)) {
+      dyadID_full[d] <- .dyadID[which(.dyadIDactive == dyadID[d])[1]]
     }
   }
-  composition <- getEventsComposition(dyads = dyadID_full, N = x$N, D = x$D,directed = attr(x,"directed"), ncores  = attr(x,"ncores"))
+  composition <- getEventsComposition(dyads = dyadID_full, N = x$N, D = x$D, directed = .directed, ncores = .ncores)
 
-  # if at least one dyad is not found (<NA>,<NA>,<NA>), then throw warning
-  if(any(is.na(composition))){
+  if (any(is.na(composition))) {
     warning("one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D. NA's are returned for such ID's")
   }
 
-  if(attr(x,"with_type")){ # output with 'type' column
+  if (.with_type) {
     out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]], type = dict_loc$types$typeName[composition[,3]])
-  }
-  else{ # output without 'type' column (for sequences with one or none event type)
+  } else {
     out <- data.frame(dyadID = dyadID, actor1 = dict_loc$actors$actorName[composition[,1]], actor2 = dict_loc$actors$actorName[composition[,2]])
   }
-  if(active){
+  if (active) {
     names(out)[1] <- "dyadIDactive"
   }
 
@@ -768,7 +807,8 @@ getActorID.remify <- function(x, actorName = NULL) {
   if(is.null(actorName)) stop("provide at least one actorName.")
   else{
       actorName <- as.character(actorName)
-      actors <- attr(x, "dictionary")$actors
+      dict_loc <- if (!is.null(x$meta)) x$meta$dictionary else attr(x, "dictionary")
+      actors <- dict_loc$actors
       which_actor <- sapply(actorName, function(y) which(actors$actorName == y))
       which_actor <- unlist(which_actor)
       IDs <- actors$actorID[which_actor]
@@ -819,7 +859,8 @@ getTypeID.remify <- function(x, typeName = NULL) {
   if(is.null(typeName)) stop("provide at least one typeName.")
   else{
     typeName <- as.character(typeName)
-    types <- attr(x, "dictionary")$types
+    dict_loc <- if (!is.null(x$meta)) x$meta$dictionary else attr(x, "dictionary")
+    types <- dict_loc$types
     which_type <- sapply(typeName, function(y) which(types$typeName == y))
     which_type <- unlist(which_type)
     IDs <- types$typeID[which_type]
@@ -864,7 +905,25 @@ getDyadID <- function(x, actor1, actor2, type){
 #' @method getDyadID remify
 #' @export
 getDyadID.remify <- function(x, actor1, actor2, type) {
-  if(attr(x,"with_type")){
+  # support both old remify (attributes) and new remify2 ($meta) structure
+  if (!is.null(x$meta)) {
+    .with_type <- isTRUE(x$meta$with_type)
+    .riskset   <- x$meta$riskset
+    .model     <- x$meta$model
+    .directed  <- x$meta$directed
+    .dict      <- x$meta$dictionary
+    .dyadID    <- x$ids$dyad
+    .dyadIDactive <- x$ids$dyad_active
+  } else {
+    .with_type    <- isTRUE(attr(x, "with_type"))
+    .riskset      <- attr(x, "riskset")
+    .model        <- attr(x, "model")
+    .directed     <- attr(x, "directed")
+    .dict         <- attr(x, "dictionary")
+    .dyadID       <- attr(x, "dyadID")
+    .dyadIDactive <- attr(x, "dyadIDactive")
+  }
+  if(.with_type){
     if(!is.vector(type) | (length(type)>1)){
       stop("'type' must be a character vector of length 1")
     }
@@ -881,7 +940,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
     stop("'actor1' and 'actor2' must be different")
   }
 
-  dict_loc <- attr(x,"dictionary")
+  dict_loc <- .dict
   # finding actors from the dictionary of names (attribute of the reh object)
   actor1_id <- which(dict_loc$actors$actorName == actor1)
   actor2_id <- which(dict_loc$actors$actorName == actor2)
@@ -891,7 +950,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
   }
   # finding type from the dictionary of names (attribute of the reh object)
   type_id <- 1
-  if(attr(x,"with_type")){
+  if(.with_type){
     type_id <- which(dict_loc$types$typeName == type)
     if(length(type_id)==0){
       stop("'type' not found in the 'remify' object")
@@ -903,11 +962,11 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
                                     actor2 = actor2_id,
                                     type = type_id,
                                     N = x$N,
-                                    directed = attr(x,"directed"))
-  if((attr(x,"riskset") == "active") & (attr(x,"model")=="tie")){
-    select_loc <- which(attr(x,"dyadID")==dyad_id)[1] # selecting first occurrence of dyad_id in attr(x,ID"dyad")
+                                    directed = .directed)
+  if((.riskset %in% c("active","manual")) & (.model=="tie")){
+    select_loc <- which(.dyadID==dyad_id)[1]
     if(length(select_loc > 0)){
-      dyad_id <- c(dyad_id,ifelse(length(select_loc>0),attr(x,"dyadIDactive")[select_loc],NA))
+      dyad_id <- c(dyad_id,ifelse(length(select_loc>0),.dyadIDactive[select_loc],NA))
       names(dyad_id) <- c("dyadID","dyadIDactive")
     }
   }
@@ -929,7 +988,7 @@ getDyadID.remify <- function(x, actor1, actor2, type) {
 #' @param palette a palette from \code{grDevices::hcl.pals()} (default is the \code{"Purples"} palette).
 #' @param n_intervals number of time intervals for time plots (default is \code{10}).
 #' @param rev default is TRUE (reverse order of the color specified in \code{palette})
-#' @param actors default is the set of actors in the network (see \code{attr(x,"dictionary")[["actors"]]}). The user can specify a subset of actors on which to run the descriptive plots. If the set contains more than 50 actors, then the function will select the 50 most active actors from the set provided.
+#' @param actors default is the set of actors in the network (see \code{.dict[["actors"]]}). The user can specify a subset of actors on which to run the descriptive plots. If the set contains more than 50 actors, then the function will select the 50 most active actors from the set provided.
 #' @param pch.degree default is 20. Shape of the points for the degree plots (in-degree, out-degree, total-degree).
 #' @param igraph.edge.color color of the edges in visualization of the network with vertices and nodes. The user can specify the hex value of a color, the color name or use the function\code{grDevices::rgb()} which returns the hex value.
 #' @param igraph.vertex.color color of the vertices in visualization of the network with vertices and nodes. The user can specify the hex value of a color, the color name or use the function \code{grDevices::rgb()} which returns the hex value.
@@ -945,11 +1004,25 @@ plot.remify <- function(x,
                     palette = "Purples",
                     n_intervals = 4L,
                     rev = TRUE,
-                    actors = attr(x,"dictionary")$actors$actorName,
+                    actors = NULL,
                     pch.degree = 20,
                     igraph.edge.color = "#4daa89",
                     igraph.vertex.color = "#5AAFC8",
                     ...){
+
+  # support both old remify (attributes) and new remify2 ($meta) structure
+  if (!is.null(x$meta)) {
+    .dict    <- x$meta$dictionary
+    .ordinal <- isTRUE(x$meta$ordinal)
+    .directed <- isTRUE(x$meta$directed)
+    .ncores  <- x$meta$ncores
+  } else {
+    .dict    <- attr(x, "dictionary")
+    .ordinal <- isTRUE(attr(x, "ordinal"))
+    .directed <- isTRUE(attr(x, "directed"))
+    .ncores  <- attr(x, "ncores")
+  }
+  if (is.null(actors)) actors <- .dict$actors$actorName
 
   # checks on input arguments
 
@@ -995,8 +1068,8 @@ plot.remify <- function(x,
   if(nchar(igraph.vertex.color) != 7) igraph.vertex.color <- "#5AAFC8"
 
   # storing some importnat information in advance
-  dict <- attr(x,"dictionary")
-  ordinal <- attr(x,"ordinal")
+  dict <- .dict
+  ordinal <- .ordinal
 
   # actors input
   if(is.null(actors)){
@@ -1043,7 +1116,7 @@ plot.remify <- function(x,
     events_to_select <- which((x$edgelist$actor1 %in% actors) & (x$edgelist$actor2 %in% actors))
     x$edgelist <- x$edgelist[events_to_select,]
     x$N <- actors_loc # can be 49-50-51, not always exaclty 50
-    x$D <- ifelse(attr(x,"directed"),x$N*(x$N-1),x$N*(x$N-1)/2)
+    x$D <- ifelse(.directed,x$N*(x$N-1),x$N*(x$N-1)/2)
 
     # free-ing space
     rm(dyads_freq,dyads_freq_sorted,actors_loc,d_loc,actors_until_d_loc,events_to_select)
@@ -1055,7 +1128,7 @@ plot.remify <- function(x,
     if(length(actors) < x$N){
       # when length(actors) is less than x$N (analysis on a subset of actors that is smaller than 50 actors)
       x$N <- length(actors)
-      x$D <- ifelse(attr(x,"directed"),x$N*(x$N-1),x$N*(x$N-1)/2)
+      x$D <- ifelse(.directed,x$N*(x$N-1),x$N*(x$N-1)/2)
       events_to_select <- which((x$edgelist$actor1 %in% actors) & (x$edgelist$actor2 %in% actors))
       if(length(events_to_select) == 0){
         stop("no events found when selecting the set of actors (supplied via the argument 'actors').")
@@ -1067,7 +1140,7 @@ plot.remify <- function(x,
 
   # dyads, in-degree, out-degree and total-degree
   dyads <- paste(x$edgelist$actor1,x$edgelist$actor2,sep="_")
-  if(attr(x,"directed")){
+  if(.directed){
       in_degree <- table(factor(x$edgelist$actor2,levels=actors))
       out_degree <- table(factor(x$edgelist$actor1,levels=actors))
   }
@@ -1075,16 +1148,16 @@ plot.remify <- function(x,
       total_degree <- table(factor(c(x$edgelist$actor1,x$edgelist$actor2),levels=actors))
   }
 
-  if((which[4L]  & !attr(x,"directed")) | any(which[c(2L,5L)])){
+  if((which[4L]  & !.directed) | any(which[c(2L,5L)])){
     # X_dyad is used by plot 5 and total_degree is used by plot 2 when the network is undirected
     # [incomplete] matrix of dyad frequencies by [actor1-actor2] with no direction (undirected) taken into account (some dyads may not be included at this stage, only observed ones are included)
-    cl <- parallel::makeCluster(attr(x,"ncores"))
+    cl <- parallel::makeCluster(.ncores)
     dyad_no_direction_freq <-parallel::parApply(cl = cl, X = x$edgelist, MARGIN = 1,FUN = function(l) {
       dyad_l <- sort(as.character(c(l[2],l[3])))
       paste(dyad_l[1],dyad_l[2],sep="_")
       })
     parallel::stopCluster(cl)
-    if(which[4L]  & !attr(x,"directed")){
+    if(which[4L]  & !.directed){
       dyads <- dyad_no_direction_freq
     }
   }
@@ -1094,7 +1167,7 @@ plot.remify <- function(x,
     dyad_freq <- table(dyads)
 
     # [incomplete] matrix of dyad frequencies by [actor1-actor2] (some dyads may not be included at this stage, only observed one are included)
-    if(attr(x,"directed")){
+    if(.directed){
       X <- matrix(NA, nrow=length(dyad_freq),ncol=3)
       X[,3] <- as.integer(dyad_freq)
       for(d in 1:length(dyad_freq)){
@@ -1111,7 +1184,7 @@ plot.remify <- function(x,
     }
     X_dyad <- X_dyad[order(X_dyad[,1],X_dyad[,2]),]
     rm(dyad_no_direction_freq)
-    if(!attr(x,"directed")){
+    if(!.directed){
       # only for undirected networks (if undirected, X and X_dyad are the same)
       X <- X_dyad
     }
@@ -1154,7 +1227,7 @@ plot.remify <- function(x,
     # actors that interacted either as 'sender' or 'receiver' (or 'actor1' and 'actor2' in case of undirected networks)
     egrid <- expand.grid(actors,actors)
     egrid <- egrid[,2:1]
-    if(attr(x,"directed")){
+    if(.directed){
       tile_plot_x_axis_name <- "receiver"
       tile_plot_y_axis_name <- "sender"
       upper_plot_y_axis_name <- "in-degree"
@@ -1177,7 +1250,7 @@ plot.remify <- function(x,
     X_out[,1:2] <- X_out[,2:1]
 
     # setting up axes measures
-    if(attr(x,"directed")){
+    if(.directed){
       max_upper_plot <- max(unname(in_degree))+2
       min_upper_plot <- min(unname(in_degree))-1
       max_out_degree <- max(unname(out_degree))+2
@@ -1192,7 +1265,7 @@ plot.remify <- function(x,
     }
 
     # creating layout and setting up graphical parameters
-    if(attr(x,"directed")){
+    if(.directed){
       layout_matrix <- matrix(c(3,2,1,4), ncol=2, byrow=TRUE)
     }
     else{
@@ -1242,7 +1315,7 @@ plot.remify <- function(x,
     axis(side=2)
 
     # [4] line plots out-degree
-    if(attr(x,"directed")){
+    if(.directed){
       par(mar=c(6,0,1,1))
       plot(x = seq(min_out_degree,max_out_degree,length=x$N), y = 1:x$N, type = 'n', xlim = c(min_out_degree,max_out_degree), ylim = c(1,x$N),axes=FALSE,frame.plot=FALSE,xlab="",ylab="")
       title(xlab="out-degree", line = 5)
@@ -1261,7 +1334,7 @@ plot.remify <- function(x,
     # for undirected networks: normalized total-degree
     # normalization means that per each intervals the in-/out-/total- degree of each actor is normalized for the minimum and maximum observed value of in-/out-/total- degree across all the actors. The normalization is carried out as follows: (degree-min(degree))/(max(degree)-min(degree))
   if(which[3L]){
-    if(attr(x,"directed")){
+    if(.directed){
       # out-degree plot
       tab_s <- tapply(X =x$edgelist$actor1, INDEX = time, FUN = function(w) table(w))
       #dev.hold()
@@ -1342,7 +1415,7 @@ plot.remify <- function(x,
   if(which[4L]){
     # arranging layout
     layout.matrix <- NULL
-    if(attr(x,"directed")){
+    if(.directed){
     layout.matrix <- matrix(c(1,3,2,4), nrow = 2, ncol = 2)
     }
     else{
@@ -1363,7 +1436,7 @@ plot.remify <- function(x,
     plot(prop_dyads,type=type_plot,cex=0.8,col="#939393",ylab = "active dyads (observed/total)",xlab = "time interval", xaxt="n", lwd = 1.5, main="Active dyads (observed/total) per time interval")
     if(n_intervals>3) lines(smooth.spline(x=c(1:length(y)),y=as.numeric(prop_dyads),df=df_spline),col="#cd0303",lwd=2)
 
-    if(attr(x,"directed")){
+    if(.directed){
       # [3] plotting (proportion of active senders) per time interval
       s <- tapply(X = x$edgelist$actor1, INDEX = time, FUN = function(l) length(unique(l)))
       s[is.na(s)] <- 0
@@ -1417,7 +1490,7 @@ plot.remify <- function(x,
     igraph::E(net_undirected)$color <- sapply(transparency_links_weight_levels,function(l) paste(igraph.edge.color,l,sep=""))
     igraph::E(net_undirected)$curved <- 0.1
     igraph::graph_attr(net_undirected, "layout") <- igraph::layout_with_lgl
-    if(attr(x,"directed")){
+    if(.directed){
       X[is.na(X)] <- 0
       # [2] network of directed dyad intensity
       # defining nodes and links
