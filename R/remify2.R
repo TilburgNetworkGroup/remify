@@ -642,11 +642,52 @@ remify2 <- function(edgelist,
 
   # ---- dyad map (index) -------------------------------------------------------
   if (active || riskset == "manual") {
-    str_out$index$dyad_map_active <- getDyad2(
-      x = str_out,
-      dyadID = seq_len(as.integer(str_out$activeD)[1]),
-      active = TRUE
-    )
+    # When ext=FALSE but events have types, C++ collapses typed->untyped in
+    # riskset_idx. getDyad2() would decode wrong actor/type. Instead decode
+    # riskset_idx as untyped, then expand with observed types from edgelist.
+    if ((active || riskset == "manual") && isTRUE(str_out$meta$with_type) && !isTRUE(str_out$meta$with_type_riskset)) {
+      # Decode actor pairs from riskset_idx using the pure-R formula (same as
+      # decode_dyad_id below). getEventsComposition is broken for undirected networks.
+      N_loc  <- str_out$N
+      rs_raw <- str_out$omit_dyad$riskset_idx
+      rs_idx <- as.integer(if (is.matrix(rs_raw)) rs_raw[, 1L] else rs_raw)
+      dict_loc <- str_out$meta$dictionary
+      d0 <- rs_idx - 1L
+      if (isTRUE(str_out$meta$directed)) {
+        D0 <- N_loc * (N_loc - 1L)
+        r  <- d0 %% D0
+        a10 <- r %/% (N_loc - 1L)
+        w   <- r - a10 * (N_loc - 1L)
+        a20 <- ifelse(w >= a10, w + 1L, w)
+      } else {
+        b   <- 2L * N_loc - 1L
+        disc <- b * b - 8L * d0
+        i0  <- floor((b - sqrt(disc)) / 2)
+        cum_i <- (i0 * (2L * N_loc - i0 - 1L)) %/% 2L
+        a10 <- i0
+        a20 <- i0 + 1L + (d0 - cum_i)
+      }
+      actor1_u <- dict_loc$actors$actorName[a10 + 1L]
+      actor2_u <- dict_loc$actors$actorName[a20 + 1L]
+      el       <- str_out$edgelist
+      el_key   <- paste(el$actor1, el$actor2, sep = "|")
+      rows <- lapply(seq_along(rs_idx), function(i) {
+        key       <- paste(actor1_u[i], actor2_u[i], sep = "|")
+        types_obs <- unique(el$type[el_key == key])
+        if (length(types_obs) == 0L) return(NULL)
+        data.frame(actor1 = actor1_u[i], actor2 = actor2_u[i],
+                   type = types_obs, stringsAsFactors = FALSE)
+      })
+      active_typed <- do.call(rbind, rows[!sapply(rows, is.null)])
+      active_typed$dyadIDactive <- seq_len(nrow(active_typed))
+      str_out$index$dyad_map_active <- active_typed[, c("dyadIDactive","actor1","actor2","type")]
+    } else {
+      str_out$index$dyad_map_active <- getDyad2(
+        x = str_out,
+        dyadID = seq_len(as.integer(str_out$activeD)[1]),
+        active = TRUE
+      )
+    }
     if (riskset == "manual") {
       str_out$index$dyad_map <- str_out$index$dyad_map_active
     }
@@ -692,7 +733,7 @@ remify2 <- function(edgelist,
       a20 <- ifelse(which2 >= a10, which2 + 1L, which2)
 
     } else {
-      D0 <- N * (N - 1L) %/% 2L
+      D0 <- (N * (N - 1L)) %/% 2L
       type0 <- d0 %/% D0
       r <- d0 - type0 * D0
 
@@ -700,7 +741,7 @@ remify2 <- function(edgelist,
       disc <- b*b - 8L * r
       i0 <- floor((b - sqrt(disc)) / 2)
 
-      cum_i <- i0 * (2L * N - i0 - 1L) %/% 2L
+      cum_i <- (i0 * (2L * N - i0 - 1L)) %/% 2L
       within <- r - cum_i
       a10 <- i0
       a20 <- i0 + 1L + within
@@ -842,36 +883,51 @@ getDyad2 <- function(x, dyadID, active = FALSE) {
     dyadID_full <- rs[dyadID]
   }
 
-  composition <- getEventsComposition(
-    dyads   = dyadID_full,
-    N       = x$N,
-    D       = x$D,
-    directed = x$meta$directed,
-    ncores  = x$meta$ncores
-  )
-
-  if (any(is.na(composition))) {
-    warning("one or more dyad ID's can't be found in the remify object 'x': dyad ID's must range between 1 and x$D. NA's are returned for such ID's")
+  # Decode dyad IDs to actor pairs using pure-R formula.
+  # getEventsComposition is broken for undirected networks (always returns [1,1,1]).
+  N_loc <- x$N
+  C_loc <- if (isTRUE(x$meta$with_type_riskset)) nrow(x$meta$dictionary$types) else 1L
+  directed_loc <- isTRUE(x$meta$directed)
+  d0 <- dyadID_full - 1L
+  if (directed_loc) {
+    D0    <- N_loc * (N_loc - 1L)
+    type0 <- d0 %/% D0
+    r     <- d0 - type0 * D0
+    a10   <- r %/% (N_loc - 1L)
+    w     <- r - a10 * (N_loc - 1L)
+    a20   <- ifelse(w >= a10, w + 1L, w)
+  } else {
+    D0    <- (N_loc * (N_loc - 1L)) %/% 2L
+    type0 <- d0 %/% D0
+    r     <- d0 - type0 * D0
+    b     <- 2L * N_loc - 1L
+    disc  <- b * b - 8L * r
+    i0    <- floor((b - sqrt(disc)) / 2)
+    cum_i <- (i0 * (2L * N_loc - i0 - 1L)) %/% 2L
+    a10   <- i0
+    a20   <- i0 + 1L + (r - cum_i)
   }
 
-  if (isTRUE(x$meta$with_type)) {
+  # Use with_type_riskset (not with_type) to decide whether to include a type
+  # column. When with_type=TRUE but with_type_riskset=FALSE (ext=FALSE), the
+  # dyad IDs are untyped so type decoding is meaningless.
+  if (isTRUE(x$meta$with_type_riskset)) {
     out <- data.frame(
       dyadID = dyadID,
-      actor1 = dict_loc$actors$actorName[composition[, 1]],
-      actor2 = dict_loc$actors$actorName[composition[, 2]],
-      type   = dict_loc$types$typeName[composition[, 3]]
+      actor1 = dict_loc$actors$actorName[a10 + 1L],
+      actor2 = dict_loc$actors$actorName[a20 + 1L],
+      type   = dict_loc$types$typeName[type0 + 1L]
     )
   } else {
     out <- data.frame(
       dyadID = dyadID,
-      actor1 = dict_loc$actors$actorName[composition[, 1]],
-      actor2 = dict_loc$actors$actorName[composition[, 2]]
+      actor1 = dict_loc$actors$actorName[a10 + 1L],
+      actor2 = dict_loc$actors$actorName[a20 + 1L]
     )
   }
 
   if (active) names(out)[1] <- "dyadIDactive"
 
-  rm(composition)
   return(out)
 }
 
