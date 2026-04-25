@@ -18,6 +18,11 @@ Useful links:
 \author{
 \strong{Maintainer}: Giuseppe Arena \email{g.arena@uva.nl} (\href{https://orcid.org/0000-0001-5204-3326}{ORCID})
 
+Authors:
+\itemize{
+  \item Joris Mulder \email{j.mulder3@tilburguniversity.edu}
+}
+
 Other contributors:
 \itemize{
   \item Rumana Lakdawala [contributor]
@@ -26,7 +31,6 @@ Other contributors:
   \item Fabio Generoso Vieira [contributor]
   \item Mahdi Shafiee Kamalabad [contributor]
   \item Roger Leenders \email{r.t.a.j.leenders@tilburguniversity.edu} [contributor]
-  \item Joris Mulder \email{j.mulder3@tilburguniversity.edu} [contributor]
 }
 
 }
