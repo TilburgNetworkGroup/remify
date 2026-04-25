@@ -1,7 +1,7 @@
 Type: Package
 Package: remify
 Title: Processing and Transforming Relational Event History Data
-Version: 3.2.8.9000
+Version: 4.0.0
 Date: 2026-03-26
 Authors@R: 
     c(person(given = "Giuseppe",
@@ -9,6 +9,10 @@ Authors@R:
              role = c("aut", "cre"),
              email = "g.arena@uva.nl",
              comment = c(ORCID = "0000-0001-5204-3326")),
+      person(given = "Joris",
+             family = "Mulder",
+             role = "aut",
+             email = "j.mulder3@tilburguniversity.edu"),
       person(given = "Rumana",
              family = "Lakdawala",
              role = "ctb"),
@@ -27,11 +31,7 @@ Authors@R:
       person(given = "Roger",
              family = "Leenders",
              role = "ctb",
-             email = "r.t.a.j.leenders@tilburguniversity.edu"),
-      person(given = "Joris",
-             family = "Mulder",
-             role = "ctb",
-             email = "j.mulder3@tilburguniversity.edu"))
+             email = "r.t.a.j.leenders@tilburguniversity.edu"))
 Maintainer: Giuseppe Arena <g.arena@uva.nl>
 Description: Efficiently processes relational event history data and transforms them into formats suitable for other packages. The primary objective of this package is to convert event history data into a format that integrates with the packages in 'remverse' and is compatible with various analytical tools (e.g., computing network statistics, estimating tie-oriented or actor-oriented social network models). Second, it can also transform the data into formats compatible with other packages out of 'remverse'. The package processes the data for two types of temporal social network models: tie-oriented modeling framework (Butts, C., 2008, <doi:10.1111/j.1467-9531.2008.00203.x>) and actor-oriented modeling framework (Stadtfeld, C., & Block, P., 2017, <doi:10.15195/v4.a14>). 
 License: MIT + file LICENSE
@@ -53,4 +53,4 @@ VignetteBuilder:
     knitr
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3

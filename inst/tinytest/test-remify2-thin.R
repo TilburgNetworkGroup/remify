@@ -1,6 +1,6 @@
 # inst/tinytest/test-remify2-thin.R
 #
-# Tests for the `thin` argument of remify2().
+# Tests for the `thin` argument of remify().
 #
 # thin = k keeps every k-th unique time point (1st, 2nd, ..., k-th, 2k-th, ...)
 # and remaps all events to the next kept time >= their original time.
@@ -38,8 +38,8 @@ U_orig <- length(unique(h$time))   # number of unique time points before thinnin
 # 1. thin = 1 is a strict no-op
 # ====================================================================
 
-reh1 <- remify::remify2(h, model = "tie", thin = 1L)
-reh0 <- remify::remify2(h, model = "tie")          # default thin = 1
+reh1 <- remify::remify(h, model = "tie", thin = 1L)
+reh0 <- remify::remify(h, model = "tie")          # default thin = 1
 
 expect_equal(nrow(reh1$edgelist), M_orig,
   info = "thin=1: number of events unchanged")
@@ -53,7 +53,7 @@ expect_equal(reh1$M, reh0$M,
 # 2. thin = 2 keeps every 2nd unique time point
 # ====================================================================
 
-reh2 <- remify::remify2(h, model = "tie", thin = 2L)
+reh2 <- remify::remify(h, model = "tie", thin = 2L)
 
 u_all  <- sort(unique(h$time))
 kept_2 <- u_all[seq(2L, length(u_all), by = 2L)]
@@ -88,7 +88,7 @@ for (i in seq_len(M_orig)) {
 # 3. thin = 3
 # ====================================================================
 
-reh3 <- remify::remify2(h, model = "tie", thin = 3L)
+reh3 <- remify::remify(h, model = "tie", thin = 3L)
 
 kept_3 <- u_all[seq(3L, length(u_all), by = 3L)]
 
@@ -108,7 +108,7 @@ expect_true(reh2$M <= reh1$M,
 # 4. thin = U_orig: only the last unique time point is kept
 # ====================================================================
 
-reh_U <- remify::remify2(h, model = "tie", thin = U_orig)
+reh_U <- remify::remify(h, model = "tie", thin = U_orig)
 
 kept_U <- u_all[seq(U_orig, length(u_all), by = U_orig)]  # just u_all[U_orig]
 
@@ -126,8 +126,8 @@ expect_equal(nrow(reh_U$edgelist), M_orig,
 
 hT <- make_el(M = 30L, typed = TRUE)
 
-reh_t1 <- remify::remify2(hT, model = "tie", event_type = "type", thin = 1L)
-reh_t0 <- remify::remify2(hT, model = "tie", event_type = "type")
+reh_t1 <- remify::remify(hT, model = "tie", event_type = "type", thin = 1L)
+reh_t0 <- remify::remify(hT, model = "tie", event_type = "type")
 
 expect_equal(reh_t1$edgelist$time, reh_t0$edgelist$time,
   info = "thin=1 typed: times unchanged")
@@ -139,7 +139,7 @@ expect_equal(reh_t1$edgelist$type, reh_t0$edgelist$type,
 # 6. thin = 2 with typed events: type column preserved after remapping
 # ====================================================================
 
-reh_t2 <- remify::remify2(hT, model = "tie", event_type = "type",
+reh_t2 <- remify::remify(hT, model = "tie", event_type = "type",
                            thin = 2L, extend_riskset_by_type = TRUE)
 
 u_T     <- sort(unique(hT$time))
@@ -158,19 +158,19 @@ expect_false(is.null(reh_t2$ids$type),
 # ====================================================================
 
 expect_error(
-  remify::remify2(h, model = "tie", thin = 0L),
+  remify::remify(h, model = "tie", thin = 0L),
   pattern = "thin.*>=.*1|>=.*1.*thin",
   info = "thin=0: error"
 )
 
 expect_error(
-  remify::remify2(h, model = "tie", thin = -1L),
+  remify::remify(h, model = "tie", thin = -1L),
   pattern = "thin.*>=.*1|>=.*1.*thin",
   info = "thin=-1: error"
 )
 
 expect_error(
-  remify::remify2(h, model = "tie", thin = NA_integer_),
+  remify::remify(h, model = "tie", thin = NA_integer_),
   pattern = "thin.*>=.*1|>=.*1.*thin",
   info = "thin=NA: error"
 )

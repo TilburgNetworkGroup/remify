@@ -48,7 +48,7 @@ C   <- 2L   # "social" and "work"
 # 1. FULL riskset, extend_riskset_by_type = TRUE (default)
 # ====================================================================
 
-reh_ext <- remify::remify2(
+reh_ext <- remify::remify(
   edgelist = h, model = "tie", riskset = "full",
   event_type = "type", extend_riskset_by_type = TRUE,
   attach_riskset = TRUE, riskset_decode = "labels"
@@ -91,7 +91,7 @@ expect_true(all(dyad_vec >= 1L) && all(dyad_vec <= reh_ext$D),
 # 2. FULL riskset, extend_riskset_by_type = FALSE
 # ====================================================================
 
-reh_no <- remify::remify2(
+reh_no <- remify::remify(
   edgelist = h, model = "tie", riskset = "full",
   event_type = "type", extend_riskset_by_type = FALSE,
   attach_riskset = TRUE, riskset_decode = "labels"
@@ -147,7 +147,7 @@ expect_equal(reh_ext$C, reh_no$C,
 # 4. ACTIVE riskset, extend_riskset_by_type = TRUE
 # ====================================================================
 
-reh_act_ext <- remify::remify2(
+reh_act_ext <- remify::remify(
   edgelist = h, model = "tie", riskset = "active",
   event_type = "type", extend_riskset_by_type = TRUE,
   attach_riskset = TRUE, riskset_decode = "labels"
@@ -178,7 +178,7 @@ expect_equal(rs$riskset_idx[rs$dyadIDactive], dyad_full,
 # 5. ACTIVE riskset, extend_riskset_by_type = FALSE
 # ====================================================================
 
-reh_act_no <- remify::remify2(
+reh_act_no <- remify::remify(
   edgelist = h, model = "tie", riskset = "active",
   event_type = "type", extend_riskset_by_type = FALSE,
   attach_riskset = TRUE, riskset_decode = "labels"
@@ -215,7 +215,7 @@ expect_true(reh_act_no$activeD <= reh_act_ext$activeD,
 
 manual_rs <- unique(h[, c("actor1", "actor2")])[1:5, ]
 
-reh_man_ext <- suppressWarnings(remify::remify2(
+reh_man_ext <- suppressWarnings(remify::remify(
   edgelist = h, model = "tie", riskset = "manual",
   manual.riskset = manual_rs,
   event_type = "type", extend_riskset_by_type = TRUE,
@@ -237,7 +237,7 @@ expect_true(reh_man_ext$activeD >= expected_n,
 # 7. MANUAL riskset, extend_riskset_by_type = FALSE
 # ====================================================================
 
-reh_man_no <- suppressWarnings(remify::remify2(
+reh_man_no <- suppressWarnings(remify::remify(
   edgelist = h, model = "tie", riskset = "manual",
   manual.riskset = manual_rs,
   event_type = "type", extend_riskset_by_type = FALSE,
@@ -258,7 +258,7 @@ expect_true(reh_man_no$activeD >= nrow(manual_rs),
 
 h_untyped <- h[, c("time", "actor1", "actor2")]
 
-reh_untyped <- remify::remify2(
+reh_untyped <- remify::remify(
   edgelist = h_untyped, model = "tie", riskset = "full",
   event_type = NULL, extend_riskset_by_type = TRUE,  # flag ignored
   attach_riskset = TRUE, riskset_decode = "labels"
@@ -282,7 +282,7 @@ expect_true(is.null(reh_untyped$ids$type),
 
 hS <- make_typed_edgelist(directed = TRUE, simultaneous = TRUE)
 
-reh_sim_ext <- remify::remify2(
+reh_sim_ext <- remify::remify(
   edgelist = hS, model = "tie", riskset = "active",
   event_type = "type", extend_riskset_by_type = TRUE,
   attach_riskset = TRUE, riskset_decode = "ids"
@@ -314,7 +314,7 @@ expect_equal(rs_sim$riskset_idx[rs_sim$dyadIDactive], dyad_sim,
 # 10. Simultaneous events + untyped riskset
 # ====================================================================
 
-reh_sim_no <- remify::remify2(
+reh_sim_no <- remify::remify(
   edgelist = hS, model = "tie", riskset = "active",
   event_type = "type", extend_riskset_by_type = FALSE,
   attach_riskset = TRUE, riskset_decode = "ids"

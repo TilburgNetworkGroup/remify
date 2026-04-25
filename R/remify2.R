@@ -10,13 +10,13 @@
 #' @param edgelist the relational event history. An object of class \code{\link[base]{data.frame}} with first three columns corresponding to time, and actors forming the dyad. The first three columns will be re-named "time", "actor1", "actor2" (where, for directed networks, "actor1" corresponds to the sender and "actor2" to the receiver of the relational event). Optional columns that can be supplied are: `type` and `weight`. If one or both exist in \code{edgelist}, they have to be named accordingly.
 #' @param directed logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})
 #' @param ordinal logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the exact timing must be considered in the model (\code{FALSE}). (default value is \code{FALSE}). If \code{TRUE}, then the column "time" of \code{edgelist} is still used to extract the order.
-#' @param model can be "tie" or "actor" oriented modeling. This argument plays a fundamental role when \code{omit_dyad} is supplied. Indeed, when actor-oriented modeling, the dynamic risk set will consist of two risk sets objects (senders' and dyads' risk sets). In the tie-oriented model the function will return a dynamic risk set referred at a dyad-level.
+#' @param model either \code{"tie"} (default) or \code{"actor"} oriented modeling. For \code{"tie"}, the riskset is at the dyad level. For \code{"actor"}, the model has two sub-processes: a sender rate model (who sends next?) and a receiver choice model (who does the sender choose?). Actor-oriented modeling requires \code{directed=TRUE}. The returned object includes \code{sender_riskset}, \code{receiver_riskset}, and \code{activeN} (see \code{@return}).
 #' @param thin Integer >= 1. Event-time thinning based on unique time points.
 #'   Keeps every \code{thin}-th unique event time (after time translation) and
 #'   maps each event time to the next kept time point (i.e., ceiling to the kept grid).
 #'   This reduces the number of unique time points (and thus memory/computation in later steps).
 #' @param actors [\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.
-#' @param riskset [\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user.
+#' @param riskset [\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user. \code{riskset = "active_saturated"} extends the active riskset by adding the reverse direction for each observed dyad (if A->B is observed, B->A is also at risk) and includes all event types for each observed actor pair (type column is ignored). This reflects the assumption that observing any interaction between two actors implies both directions and all types are possible.
 #' @param manual.riskset [\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.
 #' @param event_type Optional. Either \code{NULL} (default) or a single character
 #'   string giving the name of the column in \code{edgelist} that contains event
@@ -71,23 +71,110 @@
 #' @param omit_dyad Deprecated. Set to \code{NULL}.
 #' @param types Deprecated. Set to \code{NULL}.
 #'
-#' @return  'remify' S3 object, list of: number of events (`M`), number of actors (`N`), number of event types (if present, `C`), number of dyads (`D`, and also `activeD` if `riskset="active"`), vector of inter-event times (waiting times between two subsequent events), processed input edgelist as `data.frame`, processed `omit_dyad` object as `list`. The function returns also several attributes that make efficient the processing of the data for future analysis. For more details about the function, input arguments, output, attributes and methods, please read \code{vignette(package="remify",topic="remify")}.
+#' @return A \code{remify} S3 object (list) with the following elements:
+#'   \itemize{
+#'     \item \code{M} number of events (or unique time points if simultaneous events exist).
+#'     \item \code{N} number of actors.
+#'     \item \code{C} number of event types (1 if untyped).
+#'     \item \code{D} number of dyads in the riskset.
+#'     \item \code{intereventTime} vector of inter-event waiting times (\code{NULL} if \code{ordinal=TRUE}).
+#'     \item \code{edgelist} processed input edgelist as \code{data.frame}.
+#'     \item \code{edgelist_id} per-event integer ID summary.
+#'     \item \code{meta} list of metadata (model, directed, ordinal, riskset, dictionary, etc.).
+#'     \item \code{ids} list of per-event integer IDs (actor1, actor2, dyad, type).
+#'     \item \code{index} list of decoded riskset tables (\code{dyad_map} or \code{dyad_map_active} for tie model; \code{sender_map} for actor model).
+#'     \item \code{omit_dyad} dynamic riskset modification list (tie model only; empty list for actor model).
+#'     \item \code{activeD} number of active dyads (tie model, \code{riskset="active"} or \code{"manual"} only).
+#'     \item \code{riskset_info} decoded riskset metadata (tie model only, when \code{attach_riskset=TRUE}).
+#'   }
+#'   For \strong{actor-oriented models} (\code{model="actor"}), the following additional elements are returned:
+#'   \itemize{
+#'     \item \code{sender_riskset} integer vector of actor IDs allowed to send (all actors for \code{"full"}; observed senders for \code{"active"}; senders in \code{manual.riskset} for \code{"manual"}/\code{"active_saturated"}).
+#'     \item \code{receiver_riskset} named list (actor names) of integer vectors of allowed receiver IDs per sender.
+#'     \item \code{activeN} number of active senders.
+#'     \item \code{index\$sender_map} data.frame with columns \code{senderID} and \code{actorName} for active senders.
+#'   }
 #'
 #' @details In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list. For more details about
 #'
 #' @export
 #'
+#' @examples
+#'
+#' # load package and random network 'randomREH'
+#' library(remify)
+#' data(randomREH)
+#'
+#' # first events in the sequence
+#' head(randomREH$edgelist)
+#'
+#' # actor's names
+#' randomREH$actors
+#'
+#' # event type's names
+#' randomREH$types
+#'
+#' # start time of the study (origin)
+#' randomREH$origin
+#'
+#' # list of changes of the risk set: each one is a list of:
+#' # 'time' (indicating the time window where to apply the risk set reduction)
+#' # 'dyad' (a data.frame describing the dyads to remove from the risk set
+#' # during the time window specified in 'time')
+#' str(randomREH$omit_dyad)
+#'
+#' # -------------------------------------- #
+#' #  processing for tie-oriented modeling  #
+#' # -------------------------------------- #
+#'
+#' tie_randomREH <- remify(edgelist = randomREH$edgelist,
+#'        directed = TRUE,
+#'        ordinal = FALSE,
+#'        model = "tie",
+#'        origin = randomREH$origin)
+#'
+#' # summary
+#' summary(tie_randomREH)
+#'
+#' # visualize descriptive measures of relational event data
+#' plot(x = tie_randomREH)
+#'
+#' # -------------------------------------- #
+#' # processing for actor-oriented modeling #
+#' # -------------------------------------- #
+#'
+#' # loading network 'randomREHsmall'
+#' data(randomREHsmall)
+#'
+#' # processing small random network
+#' actor_randomREH <- remify(edgelist = randomREHsmall$edgelist,
+#'        directed = TRUE,
+#'        ordinal = FALSE,
+#'        model = "actor",
+#'        actors = randomREHsmall$actors,
+#'        origin = randomREHsmall$origin)
+#'
+#' # summary
+#' summary(actor_randomREH)
+#'
+#' # visualize
+#' plot(actor_randomREH)
+#'
+#' # ------------------------------------ #
+#' # for more information about remify()  #
+#' # check: vignette(package="remify")    #
+#' # ------------------------------------ #
 #'
 #'
-remify2 <- function(edgelist,
+remify <- function(edgelist,
                    directed = TRUE,
                    ordinal = FALSE,
                    model = c("tie","actor"),
                    thin = 1,
                    actors = NULL,
-                   riskset = c("full","active","manual"),
+                   riskset = c("full","active","active_saturated","manual"),
                    manual.riskset = NULL,
-                   extend_riskset_by_type = TRUE,
+                   extend_riskset_by_type = FALSE,
                    event_type = NULL,
                    origin = NULL,
                    time.units = c("auto", "secs", "mins",
@@ -187,6 +274,12 @@ remify2 <- function(edgelist,
     stop("actor-oriented model can only work with directed networks")
   }
 
+  if (model == "actor" && isTRUE(extend_riskset_by_type)) {
+    stop("'extend_riskset_by_type = TRUE' is not supported for actor-oriented models. ",
+         "In the actor model, event type is modeled as a third stage (given sender and receiver), ",
+         "not as part of the receiver riskset. Use 'extend_riskset_by_type = FALSE'.")
+  }
+
   # (3) Checking for time variable classes (they must be the same)
 
   # input `origin` and `time` column in `edgelist`
@@ -206,9 +299,9 @@ remify2 <- function(edgelist,
       # compute mean waiting time on the original time scale
       mean.waitingtime <- mean(difftime(t[-1], t[-length(t)], units = time.units), na.rm = TRUE)
       origin <- t[1] - mean.waitingtime
-      if (!isTRUE(ordinal)){
-        message(paste("Note: origin is set to ", origin))
-      }
+      # if (!isTRUE(ordinal)){
+      #   message(paste("Note: origin is set to ", origin))
+      # }
     }
 
     edgelist$time <- as.numeric(difftime(t, origin, units = time.units))
@@ -219,9 +312,9 @@ remify2 <- function(edgelist,
     # numeric time: difftime is not appropriate
     if (is.null(origin)) {
       origin <- 0
-      if (!isTRUE(ordinal)){
-        message(paste("Note: origin is set to ", origin))
-      }
+      # if (!isTRUE(ordinal)){
+      #   message(paste("Note: origin is set to ", origin))
+      # }
     }
 
     edgelist$time <- as.numeric(t - origin)  # unit is whatever the numeric scale is
@@ -293,11 +386,10 @@ remify2 <- function(edgelist,
   }
 
   # Checking argument 'riskset'
-  if(is.null(riskset)){
-    riskset <- "full"
-  }
-
-  riskset  <- match.arg(arg = riskset, choices = c("full", "active", "manual"), several.ok = FALSE)
+  # if(is.null(riskset)){
+  #   riskset <- "full"
+  # }
+  riskset  <- match.arg(arg = riskset, choices = c("full", "active", "active_saturated", "manual"), several.ok = FALSE)
   active <- FALSE
   if(riskset == "active"){
     active <- TRUE
@@ -331,12 +423,7 @@ remify2 <- function(edgelist,
     types <- sort(unique(as.character(edgelist$type)))
   }
 
-  if(riskset == "manual")
-    {
-
-    if (!is.null(omit_dyad)) {
-      stop("Provide either `manual.riskset` or `omit_dyad`, not both.")
-    }
+  if(riskset == "manual"){
 
     if (!is.data.frame(manual.riskset)) stop("`manual.riskset` must be a data.frame when using a 'manual' riskset.")
     if (!all(c("actor1","actor2") %in% names(manual.riskset))) {
@@ -446,6 +533,23 @@ remify2 <- function(edgelist,
   if (!is.null(event_covariates)) {
     event_covariates_df <- edgelist[, c("time","actor1","actor2", event_covariates), drop = FALSE]
     event_covariates_df$.event_id <- seq_len(nrow(event_covariates_df))
+  }
+
+  # ---- active_saturated: manual riskset from observed pairs + reversed -------
+  if (riskset == "active_saturated") {
+    el_pairs <- unique(edgelist[, c("actor1", "actor2")])
+    el_rev   <- el_pairs[, c("actor2", "actor1")]
+    names(el_rev) <- c("actor1", "actor2")
+    sat_pairs <- unique(rbind(el_pairs, el_rev))
+    # If typed events, cross with all observed types so all types are at risk
+    if ("type" %in% names(edgelist)) {
+      all_types <- unique(edgelist$type)
+      sat_pairs <- do.call(rbind, lapply(all_types, function(tp) {
+        cbind(sat_pairs, type = tp, stringsAsFactors = FALSE)
+      }))
+    }
+    manual.riskset <- unique(sat_pairs)
+    riskset <- "manual"
   }
 
   out <- remifyCpp2(
@@ -566,14 +670,83 @@ remify2 <- function(edgelist,
 
   # ---- active / manual riskset IDs -------------------------------------------
   if (active || riskset == "manual") {
-    str_out$activeD <- out$omit_dyad$D_active
-    out$omit_dyad$D_active <- NULL
     if (model == "tie") {
+      str_out$activeD <- out$omit_dyad$D_active
       str_out$ids$dyad_active <- out$omit_dyad$dyadIDactive
     }
+    out$omit_dyad$D_active <- NULL
   }
 
   str_out$omit_dyad <- out$omit_dyad
+
+  # ---- actor model risksets ---------------------------------------------------
+  # For actor model, build clean sender and receiver risksets in R.
+  # These are derived from the edgelist / manual.riskset after C++ processing.
+  # sender_riskset: integer vector of actor IDs (1-based) allowed to send
+  # receiver_riskset: named list, one element per sender, each a vector of
+  #                   receiver actor IDs (1-based) allowed for that sender
+  if (model == "actor") {
+    actor_ids   <- str_out$meta$dictionary$actors$actorID   # 1..N
+    actor_names <- str_out$meta$dictionary$actors$actorName
+
+    if (riskset == "full") {
+      # All actors can send; each sender can choose any other actor
+      str_out$sender_riskset   <- actor_ids
+      str_out$receiver_riskset <- setNames(
+        lapply(actor_ids, function(i) actor_ids[actor_ids != i]),
+        actor_names
+      )
+
+    } else if (active) {
+      # Sender riskset: actors that have been observed sending
+      # Use risksetSender from C++ output (1 x N binary matrix)
+      sender_active_flag <- as.logical(out$omit_dyad$risksetSender[1, ])
+      str_out$sender_riskset <- actor_ids[sender_active_flag]
+
+      # Receiver riskset per sender: actors observed as receiver for that sender
+      el <- str_out$edgelist
+      a1_ids <- str_out$ids$actor1   # integer sender IDs (1-based)
+      a2_ids <- str_out$ids$actor2   # integer receiver IDs (1-based)
+      str_out$receiver_riskset <- setNames(
+        lapply(str_out$sender_riskset, function(s) {
+          obs_receivers <- unique(a2_ids[a1_ids == s])
+          sort(obs_receivers)
+        }),
+        actor_names[str_out$sender_riskset]
+      )
+
+    } else if (riskset == "manual") {
+      # Sender riskset and receiver riskset derived from manual.riskset
+      # manual.riskset is a data.frame with actor1, actor2 columns
+      if (is.null(manual.riskset)) {
+        stop("riskset='manual' requires a manual.riskset data.frame for actor model")
+      }
+      # Map actor names to IDs
+      name_to_id <- setNames(actor_ids, actor_names)
+      mr_a1 <- name_to_id[as.character(manual.riskset[[1]])]
+      mr_a2 <- name_to_id[as.character(manual.riskset[[2]])]
+      str_out$sender_riskset <- sort(unique(mr_a1))
+      str_out$receiver_riskset <- setNames(
+        lapply(str_out$sender_riskset, function(s) {
+          sort(unique(mr_a2[mr_a1 == s]))
+        }),
+        actor_names[str_out$sender_riskset]
+      )
+    }
+
+    # activeN: number of active senders
+    str_out$activeN <- length(str_out$sender_riskset)
+
+    # index$sender_map: decoded sender table (mirrors tie model's dyad_map_active)
+    str_out$index$sender_map <- data.frame(
+      senderID   = str_out$sender_riskset,
+      actorName  = str_out$meta$dictionary$actors$actorName[str_out$sender_riskset],
+      stringsAsFactors = FALSE
+    )
+
+    # omit_dyad: keep as empty list for structural consistency with tie model
+    str_out$omit_dyad <- list()
+  }
 
   # ---- simultaneous events ---------------------------------------------------
   evenly_spaced_interevent_time <- NULL
@@ -603,11 +776,13 @@ remify2 <- function(edgelist,
     time_unique <- unique(str_out$edgelist$time)
 
     # save flat vectorized versions before converting to per-time-point lists
-    str_out$ids$dyad_vec        <- str_out$ids$dyad
     str_out$ids$actor1_vec      <- str_out$ids$actor1
     str_out$ids$actor2_vec      <- str_out$ids$actor2
     str_out$ids$type_vec        <- str_out$ids$type
-    str_out$ids$dyad_active_vec <- str_out$ids$dyad_active
+    if (model == "tie") {
+      str_out$ids$dyad_vec        <- str_out$ids$dyad
+      str_out$ids$dyad_active_vec <- str_out$ids$dyad_active
+    }
 
     # convert to per-time-point lists
     actor1_list      <- vector("list", length(time_unique))
@@ -620,28 +795,32 @@ remify2 <- function(edgelist,
       idx <- which(str_out$edgelist$time == time_unique[m])
       actor1_list[[m]] <- str_out$ids$actor1[idx]
       actor2_list[[m]] <- str_out$ids$actor2[idx]
-      dyad_list[[m]]   <- str_out$ids$dyad[idx]
-      if (active || riskset == "manual") {
-        dyad_active_list[[m]] <- str_out$ids$dyad_active[idx]
+      if (model == "tie") {
+        dyad_list[[m]] <- str_out$ids$dyad[idx]
+        if (active || riskset == "manual") {
+          dyad_active_list[[m]] <- str_out$ids$dyad_active[idx]
+        }
       }
       if (isTRUE(str_out$meta$with_type)) {
         type_list[[m]] <- str_out$ids$type[idx]
       }
     }
 
-    str_out$ids$actor1     <- actor1_list
-    str_out$ids$actor2     <- actor2_list
-    str_out$ids$dyad       <- dyad_list
-    if (active || riskset == "manual") {
-      str_out$ids$dyad_active <- dyad_active_list
+    str_out$ids$actor1 <- actor1_list
+    str_out$ids$actor2 <- actor2_list
+    if (model == "tie") {
+      str_out$ids$dyad <- dyad_list
+      if (active || riskset == "manual") {
+        str_out$ids$dyad_active <- dyad_active_list
+      }
     }
     if (isTRUE(str_out$meta$with_type)) {
       str_out$ids$type <- type_list
     }
   }
 
-  # ---- dyad map (index) -------------------------------------------------------
-  if (active || riskset == "manual") {
+  # ---- dyad map (index) — tie model only ------------------------------------
+  if (model == "tie" && (active || riskset == "manual")) {
     # When ext=FALSE but events have types, C++ collapses typed->untyped in
     # riskset_idx. getDyad2() would decode wrong actor/type. Instead decode
     # riskset_idx as untyped, then expand with observed types from edgelist.
@@ -691,7 +870,7 @@ remify2 <- function(edgelist,
     if (riskset == "manual") {
       str_out$index$dyad_map <- str_out$index$dyad_map_active
     }
-  } else {
+  } else if (model == "tie") {
     str_out$index$dyad_map <- getDyad2(
       x = str_out,
       dyadID = seq_len(str_out$D),
@@ -702,12 +881,15 @@ remify2 <- function(edgelist,
   out <- NULL  # free memory
 
   # ---- edgelist_id (per-time-point summary) -----------------------------------
+  # For actor model, ids$dyad is NULL (C++ does not compute dyad IDs)
   edgelist_id <- data.frame(
     time   = sort(unique(str_out$edgelist$time)),
     actor1 = I(str_out$ids$actor1),
-    actor2 = I(str_out$ids$actor2),
-    dyad   = I(str_out$ids$dyad)
+    actor2 = I(str_out$ids$actor2)
   )
+  if (model == "tie" && !is.null(str_out$ids$dyad)) {
+    edgelist_id$dyad <- I(str_out$ids$dyad)
+  }
   if (isTRUE(str_out$meta$with_type)) {
     edgelist_id$type <- I(str_out$ids$type)
   }
@@ -754,7 +936,7 @@ remify2 <- function(edgelist,
     )
   }
 
-  if (isTRUE(attach_riskset)) {
+  if (isTRUE(attach_riskset) && model == "tie") {
 
     dict      <- str_out$meta$dictionary
     actors_df <- dict$actors
@@ -769,7 +951,7 @@ remify2 <- function(edgelist,
     D_full <- str_out$D
 
 
-    mode <- str_out$meta$riskset
+    mode <- str_out$meta$riskset_source
 
     dyad_full_vec <- as.integer(str_out$ids$dyad_vec %||% unlist(str_out$ids$dyad))
 
@@ -786,7 +968,7 @@ remify2 <- function(edgelist,
       mode,
       full   = dyad_full_vec,
       active = match(dyad_full_vec, riskset_idx),
-      manual = as.integer(str_out$omit_dyad$dyadIDactive[,1])
+      manual = match(dyad_full_vec, riskset_idx) #as.integer(str_out$omit_dyad$dyadIDactive[,1])
     )
 
     rs <- list(

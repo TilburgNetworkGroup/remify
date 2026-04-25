@@ -15,7 +15,7 @@ cap <- function(reh) paste(capture.output(summary(reh)), collapse = "\n")
 # ---------------------------------------------------------------------------
 # SECTION 1: untyped edgelist — types should show as 1, no ext info
 # ---------------------------------------------------------------------------
-reh_untyped <- remify2(edgelist_untyped, model = "tie", riskset = "full")
+reh_untyped <- remify(edgelist_untyped, model = "tie", riskset = "full")
 
 out <- cap(reh_untyped)
 expect_true(grepl("(event) types = 1", out, fixed = TRUE),
@@ -30,7 +30,7 @@ expect_true(grepl("included dyads = 90", out, fixed = TRUE),
 # ---------------------------------------------------------------------------
 # SECTION 2: typed, full riskset, ext=TRUE
 # ---------------------------------------------------------------------------
-reh_full_T <- remify2(edgelist_typed, model = "tie", riskset = "full",
+reh_full_T <- remify(edgelist_typed, model = "tie", riskset = "full",
                       extend_riskset_by_type = TRUE)
 out <- cap(reh_full_T)
 expect_true(grepl("(event) types = 2", out, fixed = TRUE),
@@ -47,7 +47,7 @@ expect_false(grepl("per type", out, fixed = TRUE),
 # ---------------------------------------------------------------------------
 # SECTION 3: typed, full riskset, ext=FALSE
 # ---------------------------------------------------------------------------
-reh_full_F <- remify2(edgelist_typed, model = "tie", riskset = "full",
+reh_full_F <- remify(edgelist_typed, model = "tie", riskset = "full",
                       extend_riskset_by_type = FALSE)
 out <- cap(reh_full_F)
 expect_true(grepl("(event) types = 2", out, fixed = TRUE),
@@ -62,7 +62,7 @@ expect_false(grepl("per type", out, fixed = TRUE),
 # ---------------------------------------------------------------------------
 # SECTION 4: typed, active riskset, ext=TRUE
 # ---------------------------------------------------------------------------
-reh_act_T <- remify2(edgelist_typed, model = "tie", riskset = "active",
+reh_act_T <- remify(edgelist_typed, model = "tie", riskset = "active",
                      extend_riskset_by_type = TRUE)
 out <- cap(reh_act_T)
 expect_true(grepl("(event) types = 2", out, fixed = TRUE),
@@ -85,7 +85,7 @@ expect_true(grepl(paste0("work=", type_counts["work"]), out, fixed = TRUE),
 # ---------------------------------------------------------------------------
 # SECTION 5: typed, active riskset, ext=FALSE
 # ---------------------------------------------------------------------------
-reh_act_F <- remify2(edgelist_typed, model = "tie", riskset = "active",
+reh_act_F <- remify(edgelist_typed, model = "tie", riskset = "active",
                      extend_riskset_by_type = FALSE)
 out <- cap(reh_act_F)
 expect_true(grepl("(event) types = 2", out, fixed = TRUE),
@@ -105,7 +105,7 @@ manual_rs <- data.frame(
   actor2 = c(109, 113, 107, 105, 115)
 )
 reh_man_T <- suppressWarnings(
-  remify2(edgelist_typed, model = "tie", riskset = "manual",
+  remify(edgelist_typed, model = "tie", riskset = "manual",
           manual.riskset = manual_rs, extend_riskset_by_type = TRUE)
 )
 out <- cap(reh_man_T)
@@ -122,7 +122,7 @@ expect_true(grepl("per type", out, fixed = TRUE),
 # SECTION 7: typed, manual riskset, ext=FALSE
 # ---------------------------------------------------------------------------
 reh_man_F <- suppressWarnings(
-  remify2(edgelist_typed, model = "tie", riskset = "manual",
+  remify(edgelist_typed, model = "tie", riskset = "manual",
           manual.riskset = manual_rs, extend_riskset_by_type = FALSE)
 )
 out <- cap(reh_man_F)
@@ -134,7 +134,7 @@ expect_true(grepl("extend_riskset_by_type = FALSE", out, fixed = TRUE),
 # ---------------------------------------------------------------------------
 # SECTION 8: undirected, full riskset, typed, ext=TRUE
 # ---------------------------------------------------------------------------
-reh_undir_T <- remify2(edgelist_typed, model = "tie", riskset = "full",
+reh_undir_T <- remify(edgelist_typed, model = "tie", riskset = "full",
                        directed = FALSE, extend_riskset_by_type = TRUE)
 out <- cap(reh_undir_T)
 expect_true(grepl("directed = FALSE", out, fixed = TRUE),
@@ -152,7 +152,7 @@ expect_true(grepl(as.character(D_undir), out, fixed = TRUE),
 # ---------------------------------------------------------------------------
 edgelist_simul <- edgelist_typed
 edgelist_simul$time[5:6] <- edgelist_simul$time[5]  # make two simultaneous
-reh_simul <- remify2(edgelist_simul, model = "tie", riskset = "full")
+reh_simul <- remify(edgelist_simul, model = "tie", riskset = "full")
 out <- cap(reh_simul)
 # If E != M, both should be shown
 if (!is.null(reh_simul$E) && reh_simul$E != reh_simul$M) {

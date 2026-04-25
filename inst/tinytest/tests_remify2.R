@@ -70,7 +70,7 @@ get_t_vec <- function(reh) {
 
 h <- make_edgelist(typed = FALSE, directed = TRUE, simultaneous = FALSE)
 
-reh <- remify::remify2(
+reh <- remify::remify(
   edgelist = h,
   model = "tie",
   riskset = "full",
@@ -103,7 +103,7 @@ a1 <- get_a1_vec(reh); a2 <- get_a2_vec(reh)
 expect_true(all(a1 != a2))
 
 # ---- 3) active riskset contract ---------------------------------
-rehA <- remify::remify2(
+rehA <- remify::remify(
   edgelist = h,
   model = "tie",
   riskset = "active",
@@ -134,7 +134,7 @@ capture_warnings <- function(expr) {
 }
 
 res <- capture_warnings(
-  remify::remify2(
+  remify::remify(
     edgelist = h,
     model = "tie",
     riskset = "manual",
@@ -158,12 +158,13 @@ expect_true(any(grepl("observed dyad", res$warnings, fixed = TRUE)))
 # ---- 5) typed contract ------------------------------------------
 hT <- make_edgelist(typed = TRUE, directed = TRUE, simultaneous = FALSE)
 
-rehT <- remify::remify2(
+rehT <- remify::remify(
   edgelist = hT,
   model = "tie",
   riskset = "active",
   attach_riskset = TRUE,
-  riskset_decode = "labels"
+  riskset_decode = "labels",
+  extend_riskset_by_type = TRUE
 )
 
 dictT <- rehT$meta$dictionary
@@ -181,7 +182,7 @@ expect_equal(rsT$riskset_idx[rsT$dyadIDactive], dyadT)
 # ---- 6) simultaneous events -------------------------------------
 hS <- make_edgelist(typed = TRUE, directed = TRUE, simultaneous = TRUE)
 
-rehS <- remify::remify2(
+rehS <- remify::remify(
   edgelist = hS,
   model = "tie",
   riskset = "active",
@@ -198,13 +199,14 @@ expect_equal(rsS$riskset_idx[rsS$dyadIDactive], dyadS)
 
 # ---- 7) decode fallback labels->ids ------------------------------
 expect_warning(
-  rehF <- remify::remify2(
+  rehF <- remify::remify(
     edgelist = hT,
     model = "tie",
     riskset = "active",
     attach_riskset = TRUE,
     riskset_decode = "labels",
-    riskset_max_decode = 5L
+    riskset_max_decode = 5L,
+    extend_riskset_by_type = TRUE
   ),
   pattern = "ID-only dyad table|threshold",
   info = "labels->ids fallback"

@@ -24,27 +24,15 @@
 summary.remify <- function(object, ...) {
 
   # Support both old remify (attributes) and new remify2 ($meta) structure
-  if (!is.null(object$meta)) {
-    .model             <- object$meta$model
-    .with_type         <- isTRUE(object$meta$with_type)
-    .with_type_riskset <- isTRUE(object$meta$with_type_riskset)
-    .riskset           <- if (!is.null(object$meta$riskset_source)) object$meta$riskset_source else object$meta$riskset
-    .directed          <- object$meta$directed
-    .ordinal           <- object$meta$ordinal
-    .weighted          <- object$meta$weighted
-    .origin            <- object$meta$origin
-    .C                 <- if (!is.null(object$C)) object$C else 1L  # NULL for untyped edgelists
-  } else {
-    .model             <- attr(object, "model")
-    .with_type         <- isTRUE(attr(object, "with_type"))
-    .with_type_riskset <- FALSE
-    .riskset           <- attr(object, "riskset")
-    .directed          <- attr(object, "directed")
-    .ordinal           <- attr(object, "ordinal")
-    .weighted          <- attr(object, "weighted")
-    .origin            <- attr(object, "origin")
-    .C                 <- if (!is.null(object$C)) object$C else 1L
-  }
+  .model             <- object$meta$model
+  .with_type         <- isTRUE(object$meta$with_type)
+  .with_type_riskset <- isTRUE(object$meta$with_type_riskset)
+  .riskset           <- if (!is.null(object$meta$riskset_source)) object$meta$riskset_source else object$meta$riskset
+  .directed          <- object$meta$directed
+  .ordinal           <- object$meta$ordinal
+  .weighted          <- object$meta$weighted
+  .origin            <- object$meta$origin
+  .C                 <- if (!is.null(object$C)) object$C else 1L  # NULL for untyped edgelists
 
   title <- "Relational Event Network"
   model <- paste0("(processed for ", .model, "-oriented modeling):")
@@ -62,11 +50,34 @@ summary.remify <- function(object, ...) {
   # Types — always shown for consistency, even when C = 1
   types <- paste0("\t> (event) types = ", .C)
 
-  # Riskset block
+  # Riskset block — tie model only; actor model shows sender/receiver riskset
+  riskset_block <- character(0)
+  ext_note      <- NULL
+
+  if (.model == "actor") {
+    N_snd  <- if (!is.null(object$activeN)) object$activeN else object$N
+    # Receiver riskset size: per-sender if available, else N-1
+    if (!is.null(object$receiver_riskset)) {
+      recv_sizes <- lengths(object$receiver_riskset)
+      recv_str <- if (min(recv_sizes) == max(recv_sizes)) {
+        as.character(recv_sizes[1])
+      } else {
+        paste0(min(recv_sizes), " - ", max(recv_sizes))
+      }
+    } else {
+      recv_str <- as.character(object$N - 1L)
+    }
+    riskset_block <- c(
+      paste0("\t> riskset = ", .riskset),
+      paste0("\t> sender model riskset: ", N_snd, " / ", object$N, " actors"),
+      paste0("\t> receiver model riskset: ", recv_str, " receivers per sender")
+    )
+  } else {
+
   riskset_line <- paste0("\t> riskset = ", .riskset)
   riskset_details <- character(0)
 
-  if (.riskset == "active" || !is.null(object$activeD)) {
+  if (.riskset == "active" || .riskset == "manual") {
     # Active riskset
     D_active <- object$activeD
     D_full   <- object$D
@@ -79,34 +90,35 @@ summary.remify <- function(object, ...) {
     } else {
       riskset_details <- c(riskset_details,
         paste0("\t\t>> active dyads = ", D_active,
-               " (full risk set size = ", D_full / max(.C, 1L), " actor pairs)"))
+               " (full risk set size = ", D_full, " actor pairs)"))
     }
     # Per-type counts for active/manual when typed
-    if (.with_type && .C > 1L && !is.null(object$riskset_info$included)) {
+    if (.with_type && !is.null(object$riskset_info$included) && .with_type_riskset) {
       type_counts <- table(object$riskset_info$included$type)
       type_str <- paste(names(type_counts), type_counts, sep = "=", collapse = ", ")
       riskset_details <- c(riskset_details,
         paste0("\t\t>> per type: ", type_str))
     }
-  } else if (.riskset == "manual") {
-    D_total <- object$D
-    if (.with_type_riskset && .C > 1L) {
-      D_pairs <- D_total / .C
-      riskset_details <- c(riskset_details,
-        paste0("\t\t>> included dyads = ", D_total,
-               " (", .C, " types x ", D_pairs, " actor pairs)"))
-      # Per-type counts
-      if (!is.null(object$riskset_info$included)) {
-        type_counts <- table(object$riskset_info$included$type)
-        type_str <- paste(names(type_counts), type_counts, sep = "=", collapse = ", ")
-        riskset_details <- c(riskset_details,
-          paste0("\t\t>> per type: ", type_str))
-      }
-    } else {
-      riskset_details <- c(riskset_details,
-        paste0("\t\t>> included dyads = ", D_total))
-    }
-  } else {
+  } else #if (.riskset == "manual") {
+  #   D_total <- object$D
+  #   if (.with_type_riskset && .C > 1L) {
+  #     D_pairs <- D_total / .C
+  #     riskset_details <- c(riskset_details,
+  #       paste0("\t\t>> included dyads = ", D_total,
+  #              " (", .C, " types x ", D_pairs, " actor pairs)"))
+  #     # Per-type counts
+  #     if (!is.null(object$riskset_info$included)) {
+  #       type_counts <- table(object$riskset_info$included$type)
+  #       type_str <- paste(names(type_counts), type_counts, sep = "=", collapse = ", ")
+  #       riskset_details <- c(riskset_details,
+  #         paste0("\t\t>> per type: ", type_str))
+  #     }
+  #   } else {
+  #     riskset_details <- c(riskset_details,
+  #       paste0("\t\t>> included dyads = ", D_total))
+  #   }
+  # }
+  {
     # Full riskset
     D_total <- object$D
     if (.with_type_riskset && .C > 1L) {
@@ -123,10 +135,11 @@ summary.remify <- function(object, ...) {
   riskset_block <- c(riskset_line, riskset_details)
 
   # extend_riskset_by_type note — only shown when types > 1
-  ext_note <- NULL
   if (.with_type && .C > 1L) {
     ext_note <- paste0("\t\t>> extend_riskset_by_type = ", .with_type_riskset)
   }
+
+  } # end tie-model riskset block
 
   directed <- paste0("\t> directed = ", .directed)
   ordinal  <- paste0("\t> ordinal = ",  .ordinal)
