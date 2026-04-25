@@ -9,36 +9,32 @@ output:
     highlight: pygments
     code_folding: show
     css: "remify-theme.css"
-header-includes:
-   - \usepackage{tikz}
-   - \usepackage{pgfplots}
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Definition of full, active and manual risk set}
+  %\VignetteIndexEntry{Definition of full, active, active_saturated and manual risk set}
   %\VignetteEncoding{UTF-8}
 ---
 
 
-<i> This vignette provides a definition of _full_, _active_ and _manual_ risk set, it explains how a _manual_ risk set is declared in the processing function `remify::remify()`, and it shows how the processed risk set looks like in the `remify` object. </i>
+<i> This vignette provides a definition of the _full_, _active_, _active\_saturated_, and _manual_ risk sets, explains how each is specified in `remify::remify()`, and shows how the processed risk set is represented in the returned `remify` object. </i>
 
 ---
 
-Consider the `remify` object for the network `randomREHsmall`.
+Consider a small example network:
 
 ```{r}
 library(remify) # loading package
 data(randomREHsmall) # data
 
 # processing the edgelist 
-reh <- remify(edgelist = randomREHsmall$edgelist,
-                          directed = TRUE, # events are directed
-                          ordinal = FALSE, # model with waiting times
-                          model = "tie", # tie-oriented modeling   
-                          actors = randomREHsmall$actors,
-                          origin = randomREHsmall$origin,
-                          omit_dyad = NULL)
-
-# summary(reh)                                
+reh <- remify(
+  edgelist = randomREHsmall$edgelist,
+  directed = TRUE,
+  ordinal  = FALSE,
+  model    = "tie",
+  actors   = randomREHsmall$actors,
+  origin   = randomREHsmall$origin
+)
 ```
 ---
 
@@ -47,203 +43,155 @@ reh <- remify(edgelist = randomREHsmall$edgelist,
 
 ## Definition of risk set
 
+A relational event history consists of a time-ordered sequence of (directed or undirected) interactions. For each event, we know:
 
-A relational event history consists of a time-ordered sequence of (directed or undirected) interaction. For each event, we know:
-
-- its __time__ of occurrence, either as timestamp/date/continuous value or just as order
-- the __actors__ that were involved in the realtional event
+- its __time__ of occurrence, either as a timestamp/date/continuous value or as an order index
+- the __actors__ involved
 - the __type__ of the event (if measured)
 
-For instance, the first five events of the `randomREHsmall` sequence are reported as follows
+For instance, the first five events of the `randomREHsmall` sequence are:
+
 ```{r, include = TRUE}
 randomREHsmall$edgelist[1:5,]
 ```
-where `time`, `actor1`, `actor2` describe each observed event in the sequence (Note that in this example the `type` of events is not annotated).
 
-When modeling a relational event sequence, we have to define per each time point a risk set, which consists of the set of those relational events (dyads) that at a specific time point were likely to be observed (this set also contains the event that is actually observed at a specific time point). The definition of the risk set is an important building block of the likelihood function for both tie-oriented and actor-oriented modeling framework. In the sections of this vignette, we discuss three possible definitions of the risk set: _full_, _active_ and _manual_ risk set. These three types of risk set can be processed with `remify::remify()` by specifying the risk set type to the input argument `riskset`.
+where `time`, `actor1`, `actor2` describe each observed event (in this example, event types are not annotated).
+
+When modeling a relational event sequence, we define per each time point a _risk set_: the set of dyadic events that were at risk of occurring at that time point (which always includes the event that actually occurred). The risk set is a central building block of the likelihood for both tie-oriented and actor-oriented models. Four possible definitions are discussed below: _full_, _active_, _active\_saturated_, and _manual_.
 
 ---
 
 ### The _full_ risk set
-The most common definition of the risk set assumes that all the possible dyads are likely to occur over the whole observation period. We refer to this definition as _full_ risk set. If the network has _N_ actors and it consists of directed events that can assume a number of _C_ possible event types, then the risk set will be characterized by all the possible directed dyads among _N_ actors, which are _D = N(N-1)C_, or _D = N(N-1)C/2_ in the case of undirected dyads. For instance, in the random network (`randomREHsmall`) dyads are directed, actors are _N = 5_ and event types are _C = 1_, therefore we expect the dimension of the risk set to be _D = 5 * 4 * 1 = 20_. The first five dyads in the _full_ risk set will be
+The _full_ risk set assumes all possible dyads are at risk throughout the entire observation period. For a network with $N$ actors, $C$ event types, and directed events, the risk set has size $D = N(N-1)C$; for undirected events, $D = N(N-1)C/2$.
+
+In `randomREHsmall`, dyads are directed, $N = 5$ actors, and $C = 1$ (untyped), so $D = 5 \times 4 \times 1 = 20$.
+
+The risk set dyad composition is stored in `reh$index$dyad_map`:
 
 ```{r, include = TRUE}
-# method getDyad(), see more in ?remify::getDyad
-getDyad(x = reh, dyadID = c(1:5)) 
+head(reh$index$dyad_map)
 ```
 
-The ID of the dyads (`dyadID`) corresponds to the order of the dyads used by the functions in `` and it is processed by the function `remify::remify()`. The ID of the dyads is defined by a two-steps approach:
+The ID of each dyad is defined by a two-step approach:
 
-1. Actors' and types' names are first sorted according to their <div class="hovertip">
- alphanumeric<span class="hovertiptext"><p>The alphanumeric order follows first the order of numbers from 0 to 9, then the alphabetical order of the letters.</p> <p>For instance, given the vector of names `c("user22","0usr","1user","1deer")`, its alphanumeric order will be `c("0usr","1deer","1user","user22)`</p><i></i></span></div> order, that for the actors in the random network will be,
+**Step 1.** Actors' names are sorted alphanumerically and assigned integer IDs from $1$ to $N$:
+
 ```{r, include = TRUE}
-# sorted vector of actors' names
 sorted_actors <- sort(randomREHsmall$actors)
 sorted_actors
 
-# number of actors in the network
 N <- length(randomREHsmall$actors)
-```
 
-and for the event type will be
-```{r, include = TRUE}
-# no event type, we set it to an empty string
-sorted_types <- c(" ") 
-
-# C = 1 for 'randomREHsmall'
-C <- length(sorted_types) 
-```
-
-In this phase, the processing function `remify::remify()` will also assign numeric IDs to both actors and event types 
-```{r, include = TRUE}
-# IDs of actors will consist of an integer number from 1 to N
+# IDs are 1 to N
 names(sorted_actors) <- 1:N
 sorted_actors
-
-# IDs of types will be an integer number from 1 to C
-names(sorted_types) <- 1:C # in this case is one (artificial) event type
-sorted_types
 ```
 
-2. dyads are defined by the triple `c(actor1,actor2,type)` that is found by looping first on `actor2`, then `actor1`, and finally `type`. An example of the loops is shown below
+**Step 2.** Dyads are indexed by looping first over `actor1`, then `actor2`, and finally `type` (if applicable), skipping self-loops:
+
 ```{r, include = TRUE}
-# initializing matrix object where to store the dyads as [actor1,actor2,type]
+sorted_types <- c(" ") # no event type in randomREHsmall
+C <- length(sorted_types)
+
 dyad_mat <- matrix(NA, nrow = N*(N-1)*C, ncol = 3)
-colnames(dyad_mat) <- c("actor1","actor2","type")
+colnames(dyad_mat) <- c("actor1", "actor2", "type")
 rownames(dyad_mat) <- 1:(N*(N-1)*C)
 
-# initializing position index
-d <- 1 
-
-# start three loops
-for(type in sorted_types){ # loop over event types, 
-  for(actor1 in sorted_actors){ # loop over actor1
-    for(actor2 in sorted_actors){ # loop over actor2
-      if(actor1!=actor2){ # avoid self-loops
-        dyad_mat[d,] <- c(actor1,actor2,type)
+d <- 1
+for(type in sorted_types){
+  for(actor1 in sorted_actors){
+    for(actor2 in sorted_actors){
+      if(actor1 != actor2){
+        dyad_mat[d,] <- c(actor1, actor2, type)
         d <- d + 1
       }
     }
   }
 }
 
- # same result as showed above by using the method `getDyad()`
 dyad_mat[1:5,]
-
-# checking the size of the _full_ risk set that is 20
-dim(dyad_mat)[1] 
+dim(dyad_mat)[1] # full risk set size = 20
 ```
-The matrix `dyad_mat` above describes the _full_ risk set and the row indices correspond to the ID of each dyad (`dyadID`). For instance, the `dyadID` is useful in the case of tie-oriented modeling, where the `remify` object will contain the attribute named `"dyad"`, which describes the time-ordered sequence of ID's as to the observed dyads. 
+
+The row index in `dyad_mat` corresponds to the `dyadID`. This ID is used throughout 'remverse' to identify dyads. For tie-oriented modeling, the observed dyad IDs per event are stored in `reh$ids$dyad`:
 
 ```{r, include = TRUE}
-# accessing the first values of the attribute "dyad" 
-# (attribute available only for tie-oriented modeling)
-head(attr(reh,"dyad"))
+head(reh$ids$dyad) # dyadID of the first few observed events
 ```
 
 ---
 
 ### Visualizing the risk set
 
-A possible way for visualizing the risk set composition at each time point consists in plotting a grid with actors' names on both axes: referring to the __senders__ (on the __y-axis__) and to the __receivers__ (on the __x-axis__). 
+A useful visualization plots the risk set as a grid with senders on the y-axis and receivers on the x-axis. At each time point, the observed dyad is colored green and all other at-risk dyads are colored gray.
 
 <center>
 ```{r, echo = FALSE, dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing risk set composition at each time point"}
-risk_set <- expand.grid(sorted_actors,sorted_actors)
-dyad_occurred <- c(11,4,11,11)
+risk_set <- expand.grid(sorted_actors, sorted_actors)
+dyad_occurred <- c(11, 4, 11, 11)
 
-# ... saving current graphical parameters
 op <- par(no.readonly = TRUE)
-
-# ... creating layout
-layout_matrix <- matrix(c(1,2,3,4), ncol=2, byrow=TRUE) # 0 can become 4 for a legend of the colors
+layout_matrix <- matrix(c(1,2,3,4), ncol=2, byrow=TRUE)
 layout(layout_matrix, widths=c(1/2,1/2), heights=c(1/2,1/2))
-# ... starting plotting
 par(oma=c(2,0,2,0))
 par(mar=c(6,6,1,0))
 par(mgp=c(6,1,0))
 par(mfrow=c(2,2))
 for(m in 1:4){
-value <- rep(NA,dim(risk_set)[1])
-for(d in 1:length(value)){
-    if(risk_set[d,1]!=risk_set[d,2]){
-        if(d == dyad_occurred[m]){
-            value[d] <- "#2ffd20"
-        }
-        else{
-            value[d] <- "#b2b2b2"
-        }
+  value <- rep(NA, dim(risk_set)[1])
+  for(d in 1:length(value)){
+    if(risk_set[d,1] != risk_set[d,2]){
+      if(d == dyad_occurred[m]) value[d] <- "#2ffd20"
+      else value[d] <- "#b2b2b2"
+    } else {
+      value[d] <- "#ffffff"
     }
-    else{
-       value[d] <- "#ffffff"
-    }
+  }
+  dat <- data.frame(row=as.numeric(risk_set[,1]), col=as.numeric(risk_set[,2]), value=value)
+  plot.new()
+  plot.window(xlim=c(0.5,N+0.5), ylim=c(0.5,N+0.5), asp=1)
+  with(dat, {
+    rect(col-0.5, row-0.5, col+0.5, row+0.5, col=value, border="#f1f1f1")
+    text(x=c(1:N), y=0, labels=sorted_actors, srt=90, pos=1, xpd=TRUE, adj=c(0.5,0), offset=1.5, cex=0.8)
+    text(x=0, y=c(1:N), labels=sorted_actors, srt=0, pos=2, xpd=TRUE, adj=c(1,0.5), offset=-0.5, cex=0.8)
+    mtext(text="actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2), cex=0.6)
+    mtext(text="actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1, cex=0.6)
+    mtext(text=bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
+  })
 }
-dat <- data.frame(row=as.numeric(risk_set[,1]),col=as.numeric(risk_set[,2]),value=value)
-# tile plot
-plot.new()
-plot.window(xlim=c(0.5,N+0.5),ylim=c(0.5,N+0.5),asp=1)
-with(dat,{
-rect(col-0.5,row-0.5,col+0.5,row+0.5,col=value,border="#f1f1f1")  
-#segments(x0=c(1:N)+0.5,y0=c(1:N)-0.5,x1=c(1:N)-0.5,y1=c(1:N)+0.5,col="#eae8e8")
-#segments(x0=0.5,y0=0.5,x1=(N+0.5),y1=(N+0.5),col="#eae8e8")
-# actor names
-text(x = c(1:N), y = 0, labels = sorted_actors, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,0), offset = 1.5,cex = 0.8) 
-text(x = 0, y = c(1:N), labels = sorted_actors, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = -0.5, cex = 0.8)
-# axes names 
-mtext(text  = "actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2),cex = 0.6)
-mtext(text = "actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1,cex = 0.6)
-mtext(text = bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
-})
-}
-
 par(op)
 ```
 </center>
 
-Cosidering the first four time points of `randomREHsmall`, we observe: the (directed) dyad _(Colton,Kayla)_ at time $t_1$, $t_3$ and $t_4$ and the (directed) dyad _(Lexy,Colton)_ at time $t_2$. The cell corresponding to the relational event occurred at each time point is colored in green. The rest of the cells are colored in gray, indicating those dyadic events that could have occurred and they are part of the risk set. Cells in white, indicate those events that could not occur (in this case the self-loops, like _(Colton,Colton)_,  where sender and receiver are the same actor).
+Considering the first four time points of `randomREHsmall`, we observe: the dyad _(Colton, Kayla)_ at $t_1$, $t_3$, and $t_4$, and the dyad _(Lexy, Colton)_ at $t_2$. Green cells mark observed events; gray cells mark other at-risk dyads; white cells mark infeasible events (self-loops).
 
-A _full_ risk set in undirected networks will assume a particular grid visualization. The dyads at risk will be on the lower triangular grid, because the actor names `c(actor1,actor2)` describing the dyad in the input edgelist are sorted according to their alphanumeric order before being processed. For instance, the event at $t_2$ `c("Lexy","Colton")`, will be rearranged as `c("Colton","Lexy")`, and the risk set will change as follows in the picture below.
+For undirected networks, dyads are sorted alphanumerically before processing, so the risk set is restricted to the lower triangular grid. For instance, `c("Lexy", "Colton")` becomes `c("Colton", "Lexy")`.
 
 <center>
-```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing risk set composition at each time point - full risk set"}
-# ... saving current graphical parameters
+```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing full risk set for undirected network"}
 op <- par(no.readonly = TRUE)
-
-dyad_occurred <- c(NA,NA,16) 
+dyad_occurred <- c(NA, NA, 16)
 for(m in 3){
-value <- rep(NA,dim(risk_set)[1])
-for(d in 1:dim(risk_set)[1]){
-    if(risk_set[d,1]!=risk_set[d,2]){
-        if(d == dyad_occurred[m]){
-            value[d] <- "#2ffd20"
-        }
-        else if(as.character(risk_set[d,1])<as.character(risk_set[d,2])){
-            value[d] <- "#b2b2b2"
-        }
-        else{
-            value[d] <- "#ffffff"
-        }
+  value <- rep(NA, dim(risk_set)[1])
+  for(d in 1:dim(risk_set)[1]){
+    if(risk_set[d,1] != risk_set[d,2]){
+      if(d == dyad_occurred[m]) value[d] <- "#2ffd20"
+      else if(as.character(risk_set[d,1]) < as.character(risk_set[d,2])) value[d] <- "#b2b2b2"
+      else value[d] <- "#ffffff"
     }
+  }
+  dat <- data.frame(row=as.numeric(risk_set[,1]), col=as.numeric(risk_set[,2]), value=value)
+  plot.new()
+  plot.window(xlim=c(0.5,N+0.5), ylim=c(0.5,N+0.5), asp=1)
+  with(dat, {
+    rect(col-0.5, row-0.5, col+0.5, row+0.5, col=value, border="#f1f1f1")
+    text(x=c(1:N), y=0, labels=sorted_actors, srt=90, pos=1, xpd=TRUE, adj=c(0.5,0), offset=1.5, cex=0.8)
+    text(x=0, y=c(1:N), labels=sorted_actors, srt=0, pos=2, xpd=TRUE, adj=c(1,0.5), offset=-0.5, cex=0.8)
+    mtext(text="actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2))
+    mtext(text="actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
+    mtext(text=bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
+  })
 }
-dat <- data.frame(row=as.numeric(risk_set[,1]),col=as.numeric(risk_set[,2]),value=value)
-# tile plot
-plot.new()
-plot.window(xlim=c(0.5,N+0.5),ylim=c(0.5,N+0.5),asp=1)
-with(dat,{
-rect(col-0.5,row-0.5,col+0.5,row+0.5,col=value,border="#f1f1f1")  
-#segments(x0 = c(rep(seq(1.5,4.5,by=1),each=2),5.5), y0 = c(0.5,rep(seq(1.5,4.5,by=1),each=2)) , x1 = c(rep(0.5,5),seq(1.5,4.5,by=1)) , y1 =c(seq(1.5,5.5,by=1),rep(5.5,4)),col="#eae8e8")
-#segments(x0 = rep(0.5,5), y0 = seq(0.5,4.5,by=1), x1 = seq(5.5,1.5,by=-1), y1 = rep(5.5,5), col="#eae8e8")
-
-# actor names
-text(x = c(1:N), y = 0, labels = sorted_actors, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,0), offset = 1.5,cex = 0.8) 
-text(x = 0, y = c(1:N), labels = sorted_actors, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = -0.5, cex = 0.8)
-# axes names 
-mtext(text  = "actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2))
-mtext(text = "actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
-mtext(text = bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
-})
-}
-
 par(op)
 ```
 </center>
@@ -251,358 +199,241 @@ par(op)
 ---
 
 
-## The _active_ and  _manual_ risk set
+## The _active_, _active\_saturated_, and _manual_ risk set
 
-
-A _full_ risk set is assumed to have a constant structure throughout the whole event history. All the possible dyads are assumed to be always at risk regardless any consideration about: (i) the possibility of one or more actors to still be able to interact with the other actors during the observation period, (ii) the possiblity of some event types to actually occur.
-
-From this observation, the concept of a risk set structure that changes over time may accomodate certain relational event histories in which, actors, dyads or event types may not be observed within prespecified time windows. Two alternative definitions of the risk set can be declared with `remify::remify()`: 
-
-- the _active_ risk set, which reduces its size to only the dyadic events that are observed across the event history and it mantains the same (modified) structure over time
-- the _manual_ riskset, which allows the user to specify a more flexible risk set with a time-varying structure, in which actor, dyads or event types can be excluded at specific time intervals of the event history.
+The _full_ risk set maintains a constant structure throughout the event history: all possible dyads are always at risk. Three alternative definitions accommodate settings where not all dyads are plausibly at risk.
 
 ---
 
 ### The _active_ risk set
 
-There exist relational event networks that have a large number of actors and the number of observed dyads is by far lower than the potential number of dyads (i.e. the size $D$ of the _full_ risk set). 
+In sparse networks, the number of observed dyads can be far smaller than $D$. The _active_ risk set restricts the risk set to only those dyads observed at least once in the event history, and maintains this structure throughout. Specify with `riskset = "active"`.
 
-A measure of global density can be calculated over the whole event sequence as the ratio $D_{\text{obs}}/D$, where $D_{\text{obs}}$ is the number of observed dyadic events and it can vary between $1$ and $D$.
-When a very low portion of dyads takes action in the network, we can think of restricting the risk set only to such observed dyads. This risk set reduction leads to the _active_ risk set, which mantains the same structure over time but is restricted to the dyads that were observed at least one time in the event history. This type of risk set can be declared by specifying `riskset = "active"` in `remify::remify()`
+The use of the active risk set can substantially decrease computational time for both statistics and model estimation. However, this reduction excludes dyads that were never observed but might be plausibly at risk. It is good practice to examine the active dyads before proceeding and to consider whether the exclusion of unobserved dyads is defensible for the data at hand.
 
-The use of the active risk set can significantly decrease the computational time of both the calculation of statistics and the estimation of model parameters. However, the reduction of the risk set to the set of _active_ (observed) dyads causes the exclusion of dyadic events that perhaps should be still included in the risk set. It is always good practice to explore the set of _active_ dyads and take the due considerations given the type of data at hand, for instance: (i) expecting potential biases coming from the definition of an _active_ risk set, (ii) considering to define a modification of the _active_ risk set that avoids the exclusion of a set of additional actors/dyads/event types from the risk set even if they were not observed in the event history.
+```{r}
+reh_active <- remify(
+  edgelist = randomREHsmall$edgelist,
+  directed = TRUE,
+  ordinal  = FALSE,
+  model    = "tie",
+  actors   = randomREHsmall$actors,
+  riskset  = "active",
+  origin   = randomREHsmall$origin
+)
+
+# number of dyads in full vs active risk set
+reh_active$D
+reh_active$activeD
+
+# the active dyads
+reh_active$riskset_info$included
+```
+
+The grid visualization below shows the active risk set at time $t_3$. Only the dyads observed at least once in the history (gray and green tiles) are at risk; all other dyads are excluded (white tiles).
+
+<center>
+```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing active risk set at time t3"}
+op <- par(no.readonly = TRUE)
+
+# active dyads: those observed in randomREHsmall
+active_dyads <- unique(randomREHsmall$edgelist[, c("actor1","actor2")])
+
+dyad_occurred_m3 <- 11 # Colton -> Kayla at t3
+value <- rep(NA, dim(risk_set)[1])
+for(d in 1:length(value)){
+  if(risk_set[d,1] != risk_set[d,2]){
+    a1 <- as.character(risk_set[d,1])
+    a2 <- as.character(risk_set[d,2])
+    is_active <- any(active_dyads$actor1 == a1 & active_dyads$actor2 == a2)
+    if(d == dyad_occurred_m3) value[d] <- "#2ffd20"
+    else if(is_active) value[d] <- "#b2b2b2"
+    else value[d] <- "#ffffff"
+  } else {
+    value[d] <- "#ffffff"
+  }
+}
+dat <- data.frame(row=as.numeric(risk_set[,1]), col=as.numeric(risk_set[,2]), value=value)
+plot.new()
+plot.window(xlim=c(0.5,N+0.5), ylim=c(0.5,N+0.5), asp=1)
+with(dat, {
+  rect(col-0.5, row-0.5, col+0.5, row+0.5, col=value, border="#f1f1f1")
+  text(x=c(1:N), y=0, labels=sorted_actors, srt=90, pos=1, xpd=TRUE, adj=c(0.5,0), offset=1.5, cex=0.8)
+  text(x=0, y=c(1:N), labels=sorted_actors, srt=0, pos=2, xpd=TRUE, adj=c(1,0.5), offset=-0.5, cex=0.8)
+  mtext(text="actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2), cex=0.6)
+  mtext(text="actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1, cex=0.6)
+  mtext(text=bquote(t[3]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
+})
+par(op)
+```
+</center>
+
+---
+
+### The _active\_saturated_ risk set
+
+The _active\_saturated_ risk set extends the active risk set by additionally including the reverse direction of each observed dyad and all event types for each observed actor pair. For instance, if A→B is observed, B→A is also included in the risk set. This reflects the assumption that observing an interaction between two actors implies that both directions (and all event types) are structurally possible, even if not yet observed. Specify with `riskset = "active_saturated"`.
+
+```{r}
+reh_sat <- remify(
+  edgelist = randomREHsmall$edgelist,
+  directed = TRUE,
+  model    = "tie",
+  riskset  = "active_saturated",
+  actors   = randomREHsmall$actors,
+  origin   = randomREHsmall$origin
+)
+
+reh_sat$activeD
+reh_sat$riskset_info$included
+```
 
 ---
 
 ### The _manual_ risk set
-There are circumstances in which one or more actors cannot take part in a relational event or an event type cannot be observed. This can happen either for a time window that can assume one of the following definitions:
 
--  the time window is embedded in the event history, e.g., some actors temporarily drop the network
--  the time window starts from a time point after the start of the event history and stops with the end of the history, e.g., when actors leave the network without poissibility of return 
-- the time window starts with beginning of the event history and stops before the end of the study, e.g., actors that join the network after the beginning of the event history and could only interact after they join.
+There are settings where only a specific, user-defined set of dyads should be considered at risk throughout the event history. This is the _manual_ risk set, specified via `riskset = "manual"` and the `manual.riskset` argument.
 
-To give a grasp of a few possible real scenarios in which actors/dyads/event types may be excluded from the risk set, we introduce three examples: 
+`manual.riskset` is a `data.frame` with columns `actor1` and `actor2` (and optionally `type`) listing all dyads that are at risk. This defines a **static** risk set that does not vary over time. Any observed dyads from the edgelist that are absent from `manual.riskset` are added automatically with a warning.
 
-- __Example 1:__ when the relational event network is about in-person interactions (e.g., at the university or at school) and it is measured over days (or even weeks or months). One or more actors may not be present during one or more days, therefore we want to exclude such actors from the risk set for the specific time spans in which they could not interact. Furthermore, one or more actors may join (leave) the network after (before) the beginning (end) of the event history and this can also define specific restrictions on the risk set for such actors.
+Typical use cases include:
 
-- __Example 2:__ when relational events are observed at a conference where multiple sessions or workshops can occur at the same time. In this case, the set of dyads at risk reduces to smaller different risk sets, each one based on the groups of actors participating at a specific session or workshop (constraints on the risk set here apply as a response to spatial constraints during a sesison or a workshop).
+- **Structural constraints:** only certain actor pairs can interact (e.g., members of specific organizational units, or actors within each other's contact list).
+- **Sparse networks:** the user has domain knowledge about which dyads are plausibly at risk, beyond just those observed.
+- **Spatial or group constraints:** only actors present in the same location or group can interact.
 
-- __Example 3:__ when the relational events are digital interactions and one or more actors cannot interact one another because they do not appear in each other's friends list (which may be a requirement in order to be able to interact).
-
-In such scenarios and in many others, a _full_ risk set would account for relational events that are not feasible and this may even lead to biased estimates of the model parameters. On contrary, it is possible to account for changes of the risk set over time by defining a _manual_ risk set.
-
-A _manual_ risk set consists of a time-based definition of the ensemble of dyads at risk where the user specifies which dyads to remove from the _full_ risk set at a specific time interval of the study. This can be done via the `omit_dyad` argument of the function `remify::remify()`. The user can define multiple modifications of the _full_ risk set occurring at different, or even overlapping, time windows. In each modification, the user specifies the set of actors, or dyads, or event types to be omitted.
-
-Consider the first four time points of the small random network and assume this time that actors `"Richard"` and `"Francesca"` didn't join the study until the second day of the study. This means that the risk set for at least the first four time points will have the following composition,
-
-<center>
-```{r, echo = FALSE, dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing risk set composition at each time point - manual risk set for directed network"}
-dyad_occurred <- c(11,4,11,11) 
-
-# ... saving current graphical parameters
-op <- par(no.readonly = TRUE)
-
-# ... creating layout
-layout_matrix <- matrix(c(1,2,3,4), ncol=2, byrow=TRUE) # 0 can become 4 for a legend of the colors
-layout(layout_matrix, widths=c(1/2,1/2), heights=c(1/2,1/2))
-# ... starting plotting
-par(oma=c(2,0,2,0))
-par(mar=c(6,6,1,0))
-par(mgp=c(6,1,0))
-par(mfrow=c(2,2))
-for(m in 1:4){
-value <- rep(NA,dim(risk_set)[1])
-for(d in 1:length(value)){
-    if(risk_set[d,1]!=risk_set[d,2]){
-        if(d == dyad_occurred[m]){
-            value[d] <- "#2ffd20"
-        }
-        else{
-            value[d] <- "#b2b2b2"
-        }
-        if(risk_set[d,1] %in% c("Richard","Francesca") | risk_set[d,2] %in% c("Richard","Francesca")){
-          value[d] <- "#ffffff"
-        }
-    }
-    else{
-       value[d] <- "#ffffff"
-    }
-}
-dat <- data.frame(row=as.numeric(risk_set[,1]),col=as.numeric(risk_set[,2]),value=value)
-# tile plot
-plot.new()
-plot.window(xlim=c(0.5,N+0.5),ylim=c(0.5,N+0.5),asp=1)
-with(dat,{
-rect(col-0.5,row-0.5,col+0.5,row+0.5,col=value,border="#f1f1f1")  
-
-#segments(x0=c(1:N)+0.5,y0=c(1:N)-0.5,x1=c(1:N)-0.5,y1=c(1:N)+0.5,col="#eae8e8")
-#segments(x0=0.5,y0=0.5,x1=(N+0.5),y1=(N+0.5),col="#eae8e8")
-
-# actor names
-text(x = c(1:N), y = 0, labels = sorted_actors, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,0), offset = 1.5,cex = 0.8) 
-text(x = 0, y = c(1:N), labels = sorted_actors, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = -0.5, cex = 0.8)
-# axes names 
-mtext(text  = "actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2),cex = 0.6)
-mtext(text = "actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1,cex = 0.6)
-mtext(text = bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
-})
-}
-
-par(op)
-```
-</center>
-
-where the tiles defining the dyads where `"Richard"` and `"Francesca"` are either the sender (actor1) or receiver (actor2) are excluded from the risk set (the tiles are now in white). The risk set is now made of only those dyads in which `"Colton"`, `"Kayla"` and `"Lexy"`are either the sender or the receiver of a relational event (tiles in gray).
-
-Finally, a _manual_ risk set can be defined also for undirected networks and the grid visualization will focus on the lower triangular grid, because the actor names `c(actor1,actor2)` describing the dyad in the input edgelist are sorted according to their alphanumeric order by the processing. For instance, the event at $t_2$ `c("Lexy","Colton")`, will be rearranged as `c("Colton","Lexy")`, thus the risk set will change as below.
-
-<center>
-```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing risk set composition at each time point - manual risk set for undirected network"}
-# ... saving current graphical parameters
-op <- par(no.readonly = TRUE)
-
-dyad_occurred <- c(NA,NA,16) 
-for(m in 3){
-value <- rep(NA,dim(risk_set)[1])
-for(d in 1:length(value)){
-    if(risk_set[d,1]!=risk_set[d,2]){
-        if(d == dyad_occurred[m]){
-            value[d] <- "#2ffd20"
-        }
-        else if(as.character(risk_set[d,1])<as.character(risk_set[d,2])){
-            value[d] <- "#b2b2b2"
-        }
-        if(risk_set[d,1] %in% c("Richard","Francesca") | risk_set[d,2] %in% c("Richard","Francesca")){
-          value[d] <- "#ffffff"
-        }
-    }
-    else{
-       value[d] <- "#ffffff"
-    }
-}
-dat <- data.frame(row=as.numeric(risk_set[,1]),col=as.numeric(risk_set[,2]),value=value)
-# tile plot
-plot.new()
-plot.window(xlim=c(0.5,N+0.5),ylim=c(0.5,N+0.5),asp=1)
-with(dat,{
-rect(col-0.5,row-0.5,col+0.5,row+0.5,col=value,border="#f1f1f1")  
-# actor names
-text(x = c(1:N), y = 0, labels = sorted_actors, srt = 90, pos = 1, xpd = TRUE,  adj = c(0.5,0), offset = 1.5,cex = 0.8) 
-text(x = 0, y = c(1:N), labels = sorted_actors, srt = 0, pos = 2, xpd = TRUE,  adj = c(1,0.5), offset = -0.5, cex = 0.8)
-# axes names 
-mtext(text  = "actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2))
-mtext(text = "actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
-mtext(text = bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
-})
-}
-
-par(op)
-```
-</center>
-
-
-#### __Specifying a _manual_ risk set: the `omit_dyad` argument__
-
-The input argument `omit_dyad` is required when the argument `riskset = "manual"`. With this argument, the user describes the time windows and the actor/dyads/event types to exclude from them. The object to supply via the argumen `omit_dyad` consists of a list of modifications. Each list refers to one risk set modification and must be a list of two objects: a `data.frame` called `dyad`, where dyads to be removed are specified by row in the format `actor1, actor2, type`, and a vector called `time` which describes the first and last time point of the time window where to apply the modification.
-
-#### _Example on five risk set modifications_
-
-Consider the `randomREH` data. 
+#### _Specifying a manual risk set_
 
 ```{r}
 data(randomREH)
+
+# Suppose we want to restrict the risk set to dyads among three actors only,
+# while all other dyads are considered structurally impossible.
+manual_rs <- data.frame(
+  actor1 = c("Alexander", "Alexander", "Colton",    "Colton",    "Lexy",      "Lexy"),
+  actor2 = c("Colton",    "Lexy",      "Alexander", "Lexy",      "Alexander", "Colton")
+)
+
+reh_manual <- remify(
+  edgelist       = randomREH$edgelist,
+  directed       = TRUE,
+  ordinal        = FALSE,
+  model          = "tie",
+  actors         = randomREH$actors,
+  riskset        = "manual",
+  manual.riskset = manual_rs,
+  origin         = randomREH$origin
+)
+
+# Active (manual) risk set size
+reh_manual$activeD
+
+# Inspect the decoded risk set
+reh_manual$riskset_info$included
 ```
 
-For instance, we want to modify (reduce) the risk set according to five changes that apply on different time intervals:
+Note that any observed event involving actor pairs outside `manual.riskset` will be automatically added to the risk set, ensuring that the likelihood is well-defined for all observed events.
 
-1. an event type `conflict` that was no more feasible since a specific time point until the end of the observation period.
+The grid visualization below illustrates the manual risk set at time $t_3$, with dyads involving `"Richard"` and `"Francesca"` excluded (white tiles).
 
-```{r}
-randomREH$omit_dyad[[1]]$time # start and stop time point defining the time window of interest
-```
-```{r}
-randomREH$omit_dyad[[1]]$dyad # dyads to be removed from the time points defined by the interval in `time`
-```
-
-2. two actors `Michaela` and `Zackary` that couldn't interact with anybody else after a specific time point until the last observed time point.
-
-
-```{r}
-randomREH$omit_dyad[[2]]$time
-```
-```{r}
-randomREH$omit_dyad[[2]]$dyad
-```
-The object `dyad` will give instructions such that the function will remove from the risk set at the indicated time windows all the events where: (1) type is `conflict`, (2) `Michaela` and ``Zackary` are senders or receivers.
-
-
-In this example we also add three more modifications of the risk set that are not present in the object `randomREH$omit_dyad` but that allow to explain how the input `omit_dyad` works, and also how the processed risk set object will look like (in the next section):
-
-3. actors `Maya`, `Alexander`, `Richard` and `Charles` joined the network after the start of the event history.
-```{r,echo=FALSE}
-randomREH$omit_dyad[[3]] <- list()
-randomREH$omit_dyad[[3]]$time <- c(randomREH$edgelist$time[3500],randomREH$edgelist$time[3500])
-randomREH$omit_dyad[[3]]$time[1] <- NA
-randomREH$omit_dyad[[3]]$dyad <- data.frame(actor1=c("Maya","Alexander","Richard","Charles",rep(NA,4)),actor2= c(rep(NA,4),"Maya","Alexander","Richard","Charles"),type=rep(NA,8))
-```
-```{r}
-randomREH$omit_dyad[[3]]$time 
-```
-```{r}
-randomREH$omit_dyad[[3]]$dyad 
-```
-
-
-4. actor `Breanna` left the network during a long time interval (about 2 months) embedded in the event history.
-```{r,echo=FALSE}
-randomREH$omit_dyad[[4]] <- list()
-randomREH$omit_dyad[[4]]$time <- c(randomREH$edgelist$time[2800],randomREH$edgelist$time[8700])
-randomREH$omit_dyad[[4]]$dyad <- data.frame(actor1=c("Breanna",NA),actor2= c(NA,"Breanna"),type=rep(NA,2))
-```
-```{r}
-randomREH$omit_dyad[[4]]$time
-```
-```{r}
-randomREH$omit_dyad[[4]]$dyad
-```
-
-
-5. actor `Megan` left the network for a few days.
-```{r,echo=FALSE}
-randomREH$omit_dyad[[5]] <- list()
-randomREH$omit_dyad[[5]]$time <- c(randomREH$edgelist$time[7000],randomREH$edgelist$time[7500])
-randomREH$omit_dyad[[5]]$dyad <- data.frame(actor1=c("Megan",NA),actor2= c(NA,"Megan"),type=rep(NA,2))
-```
-```{r}
-randomREH$omit_dyad[[5]]$time
-```
-```{r}
-randomREH$omit_dyad[[5]]$dyad
-```
-
-#### _Using `NA` values to remove sets of actors/dyads/event types_
-
-The `<NA>` values mean that all the actors/event types are considered in that field. Indeed, in the change 1. where we needed to remove all the events where `conflict` was the type, we did it by leaving both `actor1` and `actor2` unspecified `<NA>`. 
-Therefore, every time one of the fields among (`actor1`,`actor2`,`type`) is left undefined, the reduction applies to all the possible values of that field. 
-Another example are the risk set chages declared in 4. and 5., where we wanted to exclude all the dyads in which `Breanna` and `Megan` are either the sender or the receiver of a relational event. Therefore, we defined a `data.frame` named `"dyad"` with two rows: one row in which `Breanna`(`Megan`) appeared as the sender, and a second row in which `Breanna` (`Megan`) appeared as the receiver. We left the other fields set to `NA`, meaning that (by row) all the possible event types and actors are to be considered. 
-
-#### __Visualizing the risk set modifications declared with `omit_dyad` (_before the processing_) __
-
-We can visualize the risk set modifications as they are declared via the `omit_dyad` argument in a plot where the x-axis represents the time and the y-axis describes the five risk set modifications presented above.
-
-
-```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Plot showing manual risk set modifications from the omit_dyad argument"}
-# ... saving current graphical parameters
+<center>
+```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing manual risk set at time t3"}
 op <- par(no.readonly = TRUE)
 
-min_max_omit_dyad <-range(randomREH$edgelist$time)
-plot(min_max_omit_dyad,c(0,length(randomREH$omit_dyad)+1),type="n",yaxt="n",xlab="time",ylab="modification",main="manual risk set \n (input modifications declared with the omit_dyad argument)")
-axis(2, at=c(1:length(randomREH$omit_dyad)))
-for(r in 1:length(randomREH$omit_dyad)){
-    if(is.na(randomREH$omit_dyad[[r]]$time[1])){ # if start time is not specified
-        randomREH$omit_dyad[[r]]$time <- c(randomREH$edgelist$time[1],randomREH$omit_dyad[[r]]$time[2])
+dyad_occurred_m3 <- 11
+value <- rep(NA, dim(risk_set)[1])
+for(d in 1:length(value)){
+  if(risk_set[d,1] != risk_set[d,2]){
+    if(d == dyad_occurred_m3) value[d] <- "#2ffd20"
+    else value[d] <- "#b2b2b2"
+    if(risk_set[d,1] %in% c("Richard","Francesca") | risk_set[d,2] %in% c("Richard","Francesca")){
+      value[d] <- "#ffffff"
     }
-    if(is.na(randomREH$omit_dyad[[r]]$time[2])){ # if stop time is not specified
-        randomREH$omit_dyad[[r]]$time <- c(randomREH$omit_dyad[[r]]$time[1],randomREH$edgelist$time[dim(randomREH$edgelist)[1]])
+  } else {
+    value[d] <- "#ffffff"
+  }
+}
+dat <- data.frame(row=as.numeric(risk_set[,1]), col=as.numeric(risk_set[,2]), value=value)
+plot.new()
+plot.window(xlim=c(0.5,N+0.5), ylim=c(0.5,N+0.5), asp=1)
+with(dat, {
+  rect(col-0.5, row-0.5, col+0.5, row+0.5, col=value, border="#f1f1f1")
+  text(x=c(1:N), y=0, labels=sorted_actors, srt=90, pos=1, xpd=TRUE, adj=c(0.5,0), offset=1.5, cex=0.8)
+  text(x=0, y=c(1:N), labels=sorted_actors, srt=0, pos=2, xpd=TRUE, adj=c(1,0.5), offset=-0.5, cex=0.8)
+  mtext(text="actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2), cex=0.6)
+  mtext(text="actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1, cex=0.6)
+  mtext(text=bquote(t[3]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
+})
+par(op)
+```
+</center>
+
+Here, tiles for dyads involving `"Richard"` and `"Francesca"` are white (excluded); the risk set contains only dyads among `"Colton"`, `"Kayla"`, and `"Lexy"`.
+
+For undirected networks, the same `manual.riskset` logic applies but the grid visualization focuses on the lower triangular, since actor pairs are sorted alphanumerically.
+
+<center>
+```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing manual risk set at time t3 - undirected"}
+op <- par(no.readonly = TRUE)
+dyad_occurred <- c(NA, NA, 16)
+for(m in 3){
+  value <- rep(NA, dim(risk_set)[1])
+  for(d in 1:length(value)){
+    if(risk_set[d,1] != risk_set[d,2]){
+      if(d == dyad_occurred[m]) value[d] <- "#2ffd20"
+      else if(as.character(risk_set[d,1]) < as.character(risk_set[d,2])) value[d] <- "#b2b2b2"
+      if(risk_set[d,1] %in% c("Richard","Francesca") | risk_set[d,2] %in% c("Richard","Francesca")){
+        value[d] <- "#ffffff"
+      }
+    } else {
+      value[d] <- "#ffffff"
     }
-    segments(x0=randomREH$omit_dyad[[r]]$time[1],y0=r,x1=randomREH$omit_dyad[[r]]$time[2],y1=r,col="black", lwd = 2)
-    #randomREH$omit_dyad[[r]]$time
+  }
+  dat <- data.frame(row=as.numeric(risk_set[,1]), col=as.numeric(risk_set[,2]), value=value)
+  plot.new()
+  plot.window(xlim=c(0.5,N+0.5), ylim=c(0.5,N+0.5), asp=1)
+  with(dat, {
+    rect(col-0.5, row-0.5, col+0.5, row+0.5, col=value, border="#f1f1f1")
+    text(x=c(1:N), y=0, labels=sorted_actors, srt=90, pos=1, xpd=TRUE, adj=c(0.5,0), offset=1.5, cex=0.8)
+    text(x=0, y=c(1:N), labels=sorted_actors, srt=0, pos=2, xpd=TRUE, adj=c(1,0.5), offset=-0.5, cex=0.8)
+    mtext(text="actor2", side=1, line=4, outer=FALSE, adj=0, at=floor(N/2))
+    mtext(text="actor1", side=2, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
+    mtext(text=bquote(t[.(m)]), side=3, line=0, outer=FALSE, adj=1, at=floor(N/2)+1)
+  })
 }
 par(op)
 ```
+</center>
 
-------
+---
 
 ## The processed risk set
 
-The function `remify::remify()` processes the list of modifications supplied to `omit_dyad` (only when `riskset = "manual"`).
-The aim is to elaborate the risk set modifications by accounting for the possible partial/complete overlapping of time windows. 
-A way to understand whatthe processing does is to consider the plot of the input modifications and show the plot of the final processing.
-
+After processing, the `remify` object exposes the risk set through `riskset_info` (when `attach_riskset = TRUE`, which is the default). The key field is `riskset_info$included`, which contains the decoded table of at-risk dyads:
 
 ```{r}
-edgelist_reh <- remify::remify(edgelist = randomREH$edgelist,
-                    directed = TRUE, # events are directed
-                    ordinal = FALSE, # model with waiting times
-                    model = "tie", # tie-oriented modeling
-                    actors = randomREH$actors,
-                    types = randomREH$types, 
-                    riskset = "manual",
-                    origin = randomREH$origin,
-                    omit_dyad = randomREH$omit_dyad)
-                                        
+reh_active <- remify(
+  edgelist       = randomREH$edgelist,
+  directed       = TRUE,
+  ordinal        = FALSE,
+  model          = "tie",
+  actors         = randomREH$actors,
+  riskset        = "active",
+  origin         = randomREH$origin,
+  riskset_decode = "labels"
+)
+
+head(reh_active$riskset_info$included)
+nrow(reh_active$riskset_info$included) # number of active dyads
 ```
 
-<center>
-```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Plot showing manual risk set before processing"}
-# ... saving current graphical parameters
-op <- par(no.readonly = TRUE)
+For the full risk set, the dyad map is accessible directly via `reh$index$dyad_map`. For active or manual risk sets, it is in `reh$index$dyad_map_active`.
 
-min_max_omit_dyad <-range(randomREH$edgelist$time)
-plot(min_max_omit_dyad,c(0,length(randomREH$omit_dyad)+1),type="n",yaxt="n",xlab="time",ylab="modification",main="manual risk set \n (before processing)")
-axis(2, at=c(1:length(randomREH$omit_dyad)))
-for(r in 1:length(randomREH$omit_dyad)){
-    if(is.na(randomREH$omit_dyad[[r]]$time[1])){ # if start time is not specified
-        randomREH$omit_dyad[[r]]$time <- c(randomREH$edgelist$time[1],randomREH$omit_dyad[[r]]$time[2])
-    }
-    if(is.na(randomREH$omit_dyad[[r]]$time[2])){ # if stop time is not specified
-        randomREH$omit_dyad[[r]]$time <- c(randomREH$omit_dyad[[r]]$time[1],randomREH$edgelist$time[dim(randomREH$edgelist)[1]])
-    }
-    segments(x0=randomREH$omit_dyad[[r]]$time[1],y0=r,x1=randomREH$omit_dyad[[r]]$time[2],y1=r,col="black", lwd = 2)
-    #randomREH$omit_dyad[[r]]$time
-}
+The per-event dyad IDs (mapping each observed event to its position in the risk set) are stored in `reh$ids$dyad`:
 
-par(op)
-```
-</center> 
-
-The processing function understands the partial/complete overlapping of the time windows and defines new time intervals in which one or more risk set changes are observed. In the plot below, the vertical boundaries (dashed red lines) indicate the time intervals. Such time bounds are used from the processing function to intersect the time windows decalred in `omit_dyad` and define new time intervals, where the changes of the risk set are processed according to the new time windows. If the user supplies time windows that are not overlapping, then the processed risk set will have the same structure of the input.
-
-```{r, echo = FALSE}
-# processing here the output for the plot below 
-modification_idx <- sort(unique(edgelist_reh$omit_dyad$time))
-start_stop_times <- data.frame(start = rep(randomREH$edgelist$time[1],length(modification_idx)),
-                               stop = rep(randomREH$edgelist$time[1],length(modification_idx)))
-for(i in 1:length(modification_idx)){
- start_stop_idx <- range(which(edgelist_reh$omit_dyad$time == modification_idx[i]))
- start_stop_times[i,1] <- randomREH$edgelist$time[start_stop_idx[1]]
- start_stop_times[i,2] <- randomREH$edgelist$time[start_stop_idx[2]]
-}
+```{r}
+# dyadID of the first 10 observed events
+head(reh_active$ids$dyad, 10)
 ```
 
-<center>
-```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Plot showing manual risk set while processing"}
-# ... saving current graphical parameters
-op <- par(no.readonly = TRUE)
-
-# plotting vertical lines and different colour for the intersected intervals
-plot(min_max_omit_dyad,c(0,length(randomREH$omit_dyad)+1),type="n",yaxt="n",xlab="time",ylab="modification",main="manual risk set \n (while processing)")
-axis(2, at=c(1:length(randomREH$omit_dyad)))
-for(r in 1:length(randomREH$omit_dyad)){
-    segments(x0=randomREH$omit_dyad[[r]]$time[1],y0=r,x1=randomREH$omit_dyad[[r]]$time[2],y1=r,col="black", lwd = 2)
-}
-abline(v = unique(c(start_stop_times$start, start_stop_times$stop)) , lwd = 1, lty = 2, col = "red")
-
-par(op)
-```
-</center> 
-
-
-After the processing of a relational event history, the `remify` object will contain a list called `omit_dyad` where two objects (`time` and `riskset`) will describe the processed risk set modifications. 
-As a result of the processing of the five risk set modifications, the risk set is describe now by eight risk set modifications. This is due to the partial/total overlapping of two or more time intervals. For instance, the second modification of the processed risk set (figure below) will contain the combination of the third and the fourth modification declared in the input `omit_dyad` (figure above).
-
-<center>
-```{r, echo=FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Plot showing manual risk set modifications after processing"}
-# ... saving current graphical parameters
-op <- par(no.readonly = TRUE)
-
-plot(min_max_omit_dyad,c(0,length(modification_idx)+1),type="n",yaxt="n",xlab="time",ylab="modification",main="manual risk set \n (after processing)")
-axis(2, at=c(1:length(modification_idx)))
-for(r in 1:length(modification_idx)){
-    segments(x0=start_stop_times[r,1],y0=r,x1=start_stop_times[r,2],y1=r, lwd = 2,col="black")
-    #randomREH$omit_dyad[[r]]$time
-}
-
-par(op)
-```
-</center> 
+For actor-oriented modeling with an active or manual risk set, sender and receiver risk sets are stored in `reh$sender_riskset` and `reh$receiver_riskset` respectively, and `reh$index$sender_map` provides the mapping between sender IDs and actor names.

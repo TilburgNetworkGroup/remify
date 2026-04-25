@@ -46,6 +46,17 @@ This reduces the number of unique time points (and thus memory/computation in la
 
 \item{manual.riskset}{[\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.}
 
+\item{extend_riskset_by_type}{logical. \code{FALSE} (default). When event types are present (via
+\code{event_type}), controls whether the risk set is expanded over types.
+If \code{TRUE} (default when types are present), each actor pair is
+duplicated for each event type, so the risk set has size
+\eqn{D = N(N-1) \times C} (directed) or \eqn{D = N(N-1)/2 \times C}
+(undirected), and the \code{type} column appears in the decoded risk set.
+If \code{FALSE}, event type is treated as a mark on events only and does
+not expand the risk set: \eqn{D = N(N-1)} (directed) or
+\eqn{D = N(N-1)/2} (undirected), and no \code{type} column appears in the
+decoded risk set. This argument is ignored when no event types are present.}
+
 \item{event_type}{Optional. Either \code{NULL} (default) or a single character
   string giving the name of the column in \code{edgelist} that contains event
   types (marks).

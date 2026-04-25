@@ -18,6 +18,16 @@
 #' @param actors [\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.
 #' @param riskset [\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user. \code{riskset = "active_saturated"} extends the active riskset by adding the reverse direction for each observed dyad (if A->B is observed, B->A is also at risk) and includes all event types for each observed actor pair (type column is ignored). This reflects the assumption that observing any interaction between two actors implies both directions and all types are possible.
 #' @param manual.riskset [\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.
+#' @param extend_riskset_by_type logical. \code{FALSE} (default). When event types are present (via
+#'   \code{event_type}), controls whether the risk set is expanded over types.
+#'   If \code{TRUE} (default when types are present), each actor pair is
+#'   duplicated for each event type, so the risk set has size
+#'   \eqn{D = N(N-1) \times C} (directed) or \eqn{D = N(N-1)/2 \times C}
+#'   (undirected), and the \code{type} column appears in the decoded risk set.
+#'   If \code{FALSE}, event type is treated as a mark on events only and does
+#'   not expand the risk set: \eqn{D = N(N-1)} (directed) or
+#'   \eqn{D = N(N-1)/2} (undirected), and no \code{type} column appears in the
+#'   decoded risk set. This argument is ignored when no event types are present.
 #' @param event_type Optional. Either \code{NULL} (default) or a single character
 #'   string giving the name of the column in \code{edgelist} that contains event
 #'   types (marks).
