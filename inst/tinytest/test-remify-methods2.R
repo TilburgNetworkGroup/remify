@@ -4,6 +4,8 @@ library(tinytest)
 ## tests on methods, errors and warnings from methods
 
 # method dim() with type
+data(randomREH)
+
 reh_loc <- randomREH
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
@@ -21,7 +23,7 @@ reh_loc <- randomREH
 reh_loc$edgelist$type <- NULL
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
-                types = reh_loc$types,
+                #types = reh_loc$types,
                 directed = TRUE, # events are directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
@@ -37,7 +39,7 @@ reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
 reh_loc$origin <- as.Date(reh_loc$origin)-1
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
-                types = reh_loc$types,
+                #types = reh_loc$types,
                 directed = TRUE, # events are directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
@@ -58,7 +60,6 @@ reh_loc$edgelist$type <- NULL
 reh_loc$origin <- as.Date(reh_loc$origin)-1
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
-                types = NULL,
                 directed = TRUE, # events are directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
@@ -79,7 +80,7 @@ reh_loc$edgelist$time <- as.Date(reh_loc$edgelist$time)
 reh_loc$origin <- as.Date(reh_loc$origin)-1
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
-                types = reh_loc$types,
+                #types = reh_loc$types,
                 directed = TRUE, # events are directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
@@ -96,7 +97,7 @@ expect_identical(names(dim(out)),c("events","time points","actors","types","dyad
 reh_loc <- randomREH
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
-                types = reh_loc$types,
+                #types = reh_loc$types,
                 directed = TRUE, # events are directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
@@ -110,7 +111,7 @@ expect_identical(out$meta$riskset_source,"manual")
 reh_loc <- randomREH
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
-                types = reh_loc$types,
+                #types = reh_loc$types,
                 directed = TRUE, # events are directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
@@ -124,7 +125,7 @@ expect_identical(out$meta$riskset_source,"manual")
 reh_loc <- randomREH
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
-                types = reh_loc$types,
+                #types = reh_loc$types,
                 directed = TRUE, # events are directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
@@ -136,7 +137,7 @@ expect_identical(out$meta$riskset,"full")
 reh_loc <- randomREH
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
-                types = reh_loc$types,
+                #types = reh_loc$types,
                 directed = TRUE, # events are directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
@@ -147,7 +148,7 @@ reh_loc <- randomREH
 reh_loc$edgelist$type <- NULL
 out <- remify(edgelist = reh_loc$edgelist,
                 actors = reh_loc$actors,
-                types = NULL,
+                #types = NULL,
                 directed = TRUE, # events are directed
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,

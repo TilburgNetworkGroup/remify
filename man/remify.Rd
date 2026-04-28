@@ -22,8 +22,7 @@ remify(
   riskset_max_decode = 200000L,
   event_covariates = NULL,
   ncores = 1L,
-  omit_dyad = NULL,
-  types = NULL
+  omit_dyad = NULL
 )
 }
 \arguments{
@@ -61,7 +60,7 @@ decoded risk set. This argument is ignored when no event types are present.}
   string giving the name of the column in \code{edgelist} that contains event
   types (marks).
 
-  If \code{event_type} is \code{NULL}, \code{remify2()} uses \code{edgelist$type}
+  If \code{event_type} is \code{NULL}, \code{remify()} uses \code{edgelist$type}
   if it exists; otherwise events are treated as untyped.
 
   If \code{event_type} is a column name, that column is used as the event-type
@@ -107,17 +106,16 @@ memory usage.}
   corresponding \code{time}, \code{actor1}, and \code{actor2} columns (and an
   internal \code{.event_id}). This is useful when downstream functions (e.g.,
   in \pkg{remstats}) need access to event-level marks/covariates that are not
-  part of the core \code{reh$edgelist} produced by \code{remify2()}.
+  part of the core \code{reh$edgelist} produced by \code{remify()}.
 
   Note: \code{event_covariates} does not affect risk set construction or type
-  handling in \code{remify2()}; it only preserves additional columns for later
-  use.}
+  handling in \code{remify()}; it only preserves additional columns for later
+  use. Currently there is no further support yet when event_covariates
+  have been added.}
 
 \item{ncores}{[\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).}
 
 \item{omit_dyad}{Deprecated. Set to \code{NULL}.}
-
-\item{types}{Deprecated. Set to \code{NULL}.}
 }
 \value{
 A \code{remify} S3 object (list) with the following elements:

@@ -23,7 +23,7 @@
 #'
 summary.remify <- function(object, ...) {
 
-  # Support both old remify (attributes) and new remify2 ($meta) structure
+  # Support both old remify (attributes) and new remify ($meta) structure
   .model             <- object$meta$model
   .with_type         <- isTRUE(object$meta$with_type)
   .with_type_riskset <- isTRUE(object$meta$with_type_riskset)

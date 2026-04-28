@@ -32,7 +32,7 @@ plot.remify <- function(x,
                     igraph.vertex.color = "#5AAFC8",
                     ...){
 
-  # support both old remify (attributes) and new remify2 ($meta) structure
+  # support both old remify (attributes) and new remify ($meta) structure
   if (!is.null(x$meta)) {
     .dict    <- x$meta$dictionary
     .ordinal <- isTRUE(x$meta$ordinal)

@@ -32,7 +32,7 @@
 #'   string giving the name of the column in \code{edgelist} that contains event
 #'   types (marks).
 #'
-#'   If \code{event_type} is \code{NULL}, \code{remify2()} uses \code{edgelist$type}
+#'   If \code{event_type} is \code{NULL}, \code{remify()} uses \code{edgelist$type}
 #'   if it exists; otherwise events are treated as untyped.
 #'
 #'   If \code{event_type} is a column name, that column is used as the event-type
@@ -72,14 +72,14 @@
 #'   corresponding \code{time}, \code{actor1}, and \code{actor2} columns (and an
 #'   internal \code{.event_id}). This is useful when downstream functions (e.g.,
 #'   in \pkg{remstats}) need access to event-level marks/covariates that are not
-#'   part of the core \code{reh$edgelist} produced by \code{remify2()}.
+#'   part of the core \code{reh$edgelist} produced by \code{remify()}.
 #'
 #'   Note: \code{event_covariates} does not affect risk set construction or type
-#'   handling in \code{remify2()}; it only preserves additional columns for later
-#'   use.
+#'   handling in \code{remify()}; it only preserves additional columns for later
+#'   use. Currently there is no further support yet when event_covariates
+#'   have been added.
 #' @param ncores [\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).
 #' @param omit_dyad Deprecated. Set to \code{NULL}.
-#' @param types Deprecated. Set to \code{NULL}.
 #'
 #' @return A \code{remify} S3 object (list) with the following elements:
 #'   \itemize{
@@ -194,8 +194,7 @@ remify <- function(edgelist,
                    riskset_max_decode = 200000L,
                    event_covariates = NULL,
                    ncores = 1L,
-                   omit_dyad = NULL,
-                   types = NULL
+                   omit_dyad = NULL
 ){
 
   # (1) Checking for 'edgelist' input object
@@ -399,7 +398,8 @@ remify <- function(edgelist,
   # if(is.null(riskset)){
   #   riskset <- "full"
   # }
-  riskset  <- match.arg(arg = riskset, choices = c("full", "active", "active_saturated", "manual"), several.ok = FALSE)
+  riskset        <- match.arg(arg = riskset, choices = c("full","active","active_saturated","manual"), several.ok = FALSE)
+  riskset_source <- riskset
   active <- FALSE
   if(riskset == "active"){
     active <- TRUE
@@ -629,7 +629,7 @@ remify <- function(edgelist,
     with_type_riskset = isTRUE(out$with_type_riskset),
     C_riskset        = out$C_riskset %||% 1L,
     riskset          = if (riskset == "manual") "active" else riskset,
-    riskset_source   = riskset,   # "full" / "active" / "manual"
+    riskset_source   = riskset_source, #riskset_source,
     origin           = out$edgelist$time[1] - out$intereventTime[1],
     ncores           = ncores,
     dictionary       = list(actors = out$actorsDictionary, types = out$typesDictionary),
@@ -960,25 +960,29 @@ remify <- function(edgelist,
 
     D_full <- str_out$D
 
-
     mode <- str_out$meta$riskset_source
 
     dyad_full_vec <- as.integer(str_out$ids$dyad_vec %||% unlist(str_out$ids$dyad))
 
+    # cat("riskset:", riskset, "\n")
+    # cat("mode:", mode, "\n")
+    # cat("meta names:", names(str_out$meta), "\n")
+
     riskset_idx <- switch(
       mode,
-      full   = seq_len(D_full),
-      active = sort(unique(dyad_full_vec)),
-      manual = as.integer(str_out$omit_dyad$riskset_idx[,1]),
+      full             = seq_len(D_full),
+      active           = sort(unique(dyad_full_vec)),
+      manual           = ,
+      active_saturated = as.integer(str_out$omit_dyad$riskset_idx[, 1]),
       stop("Unknown riskset mode: ", mode)
     )
 
-    # per-event mapping into included set
     dyadIDactive <- switch(
       mode,
-      full   = dyad_full_vec,
-      active = match(dyad_full_vec, riskset_idx),
-      manual = match(dyad_full_vec, riskset_idx) #as.integer(str_out$omit_dyad$dyadIDactive[,1])
+      full             = dyad_full_vec,
+      active           = match(dyad_full_vec, riskset_idx),
+      manual           = ,
+      active_saturated = match(dyad_full_vec, riskset_idx)
     )
 
     rs <- list(
@@ -1036,6 +1040,8 @@ remify <- function(edgelist,
 
     str_out$riskset_info <- rs
   }
+
+  str_out$meta$riskset_source <- riskset_source
 
   return(str_out)
 }
