@@ -93,7 +93,6 @@
 #'     \item \code{meta} list of metadata (model, directed, ordinal, riskset, dictionary, etc.).
 #'     \item \code{ids} list of per-event integer IDs (actor1, actor2, dyad, type).
 #'     \item \code{index} list of decoded riskset tables (\code{dyad_map} or \code{dyad_map_active} for tie model; \code{sender_map} for actor model).
-#'     \item \code{omit_dyad} dynamic riskset modification list (tie model only; empty list for actor model).
 #'     \item \code{activeD} number of active dyads (tie model, \code{riskset="active"} or \code{"manual"} only).
 #'     \item \code{riskset_info} decoded riskset metadata (tie model only, when \code{attach_riskset=TRUE}).
 #'   }

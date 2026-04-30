@@ -230,7 +230,7 @@ reh_sat <- remify(edgelist = el20, actors = actors,
 
 expect_inherits(reh_sat, "remify", info = "saturated: class remify")
 expect_equal(reh_sat$meta$model,          "actor",  info = "saturated: model=actor")
-expect_equal(reh_sat$meta$riskset_source, "manual", info = "saturated: stored as manual")
+expect_equal(reh_sat$meta$riskset_source, "active_saturated", info = "saturated: stored as manual")
 
 # Every observed sender should also appear as a receiver and vice versa
 obs_senders   <- unique(el20$actor1)
@@ -274,7 +274,7 @@ expect_true(reh_sat$activeN >= reh_act2$activeN,
 # All types at risk — with_type_riskset should be TRUE (no type filtering)
 # Since manual.riskset has no type column, ext=TRUE applies all types
 # (depends on extend_riskset_by_type default)
-expect_equal(reh_sat$meta$riskset_source, "manual",
+expect_equal(reh_sat$meta$riskset_source, "active_saturated",
              info = "saturated: internally uses manual riskset")
 
 # ---------------------------------------------------------------------------

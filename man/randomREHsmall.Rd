@@ -42,7 +42,6 @@ small_edgelist_reh <- remify(edgelist = randomREHsmall$edgelist,
                     directed = TRUE,
                     ordinal = FALSE,
                     origin = randomREHsmall$origin,
-                    omit_dyad = randomREHsmall$omit_dyad,
                     model = "tie")
 
 # `small_edgelist_reh` is an object of class `reh`

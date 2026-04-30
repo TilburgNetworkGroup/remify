@@ -3,7 +3,7 @@
 
 library(tinytest)
 
-data(history, package = "remstats")
+data(history, package = "remify")
 edgelist_typed <- history
 colnames(edgelist_typed)[colnames(edgelist_typed) == "setting"] <- "type"
 

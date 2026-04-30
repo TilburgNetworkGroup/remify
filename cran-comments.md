@@ -1,7 +1,10 @@
-# remify 3.2.8
+# remify 4.0.0
+* Date: 2026-04-30
  
-* Date: 2025-01-15
-* DESCRIPTION file update (URL and Maintainer's email)
+## Updates
+* Extended functionality of remify().
+* This new version of remify (4.0.0) was submitted to CRAN at the same time as 'remstats' (4.0.0) and
+  'remstimate' (3.0.0). These new versions are not compatible with older package versions.
  
 ## Test environments 
 * Local macOS Sonoma 14.0, R version 4.3.1 

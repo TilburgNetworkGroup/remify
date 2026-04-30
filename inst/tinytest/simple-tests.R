@@ -3,7 +3,7 @@
 if (requireNamespace("remstats", quietly = TRUE)) {
   data("history", package = "remstats")
 } else {
-  stop("Package 'remstats' required for tests.")
+  exit_file("Package 'remstats' not available, skipping.")
 }
 
 N_ACTORS <- length(sort(unique(c(history$actor1, history$actor2))))

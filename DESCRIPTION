@@ -45,7 +45,8 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    tinytest
+    tinytest,
+    remstats
 LinkingTo:
     Rcpp,
     RcppArmadillo,

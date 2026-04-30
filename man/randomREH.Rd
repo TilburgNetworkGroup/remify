@@ -37,25 +37,15 @@ randomREH$actors
 # types names
 randomREH$types
 
-# looking into the first modification of the riskset: omit_dyad[[1]]
-## the data.frame `dyad` specifies which dyads will be omitted from the riskset 
-## (all the dyads that expressed a `conflict` between actor won't be part of the riskset):
-randomREH$omit_dyad[[1]]$dyad 
-
-## the vector `time` specifies the time points when this exclusion takes place 
-head(randomREH$omit_dyad[[1]]$time) # (printing out only the first 10 time points)
-
 # run the preprocessing function reh() by supplying the loaded objects.
 edgelist_reh <- remify(edgelist = randomREH$edgelist,
                     actors = randomREH$actors,
-                    types = randomREH$types, 
                     directed = TRUE,
                     ordinal = FALSE,
                     origin = randomREH$origin,
-                    omit_dyad = randomREH$omit_dyad,
                     model = "tie")
 
-# `edgelist_reh` is an object of class `reh`
+# `edgelist_reh` is an object of class `remify`
 class(edgelist_reh)
 
 # names of objects inside `edgelist_reh`
