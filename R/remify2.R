@@ -11,10 +11,11 @@
 #' @param directed logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})
 #' @param ordinal logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the exact timing must be considered in the model (\code{FALSE}). (default value is \code{FALSE}). If \code{TRUE}, then the column "time" of \code{edgelist} is still used to extract the order.
 #' @param model either \code{"tie"} (default) or \code{"actor"} oriented modeling. For \code{"tie"}, the riskset is at the dyad level. For \code{"actor"}, the model has two sub-processes: a sender rate model (who sends next?) and a receiver choice model (who does the sender choose?). Actor-oriented modeling requires \code{directed=TRUE}. The returned object includes \code{sender_riskset}, \code{receiver_riskset}, and \code{activeN} (see \code{@return}).
-#' @param thin Integer >= 1. Event-time thinning based on unique time points.
-#'   Keeps every \code{thin}-th unique event time (after time translation) and
+#' @param aggregate_time Integer >= 1. Event-time aggregated based on unique time points.
+#'   Keeps every \code{aggregate_time}-th unique event time (after time translation) and
 #'   maps each event time to the next kept time point (i.e., ceiling to the kept grid).
-#'   This reduces the number of unique time points (and thus memory/computation in later steps).
+#'   This reduces the number of unique time points (and thus memory/computation in later steps). But information
+#'   is lost regarding order and timing of events within each aggregated interval.
 #' @param actors [\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.
 #' @param riskset [\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user. \code{riskset = "active_saturated"} extends the active riskset by adding the reverse direction for each observed dyad (if A->B is observed, B->A is also at risk) and includes all event types for each observed actor pair (type column is ignored). This reflects the assumption that observing any interaction between two actors implies both directions and all types are possible.
 #' @param manual.riskset [\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.
@@ -179,7 +180,7 @@ remify <- function(edgelist,
                    directed = TRUE,
                    ordinal = FALSE,
                    model = c("tie","actor"),
-                   thin = 1,
+                   aggregate_time = 1,
                    actors = NULL,
                    riskset = c("full","active","active_saturated","manual"),
                    manual.riskset = NULL,
@@ -195,6 +196,8 @@ remify <- function(edgelist,
                    ncores = 1L,
                    omit_dyad = NULL
 ){
+
+  thin <- aggregate_time
 
   # (1) Checking for 'edgelist' input object
   if(!is.null(omit_dyad)) {

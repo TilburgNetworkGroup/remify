@@ -1,5 +1,4 @@
 # remify 4.0.0
-* Date: 2026-04-30
 
 ## Coordinated submission
 This is a coordinated submission together with remstats (4.0.0) and 

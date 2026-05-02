@@ -2,7 +2,7 @@ Type: Package
 Package: remify
 Title: Processing and Transforming Relational Event History Data
 Version: 4.0.0
-Date: 2026-04-30
+Date: 2026-05-01
 Authors@R: 
     c(person(given = "Giuseppe",
              family = "Arena",

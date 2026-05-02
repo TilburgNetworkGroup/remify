@@ -1,7 +1,7 @@
 # remify 4.0.0
 
-* Date: 2026-04-25
-* new remify version ready for remverse
+* Date: 2026-05-01
+* new remify version ready for remverse (submitted to cran in next step)
 
 # remify 3.2.8.9000
 

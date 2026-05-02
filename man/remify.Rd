@@ -9,7 +9,7 @@ remify(
   directed = TRUE,
   ordinal = FALSE,
   model = c("tie", "actor"),
-  thin = 1,
+  aggregate_time = 1,
   actors = NULL,
   riskset = c("full", "active", "active_saturated", "manual"),
   manual.riskset = NULL,
@@ -34,10 +34,11 @@ remify(
 
 \item{model}{either \code{"tie"} (default) or \code{"actor"} oriented modeling. For \code{"tie"}, the riskset is at the dyad level. For \code{"actor"}, the model has two sub-processes: a sender rate model (who sends next?) and a receiver choice model (who does the sender choose?). Actor-oriented modeling requires \code{directed=TRUE}. The returned object includes \code{sender_riskset}, \code{receiver_riskset}, and \code{activeN} (see \code{@return}).}
 
-\item{thin}{Integer >= 1. Event-time thinning based on unique time points.
-Keeps every \code{thin}-th unique event time (after time translation) and
+\item{aggregate_time}{Integer >= 1. Event-time aggregated based on unique time points.
+Keeps every \code{aggregate_time}-th unique event time (after time translation) and
 maps each event time to the next kept time point (i.e., ceiling to the kept grid).
-This reduces the number of unique time points (and thus memory/computation in later steps).}
+This reduces the number of unique time points (and thus memory/computation in later steps). But information
+is lost regarding order and timing of events within each aggregated interval.}
 
 \item{actors}{[\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.}
 
