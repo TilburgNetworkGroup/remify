@@ -34,8 +34,7 @@ summary.remify <- function(object, ...) {
   .origin            <- object$meta$origin
   .C                 <- if (!is.null(object$C)) object$C else 1L  # NULL for untyped edgelists
 
-  title <- "Relational Event Network"
-  model <- paste0("(processed for ", .model, "-oriented modeling):")
+  title <- paste0("Relational Event History processed for ", .model, "-oriented modeling:")
 
   # Events
   if (is.null(object$E)) {
@@ -163,13 +162,16 @@ summary.remify <- function(object, ...) {
     } else if (!is.numeric(time) && !is.integer(time)) {
       units_minmax <- "seconds"
     }
+    med_iet <- median(object$intereventTime)
     interevent_time <- paste0("\t> interevent time \n\t\t >> minimum ~ ",
                               round(min_iet, 4), " ", units_minmax,
+                              "\n\t\t >> median  ~ ",
+                              round(med_iet, 4), " ", units_minmax,
                               "\n\t\t >> maximum ~ ",
                               round(max_iet, 4), " ", units_minmax, "\n")
   }
 
-  out <- c(title, model, events, actors, types,
+  out <- c(title, events, actors, types,
            riskset_block, ext_note,
            directed, ordinal, weighted,
            time_length, interevent_time)

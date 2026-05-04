@@ -11,8 +11,8 @@
 #' @param directed logical value indicating whether events are directed (\code{TRUE}) or undirected (\code{FALSE}). (default value is \code{TRUE})
 #' @param ordinal logical value indicating whether only the order of events matters in the model (\code{TRUE}) or also the exact timing must be considered in the model (\code{FALSE}). (default value is \code{FALSE}). If \code{TRUE}, then the column "time" of \code{edgelist} is still used to extract the order.
 #' @param model either \code{"tie"} (default) or \code{"actor"} oriented modeling. For \code{"tie"}, the riskset is at the dyad level. For \code{"actor"}, the model has two sub-processes: a sender rate model (who sends next?) and a receiver choice model (who does the sender choose?). Actor-oriented modeling requires \code{directed=TRUE}. The returned object includes \code{sender_riskset}, \code{receiver_riskset}, and \code{activeN} (see \code{@return}).
-#' @param thin Integer >= 1. Event-time thinning based on unique time points.
-#'   Keeps every \code{thin}-th unique event time (after time translation) and
+#' @param aggregate_time Integer >= 1. Event-time aggregated based on unique time points.
+#'   Keeps every \code{aggregate_time}-th unique event time (after time translation) and
 #'   maps each event time to the next kept time point (i.e., ceiling to the kept grid).
 #'   This reduces the number of unique time points (and thus memory/computation in later steps).
 #' @param actors [\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.
@@ -80,6 +80,27 @@
 #'   have been added.
 #' @param ncores [\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).
 #' @param omit_dyad Deprecated. Set to \code{NULL}.
+#' @param duration Logical. If \code{TRUE}, the edgelist is treated as a
+#'   duration edgelist (each event has both a start time and an end time) and a
+#'   \code{\link{remify_durem}} object is returned instead of a standard
+#'   \code{remify} object. The edgelist must contain an \code{end} column (or
+#'   \code{end_time} / \code{duration} as alternatives; see
+#'   \code{.durem_normalize_edgelist}). Default \code{FALSE}.
+#' @param directed_end Logical. Only used when \code{duration = TRUE}. If
+#'   \code{FALSE} (default), the end process is undirected: either actor can
+#'   terminate the event and only a combined dyad-level end rate is modelled. If
+#'   \code{TRUE}, the end process is directed: a \code{who_ended} column in the
+#'   edgelist (\code{"actor1"} / \code{"actor2"} / \code{NA}) records which
+#'   actor terminated each event, enabling actor-level end-rate models. When
+#'   \code{who_ended} is absent and \code{directed_end = TRUE}, actor1 is
+#'   assumed to terminate all events and a message is issued.
+#' @param type_exclusive Logical. Only used when \code{duration = TRUE}, when typed events
+#'   are present and when \code{extend_riskset_by_type = TRUE}. If \code{TRUE}, an active event of
+#'   any type is a hard block on starting events of all other types for the same
+#'   dyad (e.g. two actors cannot start a text conversation while already in a
+#'   face-to-face conversation). If \code{FALSE} (default), types are treated as
+#'   independent processes and a dyad can be simultaneously active in events of
+#'   different types. Has no effect when \code{extend_riskset_by_type = FALSE}.
 #'
 #' @return A \code{remify} S3 object (list) with the following elements:
 #'   \itemize{
@@ -179,7 +200,7 @@ remify <- function(edgelist,
                    directed = TRUE,
                    ordinal = FALSE,
                    model = c("tie","actor"),
-                   thin = 1,
+                   aggregate_time = 1,
                    actors = NULL,
                    riskset = c("full","active","active_saturated","manual"),
                    manual.riskset = NULL,
@@ -193,8 +214,53 @@ remify <- function(edgelist,
                    riskset_max_decode = 200000L,
                    event_covariates = NULL,
                    ncores = 1L,
-                   omit_dyad = NULL
+                   omit_dyad = NULL,
+                   # ── Duration REM arguments ─────────────────────────────
+                   duration       = FALSE,
+                   directed_end   = FALSE,
+                   type_exclusive = FALSE
 ){
+
+  # ── Model default — mirrors the check later in the remify body ───────────────
+  # Must run before the duration dispatch so the warning fires for both paths.
+  if (is.null(model) || all(model == c("tie", "actor")) || length(model) > 1L) {
+    model <- "tie"
+    warning("`model` set to `tie` by default")
+  }
+  if (!model %in% c("tie", "actor"))
+    stop("`model` must be set to either `tie` or `actor`.")
+
+  # ── Duration REM dispatch ──────────────────────────────────────────────────
+  # When duration = TRUE, build a remify_durem object instead of a standard
+  # remify object. All standard arguments are forwarded; the duration-specific
+  # arguments (directed_end, type_exclusive) are handled there.
+  # Start directionality is controlled by the existing `directed` argument.
+  if (isTRUE(duration)) {
+    return(.remify_durem_init(
+      edgelist               = edgelist,
+      directed               = directed,
+      ordinal                = ordinal,
+      model                  = model,
+      aggregate_time         = aggregate_time,
+      actors                 = actors,
+      riskset                = riskset,
+      manual.riskset         = manual.riskset,
+      extend_riskset_by_type = extend_riskset_by_type,
+      event_type             = event_type,
+      origin                 = origin,
+      time.units             = time.units,
+      attach_riskset         = attach_riskset,
+      riskset_decode         = riskset_decode,
+      riskset_max_decode     = riskset_max_decode,
+      event_covariates       = event_covariates,
+      ncores                 = ncores,
+      omit_dyad              = omit_dyad,
+      directed_end           = directed_end,
+      type_exclusive         = type_exclusive
+    ))
+  }
+
+  thin <- aggregate_time
 
   # (1) Checking for 'edgelist' input object
   if(!is.null(omit_dyad)) {

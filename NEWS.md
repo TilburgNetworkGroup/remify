@@ -1,3 +1,7 @@
+# remify 4.0.0.999
+
+* Support for events with duration
+
 # remify 4.0.0
 
 * Date: 2026-04-25
