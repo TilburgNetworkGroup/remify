@@ -86,7 +86,6 @@ expect_false(isTRUE(reh$meta$with_type_riskset),     info = "extend_riskset_by_t
 
 # end column present in $edgelist and $edgelist_id
 expect_true("end" %in% names(reh$edgelist),          info = "end column in $edgelist")
-expect_true("end" %in% names(reh$edgelist_id),       info = "end column in $edgelist_id")
 expect_equal(reh$edgelist$end, el$end,               info = "$edgelist$end matches input")
 
 # ── 2. Column-name normalisation — legacy names ────────────────────────────────
@@ -193,8 +192,6 @@ expect_true("type" %in% names(reh_typed$edgelist),  info = "type column in $edge
 
 expect_true("who_ended" %in% names(reh_who$edgelist),
     info = "who_ended column added to $edgelist")
-expect_true("who_ended" %in% names(reh_who$edgelist_id),
-    info = "who_ended column added to $edgelist_id")
 
 # ── 14. model warning fires for duration = TRUE ───────────────────────────────
 

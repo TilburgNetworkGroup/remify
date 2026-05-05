@@ -197,50 +197,22 @@
         omit_dyad              = omit_dyad
     )
 
-    # ── 5. Add end (and who_ended) to $edgelist and $edgelist_id ─────────────
+    # ── 5. Add end (and who_ended) to $edgelist ──────────────────────────────
     # The base remify $edgelist has time/actor1/actor2 (and type/weight if
     # present). We append the end column so the full duration edgelist is
-    # accessible at the standard location. $edgelist_id gets end as a raw time
-    # value (not an ID). who_ended stays as character — no integer encoding.
+    # accessible at the standard location.
     #
-    # remify may silently drop events (e.g. certain duplicate time-stamp
-    # configurations). Align edgelist to exactly the rows remify kept before
-    # attaching duration-specific columns, using (time, actor1, actor2) as a
-    # composite key and a greedy first-available match to handle duplicate dyads.
-    if (nrow(base_reh$edgelist) < nrow(edgelist)) {
-        base_key <- paste(base_reh$edgelist$time,
-                          base_reh$edgelist$actor1,
-                          base_reh$edgelist$actor2, sep = "|||")
-        el_key   <- paste(edgelist$time,
-                          edgelist$actor1,
-                          edgelist$actor2, sep = "|||")
-        used <- rep(FALSE, nrow(edgelist))
-        keep <- integer(nrow(base_reh$edgelist))
-        for (i in seq_along(keep)) {
-            cands <- which(el_key == base_key[i] & !used)
-            if (length(cands) == 0L)
-                stop(
-                    "Internal error in remify_durem: remify removed an event ",
-                    "that could not be matched back to the edgelist. ",
-                    "Please report this as a bug."
-                )
-            keep[i]          <- cands[1L]
-            used[cands[1L]]  <- TRUE
-        }
-        edgelist <- edgelist[keep, , drop = FALSE]
-        rownames(edgelist) <- NULL
-    }
+    # NOTE: $edgelist_id is intentionally NOT given an end column. remify
+    # collapses simultaneous events into a single merged row in $edgelist_id
+    # (e.g. two events at t=15 become one row with actor1 = "2, 1"), so its row
+    # count can be less than $edgelist. All DuREM duration logic reads from
+    # $edgelist and $edgelist_dual; $edgelist_id is only needed by remstats C++
+    # for integer actor/dyad lookups and does not require duration columns.
+    #
+    # who_ended stays as character — no integer encoding needed.
     base_reh$edgelist$end <- edgelist$end
-    # lengths per row (how many "events" per time point)
-    lens <- lengths(base_reh$ids$actor1)
-    # split the end vector accordingly
-    end_list <- split(edgelist$end, rep(seq_along(lens), lens))
-    base_reh$edgelist_id$end <- end_list
-    if ("who_ended" %in% names(edgelist)) {
-        base_reh$edgelist$who_ended    <- edgelist$who_ended
-        who_list <- split(edgelist$who_ended, rep(seq_along(lens), lens))
-        base_reh$edgelist_id$who_ended <- who_list
-    }
+    if ("who_ended" %in% names(edgelist))
+        base_reh$edgelist$who_ended <- edgelist$who_ended
 
     # ── 5b. Build and attach dual-event edgelist ──────────────────────────────
     # The dual edgelist represents the full event history as a sequence of
@@ -262,7 +234,7 @@
     has_weight  <- "weight" %in% names(edgelist)
     base_weight <- if (has_weight) edgelist$weight else rep(1, nrow(edgelist))
     dur         <- ifelse(is.na(edgelist$end), 1,
-                          edgelist$end - edgelist$time)
+                          edgelist$end - edgelist$time + 1)
 
     start_rows_dual <- data.frame(
         time     = edgelist$time,
@@ -289,6 +261,20 @@
     if (has_type) {
         start_rows_dual$type <- edgelist$type
         end_rows_dual$type   <- edgelist$type[complete]
+    }
+    # who_ended column — only when directed_end = TRUE:
+    #   • if user supplied a who_ended column: use those values for end rows
+    #   • if directed_end = TRUE but no who_ended column: assume actor1
+    #     (consistent with the message issued in section 2)
+    # Both start_rows_dual and end_rows_dual must carry the column (with NA
+    # on start rows) so that rbind() sees matching column sets.
+    if (isTRUE(directed_end)) {
+        start_rows_dual$who_ended <- NA_character_
+        end_rows_dual$who_ended <-
+            if ("who_ended" %in% names(edgelist))
+                edgelist$who_ended[complete]
+            else
+                rep("actor1", sum(complete))
     }
     edgelist_dual <- rbind(start_rows_dual, end_rows_dual)
     edgelist_dual <- edgelist_dual[order(edgelist_dual$time), ]
