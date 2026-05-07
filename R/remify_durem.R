@@ -234,7 +234,7 @@
     has_weight  <- "weight" %in% names(edgelist)
     base_weight <- if (has_weight) edgelist$weight else rep(1, nrow(edgelist))
     dur         <- ifelse(is.na(edgelist$end), 1,
-                          edgelist$end - edgelist$time + 1)
+                          edgelist$end - edgelist$time)
 
     start_rows_dual <- data.frame(
         time     = edgelist$time,
