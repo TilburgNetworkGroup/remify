@@ -433,7 +433,7 @@ summary.remify_durem <- function(object, ...) {
             "\t> interevent time \n\t\t >> minimum ~ ", round(min_iet, 4),
             " ", units_minmax,
             "\n\t\t >> maximum ~ ", round(max_iet, 4),
-            " ", units_minmax, "\n")
+            " ", units_minmax)
     }
 
     # ── DuREM-specific fields ─────────────────────────────────────────────────

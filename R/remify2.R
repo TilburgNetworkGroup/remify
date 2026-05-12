@@ -218,7 +218,7 @@ remify <- function(edgelist,
                    # ── Duration REM arguments ─────────────────────────────
                    duration       = FALSE,
                    directed_end   = FALSE,
-                   type_exclusive = FALSE
+                   type_exclusive = FALSE,
 ){
 
   # ── Model default — mirrors the check later in the remify body ───────────────
