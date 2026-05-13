@@ -107,201 +107,293 @@
     directed_end           = FALSE,
     type_exclusive         = FALSE
 ) {
-    # ── 1. Normalise column names ─────────────────────────────────────────────
-    edgelist <- .durem_normalize_edgelist(edgelist)
+  # ── 1. Normalise column names ─────────────────────────────────────────────
+  edgelist <- .durem_normalize_edgelist(edgelist)
 
-    # ── 2. Validate ───────────────────────────────────────────────────────────
-    riskset <- match.arg(riskset)
+  # ── 2. Validate ───────────────────────────────────────────────────────────
+  riskset <- match.arg(riskset)
 
-    # Remove self-loops (actor1 == actor2) before anything else, mirroring
-    # remify's own behaviour.  Do this on the full edgelist so that the row
-    # counts of edgelist, start_el, and base_reh$edgelist stay in sync.
-    self_loops <- edgelist$actor1 == edgelist$actor2
-    if (any(self_loops)) {
-        warning(
-            "Self-loops detected in the duration edgelist (actor1 == actor2). ",
-            sum(self_loops), " row(s) removed."
-        )
-        edgelist <- edgelist[!self_loops, , drop = FALSE]
-        rownames(edgelist) <- NULL
-    }
+  # Remove self-loops (actor1 == actor2) before anything else, mirroring
+  # remify's own behaviour.  Do this on the full edgelist so that the row
+  # counts of edgelist, start_el, and base_reh$edgelist stay in sync.
+  self_loops <- edgelist$actor1 == edgelist$actor2
+  if (any(self_loops)) {
+    warning(
+      "Self-loops detected in the duration edgelist (actor1 == actor2). ",
+      sum(self_loops), " row(s) removed."
+    )
+    edgelist <- edgelist[!self_loops, , drop = FALSE]
+    rownames(edgelist) <- NULL
+  }
 
-    # end >= time for non-censored events
-    complete <- !is.na(edgelist$end)
-    if (any(edgelist$end[complete] < edgelist$time[complete]))
-        stop("End time cannot be before start time.")
+  # end >= time for non-censored events
+  complete <- !is.na(edgelist$end)
+  if (any(edgelist$end[complete] < edgelist$time[complete]))
+    stop("End time cannot be before start time.")
 
-    # model restriction
-    model <- match.arg(model, c("tie", "actor"))
-    if (model == "actor")
-        stop("AOM-DuREM is not yet implemented. Use model = \"tie\".")
+  # model restriction
+  model <- match.arg(model, c("tie", "actor"))
+  if (model == "actor")
+    stop("AOM-DuREM is not yet implemented. Use model = \"tie\".")
 
-    # type_exclusive without extend_riskset_by_type is a no-op
-    if (isTRUE(type_exclusive) && !isTRUE(extend_riskset_by_type))
-        warning(
-            "`type_exclusive = TRUE` has no effect when ",
-            "`extend_riskset_by_type = FALSE`. The dyad-level risk set ",
-            "already enforces mutual exclusion across types."
-        )
-
-    # directed_end = TRUE without who_ended: actor1 assumed to always terminate
-    if (isTRUE(directed_end) && !"who_ended" %in% names(edgelist))
-        message(
-            "Note: `directed_end = TRUE` but no `who_ended` column found. ",
-            "Actor contributions to the end rate are not separately identifiable; ",
-            "actor1 is assumed to terminate all events."
-        )
-
-    # who_ended values must be "actor1" or "actor2" if column is present
-    if ("who_ended" %in% names(edgelist)) {
-        valid_enders <- edgelist$who_ended[!is.na(edgelist$who_ended)]
-        bad <- !valid_enders %in% c("actor1", "actor2")
-        if (any(bad))
-            stop(
-                "`who_ended` column must contain only \"actor1\", \"actor2\", ",
-                "or NA. Found: ",
-                paste(unique(valid_enders[bad]), collapse = ", ")
-            )
-    }
-
-    # ── 3. Build start edgelist for the base remify object ────────────────────
-    # Only start events are passed to remify() so the actor dictionary, N,
-    # and risk set structure reflect the start process. Optional type and
-    # weight columns are forwarded.
-    start_cols <- c("time", "actor1", "actor2")
-    if ("type"   %in% names(edgelist)) start_cols <- c(start_cols, "type")
-    if ("weight" %in% names(edgelist)) start_cols <- c(start_cols, "weight")
-    start_el <- edgelist[, start_cols, drop = FALSE]
-
-    # ── 4. Call remify() on start events ─────────────────────────────────────
-    # directed controls start directionality (TRUE = actor1 initiates,
-    # FALSE = either actor); directed_end is stored in $durem for the end model.
-    base_reh <- remify(
-        edgelist               = start_el,
-        directed               = directed,
-        ordinal                = ordinal,
-        model                  = model,
-        aggregate_time         = aggregate_time,
-        actors                 = actors,
-        riskset                = riskset,
-        manual.riskset         = manual.riskset,
-        extend_riskset_by_type = extend_riskset_by_type,
-        event_type             = event_type,
-        origin                 = origin,
-        time.units             = time.units,
-        attach_riskset         = attach_riskset,
-        riskset_decode         = riskset_decode,
-        riskset_max_decode     = riskset_max_decode,
-        event_covariates       = event_covariates,
-        ncores                 = ncores,
-        omit_dyad              = omit_dyad
+  # type_exclusive without extend_riskset_by_type is a no-op
+  if (isTRUE(type_exclusive) && !isTRUE(extend_riskset_by_type))
+    warning(
+      "`type_exclusive = TRUE` has no effect when ",
+      "`extend_riskset_by_type = FALSE`. The dyad-level risk set ",
+      "already enforces mutual exclusion across types."
     )
 
-    # ── 5. Add end (and who_ended) to $edgelist ──────────────────────────────
-    # The base remify $edgelist has time/actor1/actor2 (and type/weight if
-    # present). We append the end column so the full duration edgelist is
-    # accessible at the standard location.
-    #
-    # NOTE: $edgelist_id is intentionally NOT given an end column. remify
-    # collapses simultaneous events into a single merged row in $edgelist_id
-    # (e.g. two events at t=15 become one row with actor1 = "2, 1"), so its row
-    # count can be less than $edgelist. All DuREM duration logic reads from
-    # $edgelist and $edgelist_dual; $edgelist_id is only needed by remstats C++
-    # for integer actor/dyad lookups and does not require duration columns.
-    #
-    # who_ended stays as character — no integer encoding needed.
-    base_reh$edgelist$end <- edgelist$end
-    if ("who_ended" %in% names(edgelist))
-        base_reh$edgelist$who_ended <- edgelist$who_ended
-
-    # ── 5b. Build and attach dual-event edgelist ──────────────────────────────
-    # The dual edgelist represents the full event history as a sequence of
-    # "start" and "end" events sorted chronologically.  Stored on the object so
-    # that .remstats_durem() can consume it directly without rebuilding it on
-    # every call.
-    #
-    # Columns:
-    #   time     – event time (el$time for start rows, el$end for end rows)
-    #   actor1, actor2 – dyad (same on both rows of an event)
-    #   status   – "start" or "end"
-    #   duration – precomputed el$end - el$time + 1; 1 for censored start rows
-    #   weight   – base event weight (user's weight column or 1)
-    #   [type]   – user's event-type column carried through unchanged
-    #
-    # Recompute 'complete' here in case edgelist was trimmed by alignment above.
-    complete    <- !is.na(edgelist$end)
-    has_type    <- "type"   %in% names(edgelist)
-    has_weight  <- "weight" %in% names(edgelist)
-    base_weight <- if (has_weight) edgelist$weight else rep(1, nrow(edgelist))
-    dur         <- ifelse(is.na(edgelist$end), 1,
-                          edgelist$end - edgelist$time)
-
-    start_rows_dual <- data.frame(
-        time     = edgelist$time,
-        actor1   = edgelist$actor1,
-        actor2   = edgelist$actor2,
-        status   = "start",
-        duration = dur,
-        stringsAsFactors = FALSE
-    )
-    end_rows_dual <- data.frame(
-        time     = edgelist$end[complete],
-        actor1   = edgelist$actor1[complete],
-        actor2   = edgelist$actor2[complete],
-        status   = "end",
-        duration = dur[complete],
-        stringsAsFactors = FALSE
-    )
-    # weight column only when user supplied one; otherwise omitted (remify
-    # treats a missing weight column as uniform weight = 1)
-    if (has_weight) {
-        start_rows_dual$weight <- base_weight
-        end_rows_dual$weight   <- base_weight[complete]
-    }
-    if (has_type) {
-        start_rows_dual$type <- edgelist$type
-        end_rows_dual$type   <- edgelist$type[complete]
-    }
-    # who_ended column — only when directed_end = TRUE:
-    #   • if user supplied a who_ended column: use those values for end rows
-    #   • if directed_end = TRUE but no who_ended column: assume actor1
-    #     (consistent with the message issued in section 2)
-    # Both start_rows_dual and end_rows_dual must carry the column (with NA
-    # on start rows) so that rbind() sees matching column sets.
-    if (isTRUE(directed_end)) {
-        start_rows_dual$who_ended <- NA_character_
-        end_rows_dual$who_ended <-
-            if ("who_ended" %in% names(edgelist))
-                edgelist$who_ended[complete]
-            else
-                rep("actor1", sum(complete))
-    }
-    edgelist_dual <- rbind(start_rows_dual, end_rows_dual)
-    edgelist_dual <- edgelist_dual[order(edgelist_dual$time), ]
-    rownames(edgelist_dual) <- NULL
-    base_reh$edgelist_dual <- edgelist_dual
-
-    # ── 6. Attach DuREM slot — only info not already on the base object ───────
-    # Redundant fields intentionally omitted:
-    #   n_events               → $M
-    #   has_types              → $meta$with_type
-    #   has_weights            → $meta$weighted
-    #   extend_riskset_by_type → $meta$with_type_riskset
-    base_reh$durem <- list(
-        directed_end  = directed_end,
-        type_exclusive = type_exclusive,
-        has_who_ended = "who_ended" %in% names(edgelist),
-        has_censored  = anyNA(edgelist$end),
-        n_complete    = sum(!is.na(edgelist$end)),
-        n_censored    = sum(is.na(edgelist$end))
+  # directed_end = TRUE without who_ended: actor1 assumed to always terminate
+  if (isTRUE(directed_end) && !"who_ended" %in% names(edgelist))
+    message(
+      "Note: `directed_end = TRUE` but no `who_ended` column found. ",
+      "Actor contributions to the end rate are not separately identifiable; ",
+      "actor1 is assumed to terminate all events."
     )
 
-    # ── 7. Set class ──────────────────────────────────────────────────────────
-    class(base_reh) <- c("remify_durem", class(base_reh))
+  # who_ended values must be "actor1" or "actor2" if column is present
+  if ("who_ended" %in% names(edgelist)) {
+    valid_enders <- edgelist$who_ended[!is.na(edgelist$who_ended)]
+    bad <- !valid_enders %in% c("actor1", "actor2")
+    if (any(bad))
+      stop(
+        "`who_ended` column must contain only \"actor1\", \"actor2\", ",
+        "or NA. Found: ",
+        paste(unique(valid_enders[bad]), collapse = ", ")
+      )
+  }
 
-    base_reh
+  # ── 3. Build start edgelist for the base remify object ────────────────────
+  # Only start events are passed to remify() so the actor dictionary, N,
+  # and risk set structure reflect the start process. Optional type and
+  # weight columns are forwarded.
+  start_cols <- c("time", "actor1", "actor2")
+  if ("type"   %in% names(edgelist)) start_cols <- c(start_cols, "type")
+  if ("weight" %in% names(edgelist)) start_cols <- c(start_cols, "weight")
+  start_el <- edgelist[, start_cols, drop = FALSE]
+
+  # ── 4. Call remify() on start events ─────────────────────────────────────
+  # directed controls start directionality (TRUE = actor1 initiates,
+  # FALSE = either actor); directed_end is stored in $durem for the end model.
+  base_reh <- remify(
+    edgelist               = start_el,
+    directed               = directed,
+    ordinal                = ordinal,
+    model                  = model,
+    aggregate_time         = aggregate_time,
+    actors                 = actors,
+    riskset                = riskset,
+    manual.riskset         = manual.riskset,
+    extend_riskset_by_type = extend_riskset_by_type,
+    event_type             = event_type,
+    origin                 = origin,
+    time.units             = time.units,
+    attach_riskset         = attach_riskset,
+    riskset_decode         = riskset_decode,
+    riskset_max_decode     = riskset_max_decode,
+    event_covariates       = event_covariates,
+    ncores                 = ncores,
+    omit_dyad              = omit_dyad
+  )
+
+  # ── 5. Add end (and who_ended) to $edgelist ──────────────────────────────
+  # The base remify $edgelist has time/actor1/actor2 (and type/weight if
+  # present). We append the end column so the full duration edgelist is
+  # accessible at the standard location.
+  #
+  # NOTE: $edgelist_id is intentionally NOT given an end column. remify
+  # collapses simultaneous events into a single merged row in $edgelist_id
+  # (e.g. two events at t=15 become one row with actor1 = "2, 1"), so its row
+  # count can be less than $edgelist. All DuREM duration logic reads from
+  # $edgelist and $edgelist_dual; $edgelist_id is only needed by remstats C++
+  # for integer actor/dyad lookups and does not require duration columns.
+  #
+  # who_ended stays as character — no integer encoding needed.
+  base_reh$edgelist$end <- edgelist$end
+  if ("who_ended" %in% names(edgelist))
+    base_reh$edgelist$who_ended <- edgelist$who_ended
+
+  # ── 5b. Build and attach dual-event edgelist ──────────────────────────────
+  # The dual edgelist represents the full event history as a sequence of
+  # "start" and "end" events sorted chronologically.  Stored on the object so
+  # that .remstats_durem() can consume it directly without rebuilding it on
+  # every call.
+  #
+  # Columns:
+  #   time     – event time (el$time for start rows, el$end for end rows)
+  #   actor1, actor2 – dyad (same on both rows of an event)
+  #   status   – "start" or "end"
+  #   duration – precomputed el$end - el$time + 1; 1 for censored start rows
+  #   weight   – base event weight (user's weight column or 1)
+  #   [type]   – user's event-type column carried through unchanged
+  #
+  # Recompute 'complete' here in case edgelist was trimmed by alignment above.
+  complete    <- !is.na(edgelist$end)
+  has_type    <- "type"   %in% names(edgelist)
+  has_weight  <- "weight" %in% names(edgelist)
+  base_weight <- if (has_weight) edgelist$weight else rep(1, nrow(edgelist))
+  dur         <- ifelse(is.na(edgelist$end), 1,
+                        edgelist$end - edgelist$time)
+
+  #check overlapping events of the same dyad
+  .check_duration_overlap(edgelist, type_exclusive = type_exclusive)
+
+  start_rows_dual <- data.frame(
+    time     = edgelist$time,
+    actor1   = edgelist$actor1,
+    actor2   = edgelist$actor2,
+    status   = "start",
+    duration = dur,
+    stringsAsFactors = FALSE
+  )
+  end_rows_dual <- data.frame(
+    time     = edgelist$end[complete],
+    actor1   = edgelist$actor1[complete],
+    actor2   = edgelist$actor2[complete],
+    status   = "end",
+    duration = dur[complete],
+    stringsAsFactors = FALSE
+  )
+  # weight column only when user supplied one; otherwise omitted (remify
+  # treats a missing weight column as uniform weight = 1)
+  if (has_weight) {
+    start_rows_dual$weight <- base_weight
+    end_rows_dual$weight   <- base_weight[complete]
+  }
+  if (has_type) {
+    start_rows_dual$type <- edgelist$type
+    end_rows_dual$type   <- edgelist$type[complete]
+  }
+  # who_ended column — only when directed_end = TRUE:
+  #   • if user supplied a who_ended column: use those values for end rows
+  #   • if directed_end = TRUE but no who_ended column: assume actor1
+  #     (consistent with the message issued in section 2)
+  # Both start_rows_dual and end_rows_dual must carry the column (with NA
+  # on start rows) so that rbind() sees matching column sets.
+  if (isTRUE(directed_end)) {
+    start_rows_dual$who_ended <- NA_character_
+    end_rows_dual$who_ended <-
+      if ("who_ended" %in% names(edgelist))
+        edgelist$who_ended[complete]
+    else
+      rep("actor1", sum(complete))
+  }
+  edgelist_dual <- rbind(start_rows_dual, end_rows_dual)
+  edgelist_dual <- edgelist_dual[order(edgelist_dual$time), ]
+  rownames(edgelist_dual) <- NULL
+  base_reh$edgelist_dual <- edgelist_dual
+
+  # ── 6. Attach DuREM slot — only info not already on the base object ───────
+  # Redundant fields intentionally omitted:
+  #   n_events               → $M
+  #   has_types              → $meta$with_type
+  #   has_weights            → $meta$weighted
+  #   extend_riskset_by_type → $meta$with_type_riskset
+  base_reh$durem <- list(
+    directed_end  = directed_end,
+    type_exclusive = type_exclusive,
+    has_who_ended = "who_ended" %in% names(edgelist),
+    has_censored  = anyNA(edgelist$end),
+    n_complete    = sum(!is.na(edgelist$end)),
+    n_censored    = sum(is.na(edgelist$end))
+  )
+
+  # ── 7. Set class ──────────────────────────────────────────────────────────
+  class(base_reh) <- c("remify_durem", class(base_reh))
+
+  if (any(edgelist$duration == 0, na.rm = TRUE))
+    warning(sum(edgelist$duration == 0), " event(s) with duration = 0; ",
+            "treated as instantaneous (start only, event end will not be modeled).",
+            call. = FALSE)
+
+  base_reh
+
 }
 
+# ── Overlap check for duration models ────────────────────────────────────────
+# Call this from .remify_durem_init() after computing end times.
+# el must have columns: actor1, actor2, time, end, and optionally type.
+
+.check_duration_overlap <- function(el, type_exclusive = TRUE) {
+  n <- nrow(el)
+  if (n < 2L) return(invisible(NULL))
+
+  has_type <- "type" %in% names(el)
+  same_type_violations <- integer(0)
+  cross_type_violations <- integer(0)
+
+  for (i in seq_len(n)) {
+    # Skip instantaneous events (already warned separately)
+    if (!is.na(el$end[i]) && el$end[i] == el$time[i]) next
+
+    # Find other events for the same base dyad that were active when i started
+    same_dyad <- which(
+      el$actor1 == el$actor1[i] &
+        el$actor2 == el$actor2[i] &
+        seq_len(n) != i &
+        el$time < el$time[i] &
+        el$end > el$time[i]
+    )
+    if (length(same_dyad) == 0L) next
+
+    if (has_type) {
+      same_t <- same_dyad[el$type[same_dyad] == el$type[i]]
+      cross_t <- same_dyad[el$type[same_dyad] != el$type[i]]
+      if (length(same_t) > 0L) same_type_violations <- c(same_type_violations, i)
+      if (length(cross_t) > 0L && type_exclusive) cross_type_violations <- c(cross_type_violations, i)
+    } else {
+      same_type_violations <- c(same_type_violations, i)
+    }
+  }
+
+  same_type_violations <- unique(same_type_violations)
+  cross_type_violations <- unique(cross_type_violations)
+
+  if (length(same_type_violations) > 0L) {
+    if (length(same_type_violations) > 1L) {
+    warning(
+      length(same_type_violations), " events start while another event ",
+      "for the same dyad is already active. Check events: ",
+      paste(same_type_violations, collapse = ", "), ".",
+      call. = FALSE
+    )
+    }else{
+      warning(
+        length(same_type_violations), " event starts while another event ",
+        "for the same dyad is already active. Check event: ",
+        paste(same_type_violations, collapse = ", "), ".",
+        call. = FALSE
+      )
+    }
+  }
+
+  if (length(cross_type_violations) > 0L) {
+    if (length(cross_type_violations) > 1L) {
+    warning(
+      length(cross_type_violations), " events start while an event of a ",
+      "different type for the same dyad is already active. With ",
+      "type_exclusive = TRUE, these dyads should not be at risk. ",
+      "Consider setting type_exclusive = FALSE if concurrent events of ",
+      "different types are expected. Check events: ",
+      paste(cross_type_violations, collapse = ", "), ".",
+      call. = FALSE
+    )
+    }else{
+      warning(
+        length(cross_type_violations), " event starts while an event of a ",
+        "different type for the same dyad is already active. With ",
+        "type_exclusive = TRUE, this dyad should not be at risk. ",
+        "Consider setting type_exclusive = FALSE if concurrent events of ",
+        "different types are expected. Check event: ",
+        paste(cross_type_violations, collapse = ", "), ".",
+        call. = FALSE
+      )
+    }
+  }
+
+  invisible(unique(c(same_type_violations, cross_type_violations)))
+}
 
 # ── S3 methods ────────────────────────────────────────────────────────────────
 

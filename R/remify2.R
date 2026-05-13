@@ -218,7 +218,7 @@ remify <- function(edgelist,
                    # ── Duration REM arguments ─────────────────────────────
                    duration       = FALSE,
                    directed_end   = FALSE,
-                   type_exclusive = FALSE,
+                   type_exclusive = FALSE
 ){
 
   # ── Model default — mirrors the check later in the remify body ───────────────
@@ -506,7 +506,7 @@ remify <- function(edgelist,
     }
 
     if (!is.null(actors)) {
-      message("Note: `actors` is ignored when `riskset = \"manual\"` and `manual.riskset` is used")
+      warning("Note: `actors` is ignored when `riskset = \"manual\"` and `manual.riskset` is used")
       actors <- NULL
     }
 
@@ -584,7 +584,7 @@ remify <- function(edgelist,
     }
     ndups <- sum(duplicated(key))
     if (ndups > 0) {
-      message(sprintf("Note: `manual.riskset` contained %d duplicate entries; duplicates were removed.", ndups))
+      warning(sprintf("`manual.riskset` contained %d duplicate entries; duplicates were removed.", ndups))
       manual.riskset <- manual.riskset[!duplicated(key), , drop = FALSE]
     }
 
