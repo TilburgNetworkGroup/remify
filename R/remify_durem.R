@@ -179,7 +179,7 @@
   base_reh <- remify(
     edgelist               = start_el,
     directed               = directed,
-    ordinal                = ordinal,
+    ordinal                = FALSE, #handled later
     model                  = model,
     aggregate_time         = aggregate_time,
     actors                 = actors,
@@ -279,10 +279,30 @@
     else
       rep("actor1", sum(complete))
   }
+  start_rows_dual$.eidx <- seq_len(nrow(edgelist))
+  end_rows_dual$.eidx   <- which(complete)
+
   edgelist_dual <- rbind(start_rows_dual, end_rows_dual)
   edgelist_dual <- edgelist_dual[order(edgelist_dual$time), ]
   rownames(edgelist_dual) <- NULL
   base_reh$edgelist_dual <- edgelist_dual
+
+  if (isTRUE(ordinal)) {
+    # Convert numeric time to an integer step index over unique time values.
+    # Events with identical times share the same index; indices increase densely.
+    all_times <- sort(unique(edgelist_dual$time))
+    tmap <- setNames(seq_along(all_times), as.character(all_times))
+
+    base_reh$edgelist_dual$time <- unname(tmap[as.character(base_reh$edgelist_dual$time)])
+    base_reh$edgelist$time      <- unname(tmap[as.character(base_reh$edgelist$time)])
+    ok <- !is.na(base_reh$edgelist$end)
+    base_reh$edgelist$end[ok]   <- unname(tmap[as.character(base_reh$edgelist$end[ok])])
+
+    # Ordinal duration from remapped main edgelist
+    ord_dur <- base_reh$edgelist$end - base_reh$edgelist$time
+    base_reh$edgelist_dual$duration <- ord_dur[base_reh$edgelist_dual$.eidx]
+    base_reh$edgelist_dual$.eidx    <- NULL  # remove temp column
+  }
 
   # ── 6. Attach DuREM slot — only info not already on the base object ───────
   # Redundant fields intentionally omitted:

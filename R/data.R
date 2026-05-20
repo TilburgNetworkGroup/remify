@@ -106,8 +106,7 @@
 
 #' History dataset
 #'
-#' A relational event history dataset for testing and examples.
+#' A randomly generated relational event history dataset for testing and examples.
 #'
-#' @format A data frame that can be used for an analysis with remify, remstats, remstimate
-#' @source remstats package
+#' @format A data frame that can be used for an analysis with remverse
 "history"

@@ -230,6 +230,25 @@ remify <- function(edgelist,
   if (!model %in% c("tie", "actor"))
     stop("`model` must be set to either `tie` or `actor`.")
 
+  if (!is.null(event_type)) {
+    if (!is.character(event_type) || length(event_type) != 1L) {
+      stop("`event_type` must be NULL or a single column name.")
+    }
+    if (!(event_type %in% names(edgelist))) {
+      stop("`event_type` not found in `edgelist`: ", event_type)
+    }
+
+    if (event_type != "type") {
+      if ("type" %in% names(edgelist)) {
+        warning("`event_type = '", event_type,
+                "'` overrides existing `edgelist$type` for event typing.",
+                call. = FALSE)
+      }
+      edgelist$type <- edgelist[[event_type]]
+      event_type <- NULL
+    }
+  }
+
   # ── Duration REM dispatch ──────────────────────────────────────────────────
   # When duration = TRUE, build a remify_durem object instead of a standard
   # remify object. All standard arguments are forwarded; the duration-specific
@@ -307,24 +326,6 @@ remify <- function(edgelist,
   if(!("actor2" %in% names(edgelist))){
     #stop("`edgelist` should contain a column named `actor2` with the second actors/receivers of the events.")
     names(edgelist)[3] <- "actor2"
-  }
-
-  if (!is.null(event_type)) {
-    if (!is.character(event_type) || length(event_type) != 1L) {
-      stop("`event_type` must be NULL or a single column name.")
-    }
-    if (!(event_type %in% names(edgelist))) {
-      stop("`event_type` not found in `edgelist`: ", event_type)
-    }
-
-    if (event_type != "type") {
-      if ("type" %in% names(edgelist)) {
-        warning("`event_type = '", event_type,
-                "'` overrides existing `edgelist$type` for event typing.",
-                call. = FALSE)
-      }
-      edgelist$type <- edgelist[[event_type]]
-    }
   }
 
   # validate event_covariates
