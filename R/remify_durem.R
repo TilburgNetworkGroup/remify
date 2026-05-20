@@ -295,6 +295,7 @@
 
     base_reh$edgelist_dual$time <- unname(tmap[as.character(base_reh$edgelist_dual$time)])
     base_reh$edgelist$time      <- unname(tmap[as.character(base_reh$edgelist$time)])
+    base_reh$edgelist_id$time <- unname(tmap[as.character(base_reh$edgelist_id$time)])
     ok <- !is.na(base_reh$edgelist$end)
     base_reh$edgelist$end[ok]   <- unname(tmap[as.character(base_reh$edgelist$end[ok])])
 
