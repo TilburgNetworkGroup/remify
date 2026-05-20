@@ -303,7 +303,9 @@
     ord_dur <- base_reh$edgelist$end - base_reh$edgelist$time
     base_reh$edgelist_dual$duration <- ord_dur[base_reh$edgelist_dual$.eidx]
     base_reh$edgelist_dual$.eidx    <- NULL  # remove temp column
+    base_reh$intereventTime <- NULL
   }
+  base_reh$meta$ordinal <- TRUE
 
   # ── 6. Attach DuREM slot — only info not already on the base object ───────
   # Redundant fields intentionally omitted:
