@@ -97,11 +97,11 @@
     extend_riskset_by_type = FALSE,
     event_type             = NULL,
     origin                 = NULL,
-    time.units             = c("auto", "secs", "mins", "hours", "days", "weeks"),
+    time_units             = c("auto", "secs", "mins", "hours", "days", "weeks"),
     attach_riskset         = TRUE,
     riskset_decode         = c("labels", "ids", "none"),
     riskset_max_decode     = 200000L,
-    event_covariates       = NULL,
+    event_attributes       = NULL,
     ncores                 = 1L,
     omit_dyad              = NULL,
     directed_end           = FALSE,
@@ -139,7 +139,7 @@
   # type_exclusive without extend_riskset_by_type is a no-op
   if (isTRUE(type_exclusive) && !isTRUE(extend_riskset_by_type))
     warning(
-      "`type_exclusive = TRUE` has no effect when ",
+      "`dur_type_exclusive = TRUE` has no effect when ",
       "`extend_riskset_by_type = FALSE`. The dyad-level risk set ",
       "already enforces mutual exclusion across types."
     )
@@ -164,13 +164,24 @@
       )
   }
 
+  # validate event_attributes
+  if (!is.null(event_attributes)) {
+    if (!is.character(event_attributes)) stop("`event_attributes` must be a character vector of column names.")
+    event_attributes <- unique(event_attributes)
+    missing <- setdiff(event_attributes, names(edgelist))
+    if (length(missing)) stop("`event_attributes` not found in `edgelist`: ", paste(missing, collapse = ", "))
+    event_attributes <- setdiff(event_attributes, c("time","actor1","actor2","type","weight"))
+    if (!length(event_attributes)) event_attributes <- NULL
+  }
+
   # ── 3. Build start edgelist for the base remify object ────────────────────
   # Only start events are passed to remify() so the actor dictionary, N,
-  # and risk set structure reflect the start process. Optional type and
-  # weight columns are forwarded.
+  # and risk set structure reflect the start process. Optional type, weight
+  # and event atributes columns are forwarded
   start_cols <- c("time", "actor1", "actor2")
   if ("type"   %in% names(edgelist)) start_cols <- c(start_cols, "type")
   if ("weight" %in% names(edgelist)) start_cols <- c(start_cols, "weight")
+  if (!is.null(event_attributes)) {start_cols <- c(start_cols, event_attributes)}
   start_el <- edgelist[, start_cols, drop = FALSE]
 
   # ── 4. Call remify() on start events ─────────────────────────────────────
@@ -184,15 +195,15 @@
     aggregate_time         = aggregate_time,
     actors                 = actors,
     riskset                = riskset,
-    manual.riskset         = manual.riskset,
+    manual_riskset         = manual.riskset,
     extend_riskset_by_type = extend_riskset_by_type,
     event_type             = event_type,
     origin                 = origin,
-    time.units             = time.units,
+    time_units             = time_units,
     attach_riskset         = attach_riskset,
     riskset_decode         = riskset_decode,
     riskset_max_decode     = riskset_max_decode,
-    event_covariates       = event_covariates,
+    event_attributes       = event_attributes,
     ncores                 = ncores,
     omit_dyad              = omit_dyad
   )
@@ -265,6 +276,12 @@
     start_rows_dual$type <- edgelist$type
     end_rows_dual$type   <- edgelist$type[complete]
   }
+  if (!is.null(event_attributes)) {
+    for (ea in event_attributes) {
+      start_rows_dual[[ea]] <- edgelist[[ea]]
+      end_rows_dual[[ea]]   <- edgelist[[ea]][complete]
+    }
+  }
   # who_ended column — only when directed_end = TRUE:
   #   • if user supplied a who_ended column: use those values for end rows
   #   • if directed_end = TRUE but no who_ended column: assume actor1
@@ -304,8 +321,8 @@
     base_reh$edgelist_dual$duration <- ord_dur[base_reh$edgelist_dual$.eidx]
     base_reh$edgelist_dual$.eidx    <- NULL  # remove temp column
     base_reh$intereventTime <- NULL
+    base_reh$meta$ordinal <- TRUE
   }
-  base_reh$meta$ordinal <- TRUE
 
   # ── 6. Attach DuREM slot — only info not already on the base object ───────
   # Redundant fields intentionally omitted:
@@ -314,8 +331,8 @@
   #   has_weights            → $meta$weighted
   #   extend_riskset_by_type → $meta$with_type_riskset
   base_reh$durem <- list(
-    directed_end  = directed_end,
-    type_exclusive = type_exclusive,
+    dur_directed_end  = directed_end,
+    dur_type_exclusive = type_exclusive,
     has_who_ended = "who_ended" %in% names(edgelist),
     has_censored  = anyNA(edgelist$end),
     n_complete    = sum(!is.na(edgelist$end)),
@@ -396,8 +413,8 @@
     warning(
       length(cross_type_violations), " events start while an event of a ",
       "different type for the same dyad is already active. With ",
-      "type_exclusive = TRUE, these dyads should not be at risk. ",
-      "Consider setting type_exclusive = FALSE if concurrent events of ",
+      "dur_type_exclusive = TRUE, these dyads should not be at risk. ",
+      "Consider setting dur_type_exclusive = FALSE if concurrent events of ",
       "different types are expected. Check events: ",
       paste(cross_type_violations, collapse = ", "), ".",
       call. = FALSE
@@ -406,8 +423,8 @@
       warning(
         length(cross_type_violations), " event starts while an event of a ",
         "different type for the same dyad is already active. With ",
-        "type_exclusive = TRUE, this dyad should not be at risk. ",
-        "Consider setting type_exclusive = FALSE if concurrent events of ",
+        "dur_type_exclusive = TRUE, this dyad should not be at risk. ",
+        "Consider setting dur_type_exclusive = FALSE if concurrent events of ",
         "different types are expected. Check event: ",
         paste(cross_type_violations, collapse = ", "), ".",
         call. = FALSE
@@ -580,8 +597,8 @@ summary.remify_durem <- function(object, ...) {
             "\n\t\t\t >>> maximum ~ ", round(max(durs),    4), " ", units_dur, "\n")
     }
 
-    type_excl <- if (isTRUE(d$type_exclusive))
-        "\t\t>> type_exclusive = TRUE"
+    type_excl <- if (isTRUE(d$dur_type_exclusive))
+        "\t\t>> dur_type_exclusive = TRUE"
     else
         NULL
 

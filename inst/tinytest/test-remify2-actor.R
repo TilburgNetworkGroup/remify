@@ -145,16 +145,16 @@ reh_man <- remify(edgelist = el20, actors = actors,
                    directed = TRUE, ordinal = TRUE,
                    origin = origin, model = "actor",
                    riskset = "manual",
-                   manual.riskset = el40[, -1])  # actor1, actor2, type
+                   manual_riskset = el40[, -1])  # actor1, actor2, type
 
 expect_inherits(reh_man, "remify", info = "manual: class remify")
 expect_equal(reh_man$meta$model,          "actor",  info = "manual: model=actor")
 expect_equal(reh_man$meta$riskset_source, "manual", info = "manual: riskset_source=manual")
 
-# sender_riskset derived from manual.riskset actor1 column
+# sender_riskset derived from manual_riskset actor1 column
 man_senders <- unique(el40$actor1)
 expect_equal(reh_man$activeN, length(man_senders),
-             info = "manual: activeN = unique senders in manual.riskset")
+             info = "manual: activeN = unique senders in manual_riskset")
 
 # receiver_riskset respects manual constraints
 for (i in seq_along(reh_man$sender_riskset)) {
@@ -166,7 +166,7 @@ for (i in seq_along(reh_man$sender_riskset)) {
   recv_in_rs <- reh_man$receiver_riskset[[i]]
   expect_true(all(recv_in_rs %in% allowed_recv_ids),
               info = paste("manual: receivers for", s_name,
-                           "match manual.riskset"))
+                           "match manual_riskset"))
 }
 
 # index$sender_map present
@@ -212,7 +212,7 @@ reh_ext_false <- remify(edgelist = el20, actors = actors,
                          directed = TRUE, ordinal = TRUE,
                          origin = origin, model = "actor",
                          riskset = "manual",
-                         manual.riskset = el40[, -1],
+                         manual_riskset = el40[, -1],
                          extend_riskset_by_type = FALSE)
 
 expect_false(reh_ext_false$meta$with_type_riskset,
@@ -272,7 +272,7 @@ expect_true(reh_sat$activeN >= reh_act2$activeN,
             info = "saturated: activeN >= active (reverse senders added)")
 
 # All types at risk — with_type_riskset should be TRUE (no type filtering)
-# Since manual.riskset has no type column, ext=TRUE applies all types
+# Since manual_riskset has no type column, ext=TRUE applies all types
 # (depends on extend_riskset_by_type default)
 expect_equal(reh_sat$meta$riskset_source, "active_saturated",
              info = "saturated: internally uses manual riskset")

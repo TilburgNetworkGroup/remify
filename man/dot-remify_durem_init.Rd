@@ -16,11 +16,11 @@
   extend_riskset_by_type = FALSE,
   event_type = NULL,
   origin = NULL,
-  time.units = c("auto", "secs", "mins", "hours", "days", "weeks"),
+  time_units = c("auto", "secs", "mins", "hours", "days", "weeks"),
   attach_riskset = TRUE,
   riskset_decode = c("labels", "ids", "none"),
   riskset_max_decode = 200000L,
-  event_covariates = NULL,
+  event_attributes = NULL,
   ncores = 1L,
   omit_dyad = NULL,
   directed_end = FALSE,
@@ -43,9 +43,7 @@ This reduces the number of unique time points (and thus memory/computation in la
 
 \item{actors}{[\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.}
 
-\item{riskset}{[\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user. \code{riskset = "active_saturated"} extends the active riskset by adding the reverse direction for each observed dyad (if A->B is observed, B->A is also at risk) and includes all event types for each observed actor pair (type column is ignored). This reflects the assumption that observing any interaction between two actors implies both directions and all types are possible.}
-
-\item{manual.riskset}{[\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.}
+\item{riskset}{[\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{manual_riskset}. \code{riskset = "active_saturated"} extends the active riskset by adding the reverse direction for each observed dyad (if A->B is observed, B->A is also at risk) and includes all event types for each observed actor pair (type column is ignored). This reflects the assumption that observing any interaction between two actors implies both directions and all types are possible.}
 
 \item{extend_riskset_by_type}{logical. \code{FALSE} (default). When event types are present (via
 \code{event_type}), controls whether the risk set is expanded over types.
@@ -76,7 +74,7 @@ decoded risk set. This argument is ignored when no event types are present.}
 \item{origin}{[\emph{optional}] starting time point of the observation period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}. If unsupplied, the origin
 is set to the average waiting time in the sequence subtracted from the time of the first event.}
 
-\item{time.units}{Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".}
+\item{time_units}{Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".}
 
 \item{attach_riskset}{Logical. If \code{TRUE}, attaches a list \code{riskset_info}
 to the returned \code{remify} object. The list contains the effective risk set
@@ -100,19 +98,19 @@ is allowed. If the included risk set exceeds this threshold, decoding to labels
 is skipped (typically falling back to \code{"ids"} with a warning) to avoid large
 memory usage.}
 
-\item{event_covariates}{Optional character vector of column names in
+\item{event_attributes}{Optional character vector of column names in
   \code{edgelist} to retain as additional event-level variables in the
   returned \code{reh} object.
 
-  These columns are stored as \code{reh$event_covariates} together with the
+  These columns are stored as \code{reh$event_attributes} together with the
   corresponding \code{time}, \code{actor1}, and \code{actor2} columns (and an
   internal \code{.event_id}). This is useful when downstream functions (e.g.,
-  in \pkg{remstats}) need access to event-level marks/covariates that are not
+  in \pkg{remstats}) need access to event-level marks/attributes/covariates that are not
   part of the core \code{reh$edgelist} produced by \code{remify()}.
 
-  Note: \code{event_covariates} does not affect risk set construction or type
+  Note: \code{event_attributes} does not affect risk set construction or type
   handling in \code{remify()}; it only preserves additional columns for later
-  use. Currently there is no further support yet when event_covariates
+  use. Currently there is no further support yet when event_attributes
   have been added.}
 
 \item{ncores}{[\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).}

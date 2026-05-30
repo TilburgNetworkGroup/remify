@@ -106,7 +106,7 @@ manual_rs <- data.frame(
 )
 reh_man_T <- suppressWarnings(
   remify(edgelist_typed, model = "tie", riskset = "manual",
-          manual.riskset = manual_rs, extend_riskset_by_type = TRUE)
+          manual_riskset = manual_rs, extend_riskset_by_type = TRUE)
 )
 out <- cap(reh_man_T)
 expect_true(grepl("riskset = manual", out, fixed = TRUE),
@@ -123,7 +123,7 @@ expect_true(grepl("per type", out, fixed = TRUE),
 # ---------------------------------------------------------------------------
 reh_man_F <- suppressWarnings(
   remify(edgelist_typed, model = "tie", riskset = "manual",
-          manual.riskset = manual_rs, extend_riskset_by_type = FALSE)
+          manual_riskset = manual_rs, extend_riskset_by_type = FALSE)
 )
 out <- cap(reh_man_F)
 expect_true(grepl("riskset = manual", out, fixed = TRUE),

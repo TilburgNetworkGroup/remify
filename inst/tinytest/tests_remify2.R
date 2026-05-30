@@ -138,7 +138,7 @@ res <- capture_warnings(
     edgelist = h,
     model = "tie",
     riskset = "manual",
-    manual.riskset = manual,
+    manual_riskset = manual,
     attach_riskset = TRUE,
     riskset_decode = "ids"
   )

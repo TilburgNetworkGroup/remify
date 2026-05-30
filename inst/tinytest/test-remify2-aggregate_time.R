@@ -159,18 +159,18 @@ expect_false(is.null(reh_t2$ids$type),
 
 expect_error(
   remify::remify(h, model = "tie", aggregate_time = 0L),
-  pattern = "thin.*>=.*1|>=.*1.*thin",
-  info = "thin=0: error"
+  pattern = "`aggregate_time` must be a single numeric value >= 1.",
+  info = "aggregate_time=0: error"
 )
 
 expect_error(
   remify::remify(h, model = "tie", aggregate_time = -1L),
-  pattern = "thin.*>=.*1|>=.*1.*thin",
-  info = "thin=-1: error"
+  pattern = "`aggregate_time` must be a single numeric value >= 1.",
+  info = "aggregate_time=-1: error"
 )
 
 expect_error(
   remify::remify(h, model = "tie", aggregate_time = NA_integer_),
-  pattern = "thin.*>=.*1|>=.*1.*thin",
-  info = "thin=NA: error"
+  pattern = "`aggregate_time` must be a single numeric value >= 1.",
+  info = "aggregate_time=NA: error"
 )

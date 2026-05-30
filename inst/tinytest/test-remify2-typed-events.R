@@ -217,7 +217,7 @@ manual_rs <- unique(h[, c("actor1", "actor2")])[1:5, ]
 
 reh_man_ext <- suppressWarnings(remify::remify(
   edgelist = h, model = "tie", riskset = "manual",
-  manual.riskset = manual_rs,
+  manual_riskset = manual_rs,
   event_type = "type", extend_riskset_by_type = TRUE,
   attach_riskset = TRUE, riskset_decode = "labels"
 ))
@@ -239,7 +239,7 @@ expect_true(reh_man_ext$activeD >= expected_n,
 
 reh_man_no <- suppressWarnings(remify::remify(
   edgelist = h, model = "tie", riskset = "manual",
-  manual.riskset = manual_rs,
+  manual_riskset = manual_rs,
   event_type = "type", extend_riskset_by_type = FALSE,
   attach_riskset = TRUE, riskset_decode = "labels"
 ))

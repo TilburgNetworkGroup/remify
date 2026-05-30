@@ -9,23 +9,23 @@ remify(
   directed = TRUE,
   ordinal = FALSE,
   model = c("tie", "actor"),
-  aggregate_time = 1,
   actors = NULL,
   riskset = c("full", "active", "active_saturated", "manual"),
-  manual.riskset = NULL,
+  manual_riskset = NULL,
   extend_riskset_by_type = FALSE,
   event_type = NULL,
   origin = NULL,
-  time.units = c("auto", "secs", "mins", "hours", "days", "weeks"),
+  time_units = c("auto", "secs", "mins", "hours", "days", "weeks"),
+  aggregate_time = 1,
   attach_riskset = TRUE,
   riskset_decode = c("labels", "ids", "none"),
   riskset_max_decode = 200000L,
-  event_covariates = NULL,
+  event_attributes = NULL,
   ncores = 1L,
   omit_dyad = NULL,
   duration = FALSE,
-  directed_end = FALSE,
-  type_exclusive = FALSE
+  dur_directed_end = FALSE,
+  dur_type_exclusive = FALSE
 )
 }
 \arguments{
@@ -37,16 +37,11 @@ remify(
 
 \item{model}{either \code{"tie"} (default) or \code{"actor"} oriented modeling. For \code{"tie"}, the riskset is at the dyad level. For \code{"actor"}, the model has two sub-processes: a sender rate model (who sends next?) and a receiver choice model (who does the sender choose?). Actor-oriented modeling requires \code{directed=TRUE}. The returned object includes \code{sender_riskset}, \code{receiver_riskset}, and \code{activeN} (see \code{@return}).}
 
-\item{aggregate_time}{Integer >= 1. Event-time aggregated based on unique time points.
-Keeps every \code{aggregate_time}-th unique event time (after time translation) and
-maps each event time to the next kept time point (i.e., ceiling to the kept grid).
-This reduces the number of unique time points (and thus memory/computation in later steps).}
-
 \item{actors}{[\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.}
 
-\item{riskset}{[\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{omit_dyad}. This type of risk set allows for time-varying risk set, in which, for instance, subset of actors can interact only at specific time windows, or events of a specific type (sentiment) can't be observed within time intervals that are defined by the user. \code{riskset = "active_saturated"} extends the active riskset by adding the reverse direction for each observed dyad (if A->B is observed, B->A is also at risk) and includes all event types for each observed actor pair (type column is ignored). This reflects the assumption that observing any interaction between two actors implies both directions and all types are possible.}
+\item{riskset}{[\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{manual_riskset}. \code{riskset = "active_saturated"} extends the active riskset by adding the reverse direction for each observed dyad (if A->B is observed, B->A is also at risk) and includes all event types for each observed actor pair (type column is ignored). This reflects the assumption that observing any interaction between two actors implies both directions and all types are possible.}
 
-\item{manual.riskset}{[\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.}
+\item{manual_riskset}{[\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.}
 
 \item{extend_riskset_by_type}{logical. \code{FALSE} (default). When event types are present (via
 \code{event_type}), controls whether the risk set is expanded over types.
@@ -77,7 +72,12 @@ decoded risk set. This argument is ignored when no event types are present.}
 \item{origin}{[\emph{optional}] starting time point of the observation period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}. If unsupplied, the origin
 is set to the average waiting time in the sequence subtracted from the time of the first event.}
 
-\item{time.units}{Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".}
+\item{time_units}{Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".}
+
+\item{aggregate_time}{Integer >= 1. Event-time aggregated based on unique time points.
+Keeps every \code{aggregate_time}-th unique event time (after time translation) and
+maps each event time to the next kept time point (i.e., ceiling to the kept grid).
+This reduces the number of unique time points (and thus memory/computation in later steps).}
 
 \item{attach_riskset}{Logical. If \code{TRUE}, attaches a list \code{riskset_info}
 to the returned \code{remify} object. The list contains the effective risk set
@@ -101,19 +101,19 @@ is allowed. If the included risk set exceeds this threshold, decoding to labels
 is skipped (typically falling back to \code{"ids"} with a warning) to avoid large
 memory usage.}
 
-\item{event_covariates}{Optional character vector of column names in
+\item{event_attributes}{Optional character vector of column names in
   \code{edgelist} to retain as additional event-level variables in the
   returned \code{reh} object.
 
-  These columns are stored as \code{reh$event_covariates} together with the
+  These columns are stored as \code{reh$event_attributes} together with the
   corresponding \code{time}, \code{actor1}, and \code{actor2} columns (and an
   internal \code{.event_id}). This is useful when downstream functions (e.g.,
-  in \pkg{remstats}) need access to event-level marks/covariates that are not
+  in \pkg{remstats}) need access to event-level marks/attributes/covariates that are not
   part of the core \code{reh$edgelist} produced by \code{remify()}.
 
-  Note: \code{event_covariates} does not affect risk set construction or type
+  Note: \code{event_attributes} does not affect risk set construction or type
   handling in \code{remify()}; it only preserves additional columns for later
-  use. Currently there is no further support yet when event_covariates
+  use. Currently there is no further support yet when event_attributes
   have been added.}
 
 \item{ncores}{[\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).}
@@ -127,16 +127,16 @@ duration edgelist (each event has both a start time and an end time) and a
 \code{end_time} / \code{duration} as alternatives; see
 \code{.durem_normalize_edgelist}). Default \code{FALSE}.}
 
-\item{directed_end}{Logical. Only used when \code{duration = TRUE}. If
+\item{dur_directed_end}{Logical. Only used when \code{duration = TRUE}. If
 \code{FALSE} (default), the end process is undirected: either actor can
 terminate the event and only a combined dyad-level end rate is modelled. If
 \code{TRUE}, the end process is directed: a \code{who_ended} column in the
 edgelist (\code{"actor1"} / \code{"actor2"} / \code{NA}) records which
 actor terminated each event, enabling actor-level end-rate models. When
-\code{who_ended} is absent and \code{directed_end = TRUE}, actor1 is
+\code{who_ended} is absent and \code{dur_directed_end = TRUE}, actor1 is
 assumed to terminate all events and a message is issued.}
 
-\item{type_exclusive}{Logical. Only used when \code{duration = TRUE}, when typed events
+\item{dur_type_exclusive}{Logical. Only used when \code{duration = TRUE}, when typed events
 are present and when \code{extend_riskset_by_type = TRUE}. If \code{TRUE}, an active event of
 any type is a hard block on starting events of all other types for the same
 dyad (e.g. two actors cannot start a text conversation while already in a
@@ -154,16 +154,18 @@ A \code{remify} S3 object (list) with the following elements:
     \item \code{intereventTime} vector of inter-event waiting times (\code{NULL} if \code{ordinal=TRUE}).
     \item \code{edgelist} processed input edgelist as \code{data.frame}.
     \item \code{edgelist_id} per-event integer ID summary.
+    \item \code{edgelist_dual} processed input edgelist with duration as \code{data.frame}.
     \item \code{meta} list of metadata (model, directed, ordinal, riskset, dictionary, etc.).
     \item \code{ids} list of per-event integer IDs (actor1, actor2, dyad, type).
     \item \code{index} list of decoded riskset tables (\code{dyad_map} or \code{dyad_map_active} for tie model; \code{sender_map} for actor model).
     \item \code{activeD} number of active dyads (tie model, \code{riskset="active"} or \code{"manual"} only).
     \item \code{riskset_info} decoded riskset metadata (tie model only, when \code{attach_riskset=TRUE}).
+    \item \code{durem} list of metadata for events with duration.
   }
   For \strong{actor-oriented models} (\code{model="actor"}), the following additional elements are returned:
   \itemize{
-    \item \code{sender_riskset} integer vector of actor IDs allowed to send (all actors for \code{"full"}; observed senders for \code{"active"}; senders in \code{manual.riskset} for \code{"manual"}/\code{"active_saturated"}).
-    \item \code{receiver_riskset} named list (actor names) of integer vectors of allowed receiver IDs per sender.
+    \item \code{sender_riskset} integer vector of actor IDs allowed to send (all actors for \code{"full"}; observed senders for \code{"active"}; senders in \code{manual_riskset} for \code{"manual"}/\code{"active_saturated"}).
+    \item \code{receiver_riskset} named list (actor names) of integer vectors of allowed receiver IDs per sender. Depends on the chosen riskset vie the argument \code{riskset}.
     \item \code{activeN} number of active senders.
     \item \code{index\$sender_map} data.frame with columns \code{senderID} and \code{actorName} for active senders.
   }

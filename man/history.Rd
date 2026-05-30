@@ -5,15 +5,12 @@
 \alias{history}
 \title{History dataset}
 \format{
-A data frame that can be used for an analysis with remify, remstats, remstimate
-}
-\source{
-remstats package
+A data frame that can be used for an analysis with remverse
 }
 \usage{
 history
 }
 \description{
-A relational event history dataset for testing and examples.
+A randomly generated relational event history dataset for testing and examples.
 }
 \keyword{datasets}

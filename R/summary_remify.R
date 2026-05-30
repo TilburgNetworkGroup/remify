@@ -47,7 +47,7 @@ summary.remify <- function(object, ...) {
   actors <- paste0("\t> actors = ", object$N)
 
   # Types — always shown for consistency, even when C = 1
-  types <- paste0("\t> (event) types = ", .C)
+  types <- paste0("\t> event types = ", .C)
 
   # Riskset block — tie model only; actor model shows sender/receiver riskset
   riskset_block <- character(0)

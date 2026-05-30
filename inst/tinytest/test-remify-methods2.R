@@ -102,7 +102,7 @@ out <- remify(edgelist = reh_loc$edgelist,
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
                 riskset = "manual",
-                manual.riskset=reh_loc$edgelist[,2:3],
+              manual_riskset=reh_loc$edgelist[,2:3],
                 model = "tie")
 expect_identical(out$meta$riskset,"active")
 expect_identical(out$meta$riskset_source,"manual")
@@ -116,7 +116,7 @@ out <- remify(edgelist = reh_loc$edgelist,
                 ordinal = FALSE, # REM with waiting times
                 origin = reh_loc$origin,
                 riskset = "manual",
-                manual.riskset=reh_loc$edgelist[1:1000,2:3],
+              manual_riskset=reh_loc$edgelist[1:1000,2:3],
                 model = "actor")
 
 expect_identical(out$meta$riskset_source,"manual")

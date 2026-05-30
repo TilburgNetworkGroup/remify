@@ -4,7 +4,7 @@
 ##   - remify(duration = TRUE) returns the right class and $durem slot
 ##   - Column-name normalisation (legacy names, duration column)
 ##   - Validation errors (end < start, bad who_ended values)
-##   - directed / directed_end / type_exclusive argument semantics
+##   - directed / dur_directed_end / dur_type_exclusive argument semantics
 ##   - Right-censored events (NA in end column)
 ##   - is.remify_durem(), print(), summary() run without error
 
@@ -73,8 +73,8 @@ expect_true(!is.null(reh$durem),
 expect_equal(reh$durem$n_complete, 4L, info = "$durem$n_complete (no censoring)")
 expect_equal(reh$durem$n_censored, 0L, info = "$durem$n_censored (no censoring)")
 
-expect_false(reh$durem$directed_end,   info = "directed_end defaults to FALSE")
-expect_false(reh$durem$type_exclusive, info = "type_exclusive defaults to FALSE")
+expect_false(reh$durem$dur_directed_end,   info = "dur_directed_end defaults to FALSE")
+expect_false(reh$durem$dur_type_exclusive, info = "dur_type_exclusive defaults to FALSE")
 expect_false(reh$durem$has_who_ended,  info = "has_who_ended FALSE when no who_ended column")
 expect_false(reh$durem$has_censored,   info = "has_censored FALSE when no NA ends")
 
@@ -131,19 +131,19 @@ expect_error(
     info = "invalid who_ended value triggers error"
 )
 
-# ── 6. directed_end = TRUE with who_ended column ──────────────────────────────
+# ── 6. dur_directed_end = TRUE with who_ended column ──────────────────────────────
 
-reh_who <- remify(el_who, duration = TRUE, directed_end = TRUE)
+reh_who <- remify(el_who, duration = TRUE, dur_directed_end = TRUE)
 
-expect_true(reh_who$durem$directed_end,   info = "directed_end stored as TRUE")
+expect_true(reh_who$durem$dur_directed_end,   info = "dur_directed_end stored as TRUE")
 expect_true(reh_who$durem$has_who_ended,  info = "has_who_ended TRUE when column present")
 
-# ── 7. directed_end = TRUE without who_ended column — message issued ──────────
+# ── 7. dur_directed_end = TRUE without who_ended column — message issued ──────────
 
 expect_message(
-    remify(el, duration = TRUE, directed_end = TRUE),
+    remify(el, duration = TRUE, dur_directed_end = TRUE),
     pattern = "who_ended",
-    info = "directed_end=TRUE without who_ended column issues a message"
+    info = "dur_directed_end=TRUE without who_ended column issues a message"
 )
 
 # ── 8. directed = FALSE (undirected start) ────────────────────────────────────
@@ -163,22 +163,22 @@ expect_true(reh_cens$durem$has_censored,          info = "has_censored TRUE when
 expect_equal(reh_cens$durem$n_censored, 1L,       info = "n_censored = 1")
 expect_equal(reh_cens$durem$n_complete, 2L,       info = "n_complete = 2")
 
-# ── 10. type_exclusive warning when extend_riskset_by_type = FALSE ────────────
+# ── 10. dur_type_exclusive warning when extend_riskset_by_type = FALSE ────────────
 
 expect_warning(
-    remify(el, duration = TRUE, type_exclusive = TRUE,
+    remify(el, duration = TRUE, dur_type_exclusive = TRUE,
            extend_riskset_by_type = FALSE),
-    pattern = "type_exclusive",
-    info = "type_exclusive=TRUE without extend_riskset_by_type warns"
+    pattern = "dur_type_exclusive",
+    info = "dur_type_exclusive=TRUE without extend_riskset_by_type warns"
 )
 
-# ── 11. type_exclusive = TRUE with extend_riskset_by_type = TRUE ─────────────
+# ── 11. dur_type_exclusive = TRUE with extend_riskset_by_type = TRUE ─────────────
 
 reh_excl <- remify(el_typed, duration = TRUE,
-                   type_exclusive         = TRUE,
+                   dur_type_exclusive         = TRUE,
                    extend_riskset_by_type = TRUE)
 
-expect_true(reh_excl$durem$type_exclusive,              info = "type_exclusive stored in $durem")
+expect_true(reh_excl$durem$dur_type_exclusive,              info = "dur_type_exclusive stored in $durem")
 expect_true(isTRUE(reh_excl$meta$with_type_riskset),   info = "extend_riskset_by_type in $meta$with_type_riskset")
 
 # ── 12. Event types stored correctly ──────────────────────────────────────────
@@ -215,10 +215,11 @@ expect_silent(capture.output(print(reh)),
 expect_silent(capture.output(summary(reh)),
     info = "summary.remify_durem runs without error")
 
-# print with directed_end and who_ended
+# print with dur_directed_end and who_ended
 expect_silent(capture.output(print(reh_who)),
-    info = "print.remify_durem: directed_end + who_ended")
+    info = "print.remify_durem: dur_directed_end + who_ended")
 
 # print with censored events
 expect_silent(capture.output(print(reh_cens)),
     info = "print.remify_durem: right-censored events shown")
+
