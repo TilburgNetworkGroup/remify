@@ -122,7 +122,7 @@ memory usage.}
 
 \item{duration}{Logical. If \code{TRUE}, the edgelist is treated as a
 duration edgelist (each event has both a start time and an end time) and a
-\code{\link{remify_durem}} object is returned instead of a standard
+\code{remify_durem} object is returned instead of a standard
 \code{remify} object. The edgelist must contain an \code{end} column (or
 \code{end_time} / \code{duration} as alternatives; see
 \code{.durem_normalize_edgelist}). Default \code{FALSE}.}
