@@ -18,7 +18,7 @@ cap <- function(reh) paste(capture.output(summary(reh)), collapse = "\n")
 reh_untyped <- remify(edgelist_untyped, model = "tie", riskset = "full")
 
 out <- cap(reh_untyped)
-expect_true(grepl("(event) types = 1", out, fixed = TRUE),
+expect_true(grepl("event types = 1", out, fixed = TRUE),
   info = "untyped: types = 1 always shown")
 expect_false(grepl("extend_riskset_by_type", out, fixed = TRUE),
   info = "untyped: no ext info when C=1")
@@ -33,7 +33,7 @@ expect_true(grepl("included dyads = 90", out, fixed = TRUE),
 reh_full_T <- remify(edgelist_typed, model = "tie", riskset = "full",
                       extend_riskset_by_type = TRUE)
 out <- cap(reh_full_T)
-expect_true(grepl("(event) types = 2", out, fixed = TRUE),
+expect_true(grepl("event types = 2", out, fixed = TRUE),
   info = "full/ext=T: types = 2")
 expect_true(grepl("included dyads = 180", out, fixed = TRUE),
   info = "full/ext=T: 180 typed dyads")
@@ -50,7 +50,7 @@ expect_false(grepl("per type", out, fixed = TRUE),
 reh_full_F <- remify(edgelist_typed, model = "tie", riskset = "full",
                       extend_riskset_by_type = FALSE)
 out <- cap(reh_full_F)
-expect_true(grepl("(event) types = 2", out, fixed = TRUE),
+expect_true(grepl("event types = 2", out, fixed = TRUE),
   info = "full/ext=F: types = 2")
 expect_true(grepl("included dyads = 90", out, fixed = TRUE),
   info = "full/ext=F: 90 untyped dyads")
@@ -65,7 +65,7 @@ expect_false(grepl("per type", out, fixed = TRUE),
 reh_act_T <- remify(edgelist_typed, model = "tie", riskset = "active",
                      extend_riskset_by_type = TRUE)
 out <- cap(reh_act_T)
-expect_true(grepl("(event) types = 2", out, fixed = TRUE),
+expect_true(grepl("event types = 2", out, fixed = TRUE),
   info = "active/ext=T: types = 2")
 expect_true(grepl("riskset = active", out, fixed = TRUE),
   info = "active/ext=T: riskset label")
@@ -88,7 +88,7 @@ expect_true(grepl(paste0("work=", type_counts["work"]), out, fixed = TRUE),
 reh_act_F <- remify(edgelist_typed, model = "tie", riskset = "active",
                      extend_riskset_by_type = FALSE)
 out <- cap(reh_act_F)
-expect_true(grepl("(event) types = 2", out, fixed = TRUE),
+expect_true(grepl("event types = 2", out, fixed = TRUE),
   info = "active/ext=F: types = 2")
 expect_true(grepl("active dyads", out, fixed = TRUE),
   info = "active/ext=F: active dyads shown")
@@ -111,7 +111,7 @@ reh_man_T <- suppressWarnings(
 out <- cap(reh_man_T)
 expect_true(grepl("riskset = manual", out, fixed = TRUE),
   info = "manual/ext=T: riskset label")
-expect_true(grepl("(event) types = 2", out, fixed = TRUE),
+expect_true(grepl("event types = 2", out, fixed = TRUE),
   info = "manual/ext=T: types = 2")
 expect_true(grepl("extend_riskset_by_type = TRUE", out, fixed = TRUE),
   info = "manual/ext=T: ext flag shown")
@@ -139,7 +139,7 @@ reh_undir_T <- remify(edgelist_typed, model = "tie", riskset = "full",
 out <- cap(reh_undir_T)
 expect_true(grepl("directed = FALSE", out, fixed = TRUE),
   info = "undirected: directed = FALSE")
-expect_true(grepl("(event) types = 2", out, fixed = TRUE),
+expect_true(grepl("event types = 2", out, fixed = TRUE),
   info = "undirected/ext=T: types = 2")
 expect_true(grepl("extend_riskset_by_type = TRUE", out, fixed = TRUE),
   info = "undirected/ext=T: ext flag shown")

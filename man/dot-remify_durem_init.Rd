@@ -12,7 +12,7 @@
   aggregate_time = 1L,
   actors = NULL,
   riskset = c("full", "active", "active_saturated", "manual"),
-  manual.riskset = NULL,
+  manual_riskset = NULL,
   extend_riskset_by_type = FALSE,
   event_type = NULL,
   origin = NULL,
@@ -44,6 +44,8 @@ This reduces the number of unique time points (and thus memory/computation in la
 \item{actors}{[\emph{optional}] character vector of actors' names that may be observed interacting in the network. If \code{NULL} (default), actors' names will be taken from the input edgelist.}
 
 \item{riskset}{[\emph{optional}] character value indicating the type of risk set to process: \code{riskset = "full"} (default) consists of all the possible dyadic events given the number of actors (and the number of event types) and it mantains the same structure over time. \code{riskset = "active"} considers at risk only the observed dyads and it mantains the same structure over time. \code{riskset = "manual"}, allows the risk set to have a structure that is user-defined, and it is based on the instructions supplied via the argument \code{manual_riskset}. \code{riskset = "active_saturated"} extends the active riskset by adding the reverse direction for each observed dyad (if A->B is observed, B->A is also at risk) and includes all event types for each observed actor pair (type column is ignored). This reflects the assumption that observing any interaction between two actors implies both directions and all types are possible.}
+
+\item{manual_riskset}{[\emph{optional}] When \code{riskset = "manual"}, this argument of class \code{\link[base]{data.frame}} specifies which dyadic riskset to consider through the entire sequence. If observed dyads from the \code{edgelist} are missing, they will be automatically be added.}
 
 \item{extend_riskset_by_type}{logical. \code{FALSE} (default). When event types are present (via
 \code{event_type}), controls whether the risk set is expanded over types.

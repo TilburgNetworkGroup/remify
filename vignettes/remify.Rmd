@@ -42,7 +42,7 @@ names(randomREH) # objects inside the list 'randomREH'
 
 ## Input
 
-<b>Input</b> arguments that can be supplied to `remify()` are: `edgelist`, `directed`, `ordinal`, `model`, `thin`, `actors`, `riskset`, `manual.riskset`, `event_type`, `origin`, `time.units`, `attach_riskset`, `riskset_decode`, `riskset_max_decode`, `event_covariates`, and `ncores`.
+<b>Input</b> arguments that can be supplied to `remify()` are: `edgelist`, `directed`, `ordinal`, `model`, `thin`, `actors`, `riskset`, `manual_riskset`, `event_type`, `origin`, `time.units`, `attach_riskset`, `riskset_decode`, `riskset_max_decode`, `event_covariates`, and `ncores`.
 
 ------
 
@@ -94,15 +94,15 @@ The `riskset` argument specifies the type of risk set. Four options are availabl
 - `"full"` (default): all possible dyadic events given the number of actors (and event types) are at risk throughout the entire event history.
 - `"active"`: only the dyadic events observed at least once in the event history are at risk. This can substantially reduce computation time for sparse networks.
 - `"active_saturated"`: extends the active risk set by adding the reverse direction for each observed dyad (if A→B is observed, B→A is also at risk) and includes all event types for each observed actor pair. This reflects the assumption that observing any interaction between two actors implies both directions and all types are possible.
-- `"manual"`: a user-defined static risk set specified via `manual.riskset`. Observed dyads absent from `manual.riskset` are automatically added.
+- `"manual"`: a user-defined static risk set specified via `manual_riskset`. Observed dyads absent from `manual_riskset` are automatically added.
 
 More details about risk set definitions are provided in `vignette(topic = "riskset", package = "remify")`.
 
 ------
 
-### <b><tt>manual.riskset</tt></b>
+### <b><tt>manual_riskset</tt></b>
 
-Required when `riskset = "manual"`. A `data.frame` with columns `actor1` and `actor2` (and optionally `type`) specifying the complete set of dyads that are at risk throughout the event history. This defines a static risk set: unlike the deprecated `omit_dyad` argument, the risk set does not vary over time. Any observed dyads from the edgelist that are missing from `manual.riskset` are added automatically.
+Required when `riskset = "manual"`. A `data.frame` with columns `actor1` and `actor2` (and optionally `type`) specifying the complete set of dyads that are at risk throughout the event history. This defines a static risk set: unlike the deprecated `omit_dyad` argument, the risk set does not vary over time. Any observed dyads from the edgelist that are missing from `manual_riskset` are added automatically.
 
 ```{r, eval = FALSE}
 # Example: restrict the risk set to a specific set of dyads
@@ -116,7 +116,7 @@ reh_manual <- remify(
   directed      = TRUE,
   model         = "tie",
   riskset       = "manual",
-  manual.riskset = my_riskset
+  manual_riskset = my_riskset
 )
 ```
 

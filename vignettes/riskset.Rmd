@@ -292,9 +292,9 @@ reh_sat$riskset_info$included
 
 ### The _manual_ risk set
 
-There are settings where only a specific, user-defined set of dyads should be considered at risk throughout the event history. This is the _manual_ risk set, specified via `riskset = "manual"` and the `manual.riskset` argument.
+There are settings where only a specific, user-defined set of dyads should be considered at risk throughout the event history. This is the _manual_ risk set, specified via `riskset = "manual"` and the `manual_riskset` argument.
 
-`manual.riskset` is a `data.frame` with columns `actor1` and `actor2` (and optionally `type`) listing all dyads that are at risk. This defines a **static** risk set that does not vary over time. Any observed dyads from the edgelist that are absent from `manual.riskset` are added automatically with a warning.
+`manual_riskset` is a `data.frame` with columns `actor1` and `actor2` (and optionally `type`) listing all dyads that are at risk. This defines a **static** risk set that does not vary over time. Any observed dyads from the edgelist that are absent from `manual_riskset` are added automatically with a warning.
 
 Typical use cases include:
 
@@ -321,7 +321,7 @@ reh_manual <- remify(
   model          = "tie",
   actors         = randomREH$actors,
   riskset        = "manual",
-  manual.riskset = manual_rs,
+  manual_riskset = manual_rs,
   origin         = randomREH$origin
 )
 
@@ -332,7 +332,7 @@ reh_manual$activeD
 reh_manual$riskset_info$included
 ```
 
-Note that any observed event involving actor pairs outside `manual.riskset` will be automatically added to the risk set, ensuring that the likelihood is well-defined for all observed events.
+Note that any observed event involving actor pairs outside `manual_riskset` will be automatically added to the risk set, ensuring that the likelihood is well-defined for all observed events.
 
 The grid visualization below illustrates the manual risk set at time $t_3$, with dyads involving `"Richard"` and `"Francesca"` excluded (white tiles).
 
@@ -370,7 +370,7 @@ par(op)
 
 Here, tiles for dyads involving `"Richard"` and `"Francesca"` are white (excluded); the risk set contains only dyads among `"Colton"`, `"Kayla"`, and `"Lexy"`.
 
-For undirected networks, the same `manual.riskset` logic applies but the grid visualization focuses on the lower triangular, since actor pairs are sorted alphanumerically.
+For undirected networks, the same `manual_riskset` logic applies but the grid visualization focuses on the lower triangular, since actor pairs are sorted alphanumerically.
 
 <center>
 ```{r, echo = FALSE, out.width="50%", dev=c("jpeg"), dev.args = list(bg = "white"), fig.alt = "Visualizing manual risk set at time t3 - undirected"}
