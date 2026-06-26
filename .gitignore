@@ -11,3 +11,5 @@ CRAN-SUBMISSION
 docs
 /doc/
 /Meta/
+vignettes/*.html
+.DS_Store
