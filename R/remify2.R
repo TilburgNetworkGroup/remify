@@ -209,7 +209,7 @@ remify <- function(edgelist,
                    event_type = NULL,
                    origin = NULL,
                    time_units = c("auto", "secs", "mins",
-                             "hours", "days", "weeks"),
+                             "hours", "days", "weeks", "months", "years"),
                    aggregate_time = 1,
                    attach_riskset = TRUE,
                    riskset_decode = c("labels","ids","none"),
@@ -366,37 +366,35 @@ remify <- function(edgelist,
   }
 
   # translate time in edgelist to numeric scale
-  time_units <- match.arg(time_units, choices = c("auto", "secs", "mins", "hours", "days", "weeks"))
-
+  time_units <- match.arg(time_units,
+                          choices = c("auto", "secs", "mins", "hours", "days", "weeks", "months", "years"))
   t <- edgelist$time
 
   if (inherits(t, c("POSIXct", "POSIXt", "Date"))) {
-
-    if (is.null(origin)) {
-      # compute mean waiting time on the original time scale
-      mean.waitingtime <- mean(difftime(t[-1], t[-length(t)], units = time_units), na.rm = TRUE)
-      origin <- t[1] - mean.waitingtime
-      # if (!isTRUE(ordinal)){
-      #   message(paste("Note: origin is set to ", origin))
-      # }
+    # difftime() supports units only up to "weeks". Months and years are
+    # not fixed-length, so convert through days with average divisors.
+    .to_num <- function(a, b) {
+      if (time_units %in% c("months", "years")) {
+        d   <- as.numeric(difftime(a, b, units = "days"))
+        div <- if (time_units == "years") 365.25 else 365.25 / 12
+        d / div
+      } else {
+        as.numeric(difftime(a, b, units = time_units))
+      }
     }
-
-    edgelist$time <- as.numeric(difftime(t, origin, units = time_units))
+    if (is.null(origin)) {
+      # place the first event one mean-waiting-time after a numeric origin of 0
+      mean.waitingtime <- mean(.to_num(t[-1], t[-length(t)]), na.rm = TRUE)
+      edgelist$time <- .to_num(t, t[1]) + mean.waitingtime
+    } else {
+      edgelist$time <- .to_num(t, origin)
+    }
     origin <- 0
-
   } else if (is.numeric(t) || is.integer(t)) {
-
     # numeric time: difftime is not appropriate
-    if (is.null(origin)) {
-      origin <- 0
-      # if (!isTRUE(ordinal)){
-      #   message(paste("Note: origin is set to ", origin))
-      # }
-    }
-
-    edgelist$time <- as.numeric(t - origin)  # unit is whatever the numeric scale is
+    if (is.null(origin)) origin <- 0
+    edgelist$time <- as.numeric(t - origin)
     origin <- 0
-
   } else {
     stop("Unsupported class for edgelist$time. Use numeric/integer, Date, or POSIXct/POSIXt.")
   }
