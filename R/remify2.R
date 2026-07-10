@@ -79,7 +79,6 @@
 #'   use. Currently there is no further support yet when event_attributes
 #'   have been added.
 #' @param ncores [\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).
-#' @param omit_dyad Deprecated. Set to \code{NULL}.
 #' @param duration Logical. If \code{TRUE}, the edgelist is treated as a
 #'   duration edgelist (each event has both a start time and an end time) and a
 #'   \code{remify_durem} object is returned instead of a standard
@@ -127,8 +126,6 @@
 #'     \item \code{index\$sender_map} data.frame with columns \code{senderID} and \code{actorName} for active senders.
 #'   }
 #'
-#' @details In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list. For more details about
-#'
 #' @export
 #'
 #' @examples
@@ -148,12 +145,6 @@
 #'
 #' # start time of the study (origin)
 #' randomREH$origin
-#'
-#' # list of changes of the risk set: each one is a list of:
-#' # 'time' (indicating the time window where to apply the risk set reduction)
-#' # 'dyad' (a data.frame describing the dyads to remove from the risk set
-#' # during the time window specified in 'time')
-#' str(randomREH$omit_dyad)
 #'
 #' # -------------------------------------- #
 #' #  processing for tie-oriented modeling  #
@@ -216,12 +207,14 @@ remify <- function(edgelist,
                    riskset_max_decode = 200000L,
                    event_attributes = NULL,
                    ncores = 1L,
-                   omit_dyad = NULL,
+                   # omit_dyad = NULL,
                    # ── Duration REM arguments ─────────────────────────────
                    duration       = FALSE,
                    dur_directed_end   = FALSE,
                    dur_type_exclusive = FALSE
 ){
+
+  omit_dyad <- NULL
 
   # ── Model default — mirrors the check later in the remify body ───────────────
   # Must run before the duration dispatch so the warning fires for both paths.
@@ -368,36 +361,11 @@ remify <- function(edgelist,
   # translate time in edgelist to numeric scale
   time_units <- match.arg(time_units,
                           choices = c("auto", "secs", "mins", "hours", "days", "weeks", "months", "years"))
-  t <- edgelist$time
 
-  if (inherits(t, c("POSIXct", "POSIXt", "Date"))) {
-    # difftime() supports units only up to "weeks". Months and years are
-    # not fixed-length, so convert through days with average divisors.
-    .to_num <- function(a, b) {
-      if (time_units %in% c("months", "years")) {
-        d   <- as.numeric(difftime(a, b, units = "days"))
-        div <- if (time_units == "years") 365.25 else 365.25 / 12
-        d / div
-      } else {
-        as.numeric(difftime(a, b, units = time_units))
-      }
-    }
-    if (is.null(origin)) {
-      # place the first event one mean-waiting-time after a numeric origin of 0
-      mean.waitingtime <- mean(.to_num(t[-1], t[-length(t)]), na.rm = TRUE)
-      edgelist$time <- .to_num(t, t[1]) + mean.waitingtime
-    } else {
-      edgelist$time <- .to_num(t, origin)
-    }
-    origin <- 0
-  } else if (is.numeric(t) || is.integer(t)) {
-    # numeric time: difftime is not appropriate
-    if (is.null(origin)) origin <- 0
-    edgelist$time <- as.numeric(t - origin)
-    origin <- 0
-  } else {
-    stop("Unsupported class for edgelist$time. Use numeric/integer, Date, or POSIXct/POSIXt.")
-  }
+  t <- edgelist$time
+  .map <- .remify_make_time_map(t, time_units, origin)
+  edgelist$time <- .map(t)
+  origin <- 0
 
   # --- thinning (event-grid thinning: keep every `thin`-th unique time) --------
   if (!is.null(thin) && length(thin) == 1L) {
@@ -926,10 +894,20 @@ remify <- function(edgelist,
       actor2_u <- dict_loc$actors$actorName[a20 + 1L]
       el       <- str_out$edgelist
       el_key   <- paste(el$actor1, el$actor2, sep = "|")
+      # rs_idx enumerates every dyad in the (saturated/manual) riskset. Some of
+      # these dyads never occur as events (e.g. reverse-completed pairs added by
+      # active_saturated). They are still part of the riskset, so they must be
+      # kept in dyad_map_active: otherwise this index shrinks to the observed
+      # dyads while activeD / ids$dyad_active remain in the full riskset space,
+      # and the two disagree (remstats then builds too few stat columns, which
+      # overruns the dyad index in remstimate -> Mat::elem index out of bounds).
+      # Never-observed dyads are put at risk for all observed types, matching the
+      # active_saturated construction (cross of saturated pairs with all types).
+      all_types_obs <- unique(el$type)
       rows <- lapply(seq_along(rs_idx), function(i) {
         key       <- paste(actor1_u[i], actor2_u[i], sep = "|")
         types_obs <- unique(el$type[el_key == key])
-        if (length(types_obs) == 0L) return(NULL)
+        if (length(types_obs) == 0L) types_obs <- all_types_obs
         data.frame(actor1 = actor1_u[i], actor2 = actor2_u[i],
                    type = types_obs, stringsAsFactors = FALSE)
       })

@@ -15,14 +15,13 @@ remify(
   extend_riskset_by_type = FALSE,
   event_type = NULL,
   origin = NULL,
-  time_units = c("auto", "secs", "mins", "hours", "days", "weeks"),
+  time_units = c("auto", "secs", "mins", "hours", "days", "weeks", "months", "years"),
   aggregate_time = 1,
   attach_riskset = TRUE,
   riskset_decode = c("labels", "ids", "none"),
   riskset_max_decode = 200000L,
   event_attributes = NULL,
   ncores = 1L,
-  omit_dyad = NULL,
   duration = FALSE,
   dur_directed_end = FALSE,
   dur_type_exclusive = FALSE
@@ -118,8 +117,6 @@ memory usage.}
 
 \item{ncores}{[\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).}
 
-\item{omit_dyad}{Deprecated. Set to \code{NULL}.}
-
 \item{duration}{Logical. If \code{TRUE}, the edgelist is treated as a
 duration edgelist (each event has both a start time and an end time) and a
 \code{remify_durem} object is returned instead of a standard
@@ -173,9 +170,6 @@ A \code{remify} S3 object (list) with the following elements:
 \description{
 A function that processes raw relational event history data and returns a S3 object of class 'remify' which is used as input in other functions inside 'remverse'.
 }
-\details{
-In \code{omit_dyad}, the \code{NA} value can be used to remove multiple objects from the risk set at once with one risk set modification list. For example, to remove all events with sender equal to actor “A” add a list with two objects \code{time = c(NA, NA)} and \code{dyad = data.frame(actor1 = A, actor2 = NA, type = NA)} to the \code{omit_dyad} list. For more details about
-}
 \examples{
 
 # load package and random network 'randomREH'
@@ -193,12 +187,6 @@ randomREH$types
 
 # start time of the study (origin)
 randomREH$origin
-
-# list of changes of the risk set: each one is a list of:
-# 'time' (indicating the time window where to apply the risk set reduction)
-# 'dyad' (a data.frame describing the dyads to remove from the risk set
-# during the time window specified in 'time')
-str(randomREH$omit_dyad)
 
 # -------------------------------------- #
 #  processing for tie-oriented modeling  #

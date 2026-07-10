@@ -10,6 +10,24 @@
 # remstimate.
 # ─────────────────────────────────────────────────────────────────────────────
 
+# internal, shared
+.remify_make_time_map <- function(t, time_units, origin = NULL) {
+  if (inherits(t, c("POSIXct", "POSIXt", "Date"))) {
+    to_num <- function(a, b) {
+      if (time_units %in% c("months", "years")) {
+        d <- as.numeric(difftime(a, b, units = "days"))
+        d / (if (time_units == "years") 365.25 else 365.25 / 12)
+      } else as.numeric(difftime(a, b, units = time_units))
+    }
+    if (is.null(origin)) {
+      ref <- t[1]; off <- mean(to_num(t[-1], t[-length(t)]), na.rm = TRUE)
+    } else { ref <- origin; off <- 0 }
+    function(x) to_num(x, ref) + off
+  } else if (is.numeric(t) || is.integer(t)) {
+    o <- if (is.null(origin)) 0 else origin
+    function(x) as.numeric(x - o)
+  } else stop("Unsupported class for edgelist$time. Use numeric/integer, Date, or POSIXct/POSIXt.")
+}
 
 # ── Column-name normalisation ─────────────────────────────────────────────────
 
@@ -38,6 +56,12 @@
     # second actor
     if ("receiver" %in% nms && !"actor2" %in% nms)
         names(edgelist)[names(edgelist) == "receiver"] <- "actor2"
+
+    # positional fallback for the start triple, mirroring remify():
+    # if a standard name is still absent, assume its canonical column position.
+    if (!"time"   %in% names(edgelist)) names(edgelist)[1] <- "time"
+    if (!"actor1" %in% names(edgelist)) names(edgelist)[2] <- "actor1"
+    if (!"actor2" %in% names(edgelist)) names(edgelist)[3] <- "actor2"
 
     # end time — prefer "end", fall back to "end_time", or compute from duration
     if ("end_time" %in% names(edgelist) && !"end" %in% names(edgelist))
@@ -97,7 +121,7 @@
     extend_riskset_by_type = FALSE,
     event_type             = NULL,
     origin                 = NULL,
-    time_units             = c("auto", "secs", "mins", "hours", "days", "weeks"),
+    time_units             = c("auto", "secs", "mins", "hours", "days", "weeks", "months", "years"),
     attach_riskset         = TRUE,
     riskset_decode         = c("labels", "ids", "none"),
     riskset_max_decode     = 200000L,
@@ -109,6 +133,10 @@
 ) {
   # ── 1. Normalise column names ─────────────────────────────────────────────
   edgelist <- .durem_normalize_edgelist(edgelist)
+  # Put start and end on the SAME numeric axis before remify rescales starts.
+  .map <- .remify_make_time_map(edgelist$time, match.arg(time_units), origin)
+  edgelist$time <- .map(edgelist$time)
+  edgelist$end  <- .map(edgelist$end)
 
   # ── 2. Validate ───────────────────────────────────────────────────────────
   riskset <- match.arg(riskset)
@@ -204,8 +232,8 @@
     riskset_decode         = riskset_decode,
     riskset_max_decode     = riskset_max_decode,
     event_attributes       = event_attributes,
-    ncores                 = ncores,
-    omit_dyad              = omit_dyad
+    ncores                 = ncores#,
+#    omit_dyad              = omit_dyad
   )
 
   # ── 5. Add end (and who_ended) to $edgelist ──────────────────────────────
@@ -319,10 +347,11 @@
     # Ordinal duration from remapped main edgelist
     ord_dur <- base_reh$edgelist$end - base_reh$edgelist$time
     base_reh$edgelist_dual$duration <- ord_dur[base_reh$edgelist_dual$.eidx]
-    base_reh$edgelist_dual$.eidx    <- NULL  # remove temp column
+  #  base_reh$edgelist_dual$.eidx    <- NULL  # remove temp column
     base_reh$intereventTime <- NULL
     base_reh$meta$ordinal <- TRUE
   }
+  #base_reh$edgelist_dual$.eidx <- NULL
 
   # ── 6. Attach DuREM slot — only info not already on the base object ───────
   # Redundant fields intentionally omitted:

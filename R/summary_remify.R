@@ -76,7 +76,7 @@ summary.remify <- function(object, ...) {
   riskset_line <- paste0("\t> riskset = ", .riskset)
   riskset_details <- character(0)
 
-  if (.riskset == "active" || .riskset == "manual") {
+  if (grepl("^active", .riskset) || .riskset == "manual") {
     # Active riskset
     D_active <- object$activeD
     D_full   <- object$D

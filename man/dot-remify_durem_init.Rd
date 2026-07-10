@@ -16,7 +16,7 @@
   extend_riskset_by_type = FALSE,
   event_type = NULL,
   origin = NULL,
-  time_units = c("auto", "secs", "mins", "hours", "days", "weeks"),
+  time_units = c("auto", "secs", "mins", "hours", "days", "weeks", "months", "years"),
   attach_riskset = TRUE,
   riskset_decode = c("labels", "ids", "none"),
   riskset_max_decode = 200000L,
@@ -116,8 +116,6 @@ memory usage.}
   have been added.}
 
 \item{ncores}{[\emph{optional}] number of cores used in the parallelization of the processing functions. (default is \code{1}).}
-
-\item{omit_dyad}{Deprecated. Set to \code{NULL}.}
 
 \item{directed_end}{Logical. \code{FALSE} (default) means the end process is
 undirected: either actor can terminate the event and only a combined
