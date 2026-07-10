@@ -1,6 +1,7 @@
-# remify 4.0.0.999
+# remify 4.1.0
 
-* Support for events with duration
+* Date: 2026-07-10
+* Support events with duration
 
 # remify 4.0.0
 
