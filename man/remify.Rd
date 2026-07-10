@@ -14,6 +14,7 @@ remify(
   manual_riskset = NULL,
   extend_riskset_by_type = FALSE,
   event_type = NULL,
+  event_weight = NULL,
   origin = NULL,
   time_units = c("auto", "secs", "mins", "hours", "days", "weeks", "months", "years"),
   aggregate_time = 1,
@@ -67,6 +68,21 @@ decoded risk set. This argument is ignored when no event types are present.}
   When event types are present (via \code{edgelist$type} or \code{event_type}),
   the dyadic risk set is extended over types, i.e., each dyad is duplicated for
   each event type (dyad \eqn{\times} type).}
+
+\item{event_weight}{Optional. Either \code{NULL} (default) or a single character
+  string giving the name of the column in \code{edgelist} that contains event
+  weights.
+
+  If \code{event_weight} is \code{NULL}, \code{remify()} uses
+  \code{edgelist$weight} if it exists; otherwise events are treated as
+  unweighted (uniform weight = 1).
+
+  If \code{event_weight} is a column name, that column is used as the event
+  weight. If a column named \code{weight} already exists and
+  \code{event_weight != "weight"}, the existing \code{edgelist$weight} is
+  overridden (with a warning). This argument behaves analogously to
+  \code{event_type} and applies to both standard and duration
+  (\code{duration = TRUE}) models.}
 
 \item{origin}{[\emph{optional}] starting time point of the observation period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}. If unsupplied, the origin
 is set to the average waiting time in the sequence subtracted from the time of the first event.}

@@ -38,6 +38,20 @@
 #'   When event types are present (via \code{edgelist$type} or \code{event_type}),
 #'   the dyadic risk set is extended over types, i.e., each dyad is duplicated for
 #'   each event type (dyad \eqn{\times} type).
+#' @param event_weight Optional. Either \code{NULL} (default) or a single character
+#'   string giving the name of the column in \code{edgelist} that contains event
+#'   weights.
+#'
+#'   If \code{event_weight} is \code{NULL}, \code{remify()} uses
+#'   \code{edgelist$weight} if it exists; otherwise events are treated as
+#'   unweighted (uniform weight = 1).
+#'
+#'   If \code{event_weight} is a column name, that column is used as the event
+#'   weight. If a column named \code{weight} already exists and
+#'   \code{event_weight != "weight"}, the existing \code{edgelist$weight} is
+#'   overridden (with a warning). This argument behaves analogously to
+#'   \code{event_type} and applies to both standard and duration
+#'   (\code{duration = TRUE}) models.
 #' @param origin [\emph{optional}] starting time point of the observation period (default is \code{NULL}). If it is supplied, it must have the same class of the `time` column in the input \code{edgelist}. If unsupplied, the origin
 #' is set to the average waiting time in the sequence subtracted from the time of the first event.
 #' @param time_units Character string specifying the time unit for converting time values when `edgelist$time` is of class Date or POSIXct; ignored for numeric or integer time. Default is "secs".
@@ -198,6 +212,7 @@ remify <- function(edgelist,
                    manual_riskset = NULL,
                    extend_riskset_by_type = FALSE,
                    event_type = NULL,
+                   event_weight = NULL,
                    origin = NULL,
                    time_units = c("auto", "secs", "mins",
                              "hours", "days", "weeks", "months", "years"),
@@ -241,6 +256,32 @@ remify <- function(edgelist,
       }
       edgelist$type <- edgelist[[event_type]]
       event_type <- NULL
+    }
+  }
+
+  # ── Event weights ───────────────────────────────────────────────────────────
+  # Mirrors the `event_type` logic above. By default (event_weight = NULL) a
+  # column named `weight`, if present, is used as event weights. If the user
+  # supplies event_weight as a column name, that column is copied into
+  # `edgelist$weight`. This runs before the duration dispatch, so both the
+  # standard and duration paths pick up the weights automatically (the C++
+  # backend and .remify_durem_init detect weighting via `edgelist$weight`).
+  if (!is.null(event_weight)) {
+    if (!is.character(event_weight) || length(event_weight) != 1L) {
+      stop("`event_weight` must be NULL or a single column name.")
+    }
+    if (!(event_weight %in% names(edgelist))) {
+      stop("`event_weight` not found in `edgelist`: ", event_weight)
+    }
+
+    if (event_weight != "weight") {
+      if ("weight" %in% names(edgelist)) {
+        warning("`event_weight = '", event_weight,
+                "'` overrides existing `edgelist$weight` for event weights.",
+                call. = FALSE)
+      }
+      edgelist$weight <- edgelist[[event_weight]]
+      event_weight <- NULL
     }
   }
 

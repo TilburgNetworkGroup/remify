@@ -36,7 +36,7 @@ make_edgelist <- function(typed = FALSE, directed = TRUE, simultaneous = FALSE, 
     df$type <- sample(c("social","work"), M, replace = TRUE)
   }
   if (weighted) {
-    df$weight <- runif(M, 0.5, 3.0)
+    df$weight_test <- runif(M, 0.5, 3.0)
   }
 
   df
@@ -75,7 +75,8 @@ reh <- remify::remify(
   model = "tie",
   riskset = "full",
   attach_riskset = TRUE,
-  riskset_decode = "ids"
+  riskset_decode = "ids",
+  event_weight = "weight_test"
 )
 
 expect_true(inherits(reh, "remify"))
