@@ -85,7 +85,7 @@
 
 # ---- [plot 2] activity plot (tile + degree marginals) -----------------------
 .plot_activity <- function(x, actors, directed, palette, rev, ncores) {
-  op <- par(no.readonly = TRUE); on.exit({ layout(1); par(op) })
+  op <- par(no.readonly = TRUE); on.exit(par(op))
   el <- x$edgelist
 
   # degrees + activity ordering (most active first)
@@ -112,6 +112,17 @@
   # margin in lines: scale with label length but shrink hard as actors grow,
   # so layout()-shrunk panels never overflow the device
   lab <- min(max(nchar(acts)) * 0.45 + 1.2, max(2.5, 8 - N / 12))
+
+  # clamp to the actual device so plot.new() cannot error with "figure margins
+  # too large" on small devices (e.g. vignette/jpeg). The heatmap and marginal
+  # panels span 4/5 of a dimension (layout widths c(4,1), heights c(1,4)); keep
+  # their lab-line margins within half of that so a plot region always remains.
+  csi     <- par("csi")                              # inches per margin line
+  din     <- par("din")                              # device size (inches)
+  inner_w <- din[1L]
+  inner_h <- din[2L] - sum(c(1.5, 2)) * csi          # minus oma (top/bottom)
+  lab_max <- 0.5 * (4 / 5) * min(inner_w, inner_h) / csi - 0.4
+  lab     <- max(1.2, min(lab, lab_max))
 
   # [1] heatmap
   par(mar = c(lab, lab, 0.4, 0.4), mgp = c(2, 0.6, 0))
@@ -155,8 +166,10 @@
     mtext("out-degree", side = 4, line = -0.3, cex = 0.85)
   } else { plot.new() }   # keep region empty so heatmap stays aligned to top marginal
 
-  # [4] colour legend
-  par(mar = c(lab, 1, 1, 2))
+  # [4] colour legend. It sits in the short top row (1/5 of the inner height),
+  # so its bottom margin must fit that panel rather than reuse the heatmap's lab.
+  leg_bot <- max(0.4, min(lab, (inner_h / 5) / csi - 1.6))
+  par(mar = c(leg_bot, 1, 1, 2))
   plot.new(); plot.window(xlim = c(0, 1), ylim = c(0, maxc))
   rect(0, 0:(maxc - 1), 1, 1:maxc, col = pal, border = NA)
   rect(0, 0, 1, maxc, border = "#888888")
@@ -179,7 +192,7 @@
 
 # ---- [plot 3] normalized degree per time interval ---------------------------
 .plot_normdegree <- function(x, actors, directed, n_intervals, palette, rev) {
-  op <- par(no.readonly = TRUE); on.exit({ layout(1); par(op) })
+  op <- par(no.readonly = TRUE); on.exit(par(op))
   el <- x$edgelist
 
   # activity ordering (most active at top), consistent with plot 2
@@ -244,7 +257,7 @@
 
 # ---- [plot 4] quantities per time interval ----------------------------------
 .plot_intervals <- function(x, directed, n_intervals, ncores) {
-  op <- par(no.readonly = TRUE); on.exit({ layout(1); par(op) })
+  op <- par(no.readonly = TRUE); on.exit(par(op))
   el <- x$edgelist
 
   intv <- cut(el$time, breaks = n_intervals)
@@ -293,7 +306,7 @@
 
 # ---- [plot 5] network visualization -----------------------------------------
 .plot_network <- function(x, actors, directed, ncores, igraph.edge.color, igraph.vertex.color) {
-  op <- par(no.readonly = TRUE); on.exit({ layout(1); par(op) })
+  op <- par(no.readonly = TRUE); on.exit(par(op))
   requireNamespace(package = "igraph", quietly = TRUE)
   mats <- .dyad_matrices(x, directed, ncores)
 
@@ -387,7 +400,7 @@
     row_order <- names(sort(table(dlab), decreasing = TRUE))
   }
 
-  row_order <- head(row_order, top_k)
+  row_order <- utils::head(row_order, top_k)
   keep <- dlab %in% row_order
   t_k <- el$time[keep]; lab_k <- dlab[keep]
   lev <- rev(row_order)               # most active ends up at the top
@@ -583,7 +596,7 @@
     dlab <- apply(el[, c("actor1", "actor2")], 1, function(l) paste(sort(as.character(l)), collapse = " \u2014 "))
   }
   freq <- sort(table(dlab), decreasing = TRUE)
-  keep_lab <- head(names(freq), top_k)
+  keep_lab <- utils::head(names(freq), top_k)
   sel <- dlab %in% keep_lab
   lev <- rev(keep_lab)
   yrow <- match(dlab, lev)
