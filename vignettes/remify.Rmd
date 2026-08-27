@@ -18,6 +18,8 @@ vignette: >
 
 <i>This vignette explains the aim, input, output, and methods of the function <tt>`remify::remify()`</tt>.</i>
 
+`remify` is part of the `remverse` ecosystem for relational event modeling; if you want the full toolchain, see the `remverse` package.
+
 ---
 
 

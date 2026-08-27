@@ -13,6 +13,11 @@
 # internal, shared
 .remify_make_time_map <- function(t, time_units, origin = NULL) {
   if (inherits(t, c("POSIXct", "POSIXt", "Date"))) {
+    # Resolve "auto" ONCE to a concrete, fixed unit and reuse it for every
+    # conversion below (offset, start, end).
+    if (identical(time_units, "auto"))
+      time_units <- "days"
+
     to_num <- function(a, b) {
       if (time_units %in% c("months", "years")) {
         d <- as.numeric(difftime(a, b, units = "days"))
@@ -603,7 +608,7 @@ summary.remify_durem <- function(object, ...) {
     else
         "undirected (either actor)"
 
-    end_lbl <- if (!isTRUE(d$directed_end))
+    end_lbl <- if (!isTRUE(d$dur_directed_end))
         "undirected (combined dyad-level rate)"
     else if (d$has_who_ended)
         "directed (who_ended observed)"
